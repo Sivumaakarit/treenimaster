@@ -2,8 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Award,
-  BookOpen,
   Bot,
   Calendar,
   CheckCircle2,
@@ -11,7 +9,6 @@ import {
   Dumbbell,
   Layers,
   PlusCircle,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -23,11 +20,11 @@ import {
   getLocalMessages,
   getLocalPrograms,
   saveCoachMessageOptimistic,
+  saveProgramWorkoutOptimistic,
   saveWorkoutLogOptimistic,
   syncInitialDataWithSupabase,
 } from "@/lib/storage";
 import {
-  BASE_1RM,
   INITIAL_PROGRAM_WORKOUTS,
   SPORT_CATEGORIES,
 } from "@/lib/programData";
@@ -39,11 +36,16 @@ import {
   SportCategory,
   WorkoutLog,
 } from "@/lib/types";
+import {
+  generateInstantWorkoutFeedback,
+  InstantCoachFeedback,
+} from "@/lib/coachIntelligence";
 import { TodayWorkoutView } from "@/components/TodayWorkoutView";
 import { FullProgramView } from "@/components/FullProgramView";
 import { CalendarView } from "@/components/CalendarView";
 import { CoachChatPanel } from "@/components/CoachChatPanel";
 import { QuickOtherWorkoutModal } from "@/components/QuickOtherWorkoutModal";
+import { AnalyticsAndProgressView } from "@/components/AnalyticsAndProgressView";
 
 type ActiveTab = "today" | "calendar" | "program" | "coach" | "knowledge";
 
@@ -59,12 +61,14 @@ export default function TreenimasterPage() {
   const [cloudConnected, setCloudConnected] = useState<boolean>(false);
   const [otherModalOpen, setOtherModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [instantFeedback, setInstantFeedback] =
+    useState<InstantCoachFeedback | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage((prev) => (prev === msg ? null : prev));
-    }, 4200);
+    }, 4500);
   };
 
   useEffect(() => {
@@ -104,14 +108,19 @@ export default function TreenimasterPage() {
   const activeWorkoutId =
     selectedWorkoutId || recommendation.nextWorkout.id || programs[0]?.id;
 
-  const strengthLogs = useMemo(
-    () => logs.filter((l) => l.category === "strength"),
-    [logs]
-  );
+  const handleUpdateProgramWorkout = (updatedWorkout: ProgramWorkout) => {
+    const updatedPrograms = saveProgramWorkoutOptimistic(
+      updatedWorkout,
+      programs
+    );
+    setPrograms(updatedPrograms);
+    showToast(`8 viikon ohjelmaa päivitetty: ${updatedWorkout.title}`);
+  };
 
   const handleSaveWorkoutLog = (
     newLog: WorkoutLog,
-    askCoachAfter: boolean = false
+    askCoachAfter: boolean = false,
+    deviationReason?: string
   ) => {
     const updatedLogs = saveWorkoutLogOptimistic(newLog, logs);
     setLogs(updatedLogs);
@@ -123,7 +132,34 @@ export default function TreenimasterPage() {
     );
     setSelectedWorkoutId(nextRec.nextWorkout.id);
 
+    // Luodaan välitön tsemppi- ja fysiologiapalaute heti näytölle
+    const fb = generateInstantWorkoutFeedback(
+      newLog,
+      updatedLogs,
+      nextRec,
+      deviationReason
+    );
+    setInstantFeedback(fb);
+
     showToast(`Tallennettu: ${newLog.title} (${newLog.performedDate})`);
+
+    // Kirjataan automaattinen tausta-analyysi myös valmentajakeskusteluun, jotta historia pysyy ajan tasalla
+    if (!askCoachAfter) {
+      const autoCoachMsg: CoachMessage = {
+        id: `msg-auto-fb-${Date.now()}`,
+        role: "assistant",
+        content: `**${fb.headline}**\n\n${fb.encouragement}\n\n- **Fysiologinen analyysi:** ${fb.physiologicalNote}\n- **Seuraava askel:** ${fb.nextStepHint}`,
+        loggedWorkoutSummary: {
+          performedDate: newLog.performedDate,
+          category: newLog.category,
+          title: newLog.title,
+          durationMinutes: newLog.durationMinutes,
+          feelings: newLog.feelings,
+        },
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => saveCoachMessageOptimistic(autoCoachMsg, prev));
+    }
 
     if (askCoachAfter) {
       const doneSetsSummary = newLog.exercises
@@ -131,7 +167,8 @@ export default function TreenimasterPage() {
           const setsStr = ex.sets
             .filter((s) => s.done !== false)
             .map(
-              (s) => `${s.actualReps || s.reps}×${s.actualWeightKg || s.weightKg}kg`
+              (s) =>
+                `${s.actualReps || s.reps}×${s.actualWeightKg || s.weightKg}kg`
             )
             .join(", ");
           return `${ex.name}: ${setsStr}`;
@@ -265,6 +302,16 @@ export default function TreenimasterPage() {
       };
       const nextLogs = saveWorkoutLogOptimistic(newLog, logs);
       setLogs(nextLogs);
+
+      const nextRec = computeNextRecommendedWorkout(
+        programs,
+        nextLogs,
+        todayISO
+      );
+      setInstantFeedback(
+        generateInstantWorkoutFeedback(newLog, nextLogs, nextRec)
+      );
+
       showToast(`Tallennettu puheesta/tekstistä: ${newLog.title}`);
       loggedSummary = {
         performedDate: newLog.performedDate,
@@ -326,8 +373,8 @@ export default function TreenimasterPage() {
                   : "text-zinc-300 hover:text-white"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Päivän treeni</span>
+              <Dumbbell className="h-3.5 w-3.5" />
+              <span>Tänään</span>
             </button>
 
             <button
@@ -353,7 +400,7 @@ export default function TreenimasterPage() {
               }`}
             >
               <Layers className="h-3.5 w-3.5" />
-              <span>Koko 8 vk ohjelma</span>
+              <span>8 viikon ohjelma</span>
             </button>
 
             <button
@@ -379,7 +426,7 @@ export default function TreenimasterPage() {
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
-              <span>Kehitys & periaatteet</span>
+              <span>Kehitys & analyysi</span>
             </button>
           </nav>
 
@@ -432,9 +479,12 @@ export default function TreenimasterPage() {
             {activeTab === "today" && (
               <TodayWorkoutView
                 todayISO={todayISO}
+                logs={logs}
                 recommendation={recommendation}
                 programs={programs}
                 activeWorkoutId={activeWorkoutId}
+                instantFeedback={instantFeedback}
+                onDismissFeedback={() => setInstantFeedback(null)}
                 onSelectWorkoutId={(id) => setSelectedWorkoutId(id)}
                 onSaveStrengthLog={handleSaveWorkoutLog}
                 onOpenOtherWorkoutModal={() => setOtherModalOpen(true)}
@@ -460,8 +510,9 @@ export default function TreenimasterPage() {
                 onSelectForToday={(id) => {
                   setSelectedWorkoutId(id);
                   setActiveTab("today");
-                  showToast("Treeni valittu Päivän treeni -näkymään");
+                  showToast("Treeni valittu Tänään-näkymään");
                 }}
+                onUpdateProgramWorkout={handleUpdateProgramWorkout}
               />
             )}
 
@@ -482,185 +533,13 @@ export default function TreenimasterPage() {
             )}
 
             {activeTab === "knowledge" && (
-              <div className="min-w-0 space-y-6">
-                {/* 1RM-lähtötasot ja 12 viikon ennätystavoitteet */}
-                <div className="apple-card p-5 sm:p-6">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-300">
-                    <Award className="h-3.5 w-3.5" />
-                    <span>Voimatasot & 12 viikon tavoitteet</span>
-                  </div>
-                  <h2 className="mt-2 text-xl sm:text-2xl font-bold text-white">
-                    Maksimivoiman kehitys ja tavoitteet
-                  </h2>
-                  <p className="mt-1 text-xs sm:text-sm text-zinc-300">
-                    Laskentapohjana käytetyt tuoreet maksimit (1RM) sekä 8
-                    kierron perusvoimajakson ja 4 viikon piikkauksen
-                    ennätystavoitteet.
-                  </p>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="text-xs font-semibold text-zinc-400">
-                        Maastaveto (DL)
-                      </div>
-                      <div className="mt-1 text-lg sm:text-xl font-bold text-white">
-                        {BASE_1RM.deadlift} kg
-                      </div>
-                      <div className="mt-1 text-xs font-semibold text-[#64D2FF]">
-                        Tavoite: {BASE_1RM.targetDeadlift}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="text-xs font-semibold text-zinc-400">
-                        Penkkipunnerrus (B)
-                      </div>
-                      <div className="mt-1 text-lg sm:text-xl font-bold text-white">
-                        {BASE_1RM.bench} kg
-                      </div>
-                      <div className="mt-1 text-xs font-semibold text-[#64D2FF]">
-                        Tavoite: {BASE_1RM.targetBench}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="text-xs font-semibold text-zinc-400">
-                        Lisäpainoleuanveto (L)
-                      </div>
-                      <div className="mt-1 text-lg sm:text-xl font-bold text-white">
-                        +{BASE_1RM.weightedPullup} kg
-                      </div>
-                      <div className="mt-1 text-xs font-semibold text-[#64D2FF]">
-                        Tavoite: {BASE_1RM.targetWeightedPullup}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="text-xs font-semibold text-zinc-400">
-                        Etukyykky (S)
-                      </div>
-                      <div className="mt-1 text-lg sm:text-xl font-bold text-white">
-                        {BASE_1RM.frontSquat} kg
-                      </div>
-                      <div className="mt-1 text-xs font-semibold text-[#64D2FF]">
-                        Tavoite: {BASE_1RM.targetFrontSquat}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Toteutuneet voimatreenit */}
-                <div className="apple-card p-5 sm:p-6">
-                  <h3 className="text-lg font-bold text-white">
-                    Toteutuneet voimatreenit tässä jaksossa ({strengthLogs.length}{" "}
-                    kpl)
-                  </h3>
-                  <div className="mt-4 space-y-3">
-                    {strengthLogs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="font-bold text-white text-sm sm:text-base">
-                            {log.title}
-                          </div>
-                          <span className="rounded-full bg-blue-500/15 px-2.5 py-0.5 text-xs font-semibold text-blue-300">
-                            {log.performedDate}
-                          </span>
-                        </div>
-                        <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                          {log.exercises.map((ex) => (
-                            <div
-                              key={ex.id}
-                              className="rounded-xl bg-black/40 border border-white/8 px-3 py-2 text-xs"
-                            >
-                              <div className="font-semibold text-white">
-                                {ex.name}
-                              </div>
-                              <div className="mt-1 text-zinc-300">
-                                {ex.sets
-                                  .map(
-                                    (s) =>
-                                      `${s.actualReps || s.reps}×${
-                                        s.actualWeightKg || s.weightKg
-                                      } kg`
-                                  )
-                                  .join(", ")}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* NotebookLM & fysiologinen tietopohja */}
-                <div className="apple-card p-5 sm:p-6">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-300">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    <span>Valmentajan fysiologiset periaatteet (NotebookLM, 43 lähdettä)</span>
-                  </div>
-                  <h3 className="mt-2 text-xl font-bold text-white">
-                    Ohjelman tieteellinen perusta
-                  </h3>
-
-                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <h4 className="text-sm font-bold text-white">
-                        1. PAP-kontrasti ja 1–1,5 toiston tekninen reservi
-                      </h4>
-                      <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-                        Treeni 1:n raskas 1×3 huippusarja toimii{" "}
-                        <strong>Post-Activation Potentiation (PAP)</strong>{" "}
-                        -herätteenä, joka rekrytoi korkean kynnyksen motoriset
-                        yksiköt ennen 3×5 back-off-volyymisarjoja. Sarjoja ei
-                        viedä koskaan tekniseen failureen, jotta keskushermosto
-                        (CNS) ei ylikuormitu.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <h4 className="text-sm font-bold text-white">
-                        2. Liukuva mikrosykli & 2–3 välipäivän sääntö
-                      </h4>
-                      <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-                        Yksi treenikierto koostuu kolmesta harjoituksesta (T1,
-                        T2, T3), joiden välissä pidetään 2–3 täyttä lepopäivää
-                        raskaan maastavedon jälkeen ennen etukyykkyä. Yksi
-                        kierto kestää tyypillisesti 9–12 päivää.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <h4 className="text-sm font-bold text-white">
-                        3. Yhdistelmäharjoittelu (juoksu, tennis, hiihto)
-                      </h4>
-                      <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-                        Kevyt aerobinen harjoittelu (PK1-juoksu 20–30 min,
-                        tennis, hiihto) välipäivinä nopeuttaa palautumista ja
-                        parantaa sarjakestävyyttä. Kovatehoista juoksua
-                        vältetään 24–36 h ennen raskasta maastaveto- tai
-                        etukyykkypäivää.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                      <h4 className="text-sm font-bold text-white">
-                        4. Ohjelman koskemattomuus
-                      </h4>
-                      <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-                        Valmentaja ei koskaan muuta 8 viikon voimaohjelmaa
-                        automaattisesti yksittäisen huonon päivän vuoksi. Jos
-                        usean viikon trendi osoittaa palautumisen sakkaavan,
-                        valmentaja tekee perustellun muutosehdotuksen, jonka
-                        voit hyväksyä tai hylätä.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <AnalyticsAndProgressView
+                programs={programs}
+                logs={logs}
+                recommendation={recommendation}
+                onNavigateToProgram={() => setActiveTab("program")}
+                onNavigateToCoach={() => setActiveTab("coach")}
+              />
             )}
           </div>
 
@@ -701,7 +580,7 @@ export default function TreenimasterPage() {
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            <Sparkles className="h-4 w-4" />
+            <Dumbbell className="h-4 w-4" />
             <span>Tänään</span>
           </button>
 

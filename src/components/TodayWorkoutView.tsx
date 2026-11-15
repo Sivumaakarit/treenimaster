@@ -1,6 +1,12 @@
 "use client";
 
+import { InstantCoachFeedback } from "@/lib/coachIntelligence";
 import { NextWorkoutRecommendation } from "@/lib/storage";
+import { SPORT_CATEGORIES } from "@/lib/programData";
+import {
+  cleanSpokenToSelkosuomi,
+  parseSpokenFeelingsToSelkosuomi,
+} from "@/lib/workoutParser";
 import {
   ExercisePlan,
   ProgramWorkout,
@@ -9,6 +15,8 @@ import {
 } from "@/lib/types";
 import {
   Activity,
+  Award,
+  Bot,
   CalendarClock,
   Check,
   CheckCircle2,
@@ -19,19 +27,42 @@ import {
   Footprints,
   RotateCcw,
   ShieldCheck,
-  Sparkles,
+  X,
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { VoiceInputButton } from "./VoiceInputButton";
 
+const STRENGTH_DEVIATION_CHIPS = [
+  "Suunnitelman mukaan ✓",
+  "Painoi / hieman tukkoinen",
+  "Alaselkä / nivelet varovasti",
+  "Aikapula – tiivistetty treeni",
+  "Huonot unet / palautuminen vajaa",
+];
+
+const SKIP_DAY_REASONS = [
+  "Työkiireet / aikapula",
+  "Väsymys / huonot unet",
+  "Alaselkä tai jalat vielä palautumassa",
+  "Flunssainen olo / nuha",
+  "Suunniteltu lepopäivä",
+];
+
 interface TodayWorkoutViewProps {
   todayISO: string;
+  logs: WorkoutLog[];
   recommendation: NextWorkoutRecommendation;
   programs: ProgramWorkout[];
   activeWorkoutId: string;
+  instantFeedback: InstantCoachFeedback | null;
+  onDismissFeedback: () => void;
   onSelectWorkoutId: (id: string) => void;
-  onSaveStrengthLog: (log: WorkoutLog, askCoachAfter: boolean) => void;
+  onSaveStrengthLog: (
+    log: WorkoutLog,
+    askCoachAfter: boolean,
+    deviationReason?: string
+  ) => void;
   onOpenOtherWorkoutModal: () => void;
   onNavigateToProgram: () => void;
 }
@@ -50,9 +81,12 @@ function formatFinnishDateFull(isoDate: string): string {
 
 export function TodayWorkoutView({
   todayISO,
+  logs,
   recommendation,
   programs,
   activeWorkoutId,
+  instantFeedback,
+  onDismissFeedback,
   onSelectWorkoutId,
   onSaveStrengthLog,
   onOpenOtherWorkoutModal,
@@ -62,17 +96,72 @@ export function TodayWorkoutView({
     programs.find((p) => p.id === activeWorkoutId) ||
     recommendation.nextWorkout;
 
+  const todaysLogs = logs.filter((l) => l.performedDate === todayISO);
+
   const [sessionExercises, setSessionExercises] = useState<ExercisePlan[]>([]);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
     null
   );
   const [feelings, setFeelings] = useState("");
+  const [deviationReason, setDeviationReason] = useState<string>(
+    "Suunnitelman mukaan ✓"
+  );
   const [oxygenScore, setOxygenScore] = useState<number>(4);
   const [energyScore, setEnergyScore] = useState<number>(4);
   const [recoveryStatus, setRecoveryStatus] =
     useState<RecoveryStatus>("normaali");
   const [durationMinutes, setDurationMinutes] = useState<string>("65");
   const [justSavedToast, setJustSavedToast] = useState<string | null>(null);
+  const [showSkipReasonBox, setShowSkipReasonBox] = useState<boolean>(false);
+  const [skipReasonText, setSkipReasonText] = useState<string>(
+    "Työkiireet / aikapula"
+  );
+  const [selkosuomiPolishing, setSelkosuomiPolishing] =
+    useState<boolean>(false);
+  const [selkosuomiBadge, setSelkosuomiBadge] = useState<string | null>(null);
+
+  const handleVoiceFeelingsDictation = (rawSpeech: string) => {
+    const combinedRaw = feelings ? `${feelings} ${rawSpeech}` : rawSpeech;
+    const localParsed = parseSpokenFeelingsToSelkosuomi(
+      combinedRaw,
+      "strength"
+    );
+
+    // Päivitetään heti selkosuomeksi + asetetaan Happi, Voimat, Palautuminen ja Poikkeama automaattisesti!
+    setFeelings(localParsed.selkosuomiText);
+    setOxygenScore(localParsed.oxygenScore);
+    setEnergyScore(localParsed.energyScore);
+    setRecoveryStatus(localParsed.recoveryStatus);
+    setDeviationReason(localParsed.suggestedDeviationChip);
+    setSelkosuomiBadge("Muotoiltu selkosuomeksi Supabase-tallennukseen ✓");
+
+    // Viimeistellään vielä taustalla tekoälyllä täydelliseksi selkosuomeksi
+    setSelkosuomiPolishing(true);
+    void fetch("/api/selkosuomi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rawText: combinedRaw, mode: "strength" }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.selkosuomiText) {
+          setFeelings(data.selkosuomiText);
+          if (data.oxygenScore) setOxygenScore(data.oxygenScore);
+          if (data.energyScore) setEnergyScore(data.energyScore);
+        }
+      })
+      .catch(() => {
+        // Pidetään välitön selkosuomi-muunnos
+      })
+      .finally(() => {
+        setSelkosuomiPolishing(false);
+      });
+  };
+
+  const handleVoiceSkipReasonDictation = (rawSpeech: string) => {
+    const localParsed = parseSpokenFeelingsToSelkosuomi(rawSpeech, "skip");
+    setSkipReasonText(localParsed.selkosuomiText);
+  };
 
   // Alusta päivän muokattava kopio aina kun valittu pohjatreeni vaihtuu
   useEffect(() => {
@@ -194,6 +283,17 @@ export function TodayWorkoutView({
     }));
 
     const dur = parseInt(durationMinutes, 10);
+    const hasReasonNote =
+      deviationReason && deviationReason !== "Suunnitelman mukaan ✓";
+    const cleanedFeelings = cleanSpokenToSelkosuomi(feelings);
+    const baseFeelingsText =
+      cleanedFeelings ||
+      (hasReasonNote
+        ? `Voimatreeni suoritettu mukautetusti (${deviationReason}).`
+        : "Voimatreeni suoritettu suunnitelman mukaisesti. Hyvä tangon nopeus ja tekninen reservi.");
+    const finalFeelings = hasReasonNote
+      ? `[Huomio: ${deviationReason}] ${baseFeelingsText}`
+      : baseFeelingsText;
 
     const newLog: WorkoutLog = {
       id: `log-strength-${Date.now()}`,
@@ -206,9 +306,7 @@ export function TodayWorkoutView({
       durationMinutes: Number.isNaN(dur) ? 65 : dur,
       rpe: baseWorkout.cycleNumber === 4 || baseWorkout.cycleNumber === 8 ? 6.0 : 8.5,
       exercises: normalizedExercises,
-      feelings:
-        feelings.trim() ||
-        "Voimatreeni suoritettu suunnitelman mukaisesti. Hyvä tangon nopeus ja tekninen reservi.",
+      feelings: finalFeelings,
       oxygenScore,
       energyScore,
       recoveryStatus,
@@ -216,11 +314,12 @@ export function TodayWorkoutView({
       createdAt: new Date().toISOString(),
     };
 
-    onSaveStrengthLog(newLog, askCoachAfter);
+    onSaveStrengthLog(newLog, askCoachAfter, deviationReason);
     setJustSavedToast(
       `${baseWorkout.title} tallennettu Supabaseen ja kalenteriin!`
     );
     setFeelings("");
+    setDeviationReason("Suunnitelman mukaan ✓");
     setTimeout(() => setJustSavedToast(null), 5000);
   };
 
@@ -229,18 +328,18 @@ export function TodayWorkoutView({
 
   return (
     <div className="min-w-0 space-y-5">
-      {/* Yläpalkki: Päivämäärä, palautumistila ja pikapoikkeus */}
-      <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="min-w-0 space-y-1.5">
+      {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & pikakirjaus */}
+      <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#0A84FF]/15 text-[#64D2FF] border border-[#0A84FF]/30">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0A84FF]/15 text-[#64D2FF] border border-[#0A84FF]/30">
                 <CalendarClock className="w-3.5 h-3.5 shrink-0" />
-                <span>{formatFinnishDateFull(todayISO)}</span>
+                <span>Tänään · {formatFinnishDateFull(todayISO)}</span>
               </span>
 
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                   recommendation.readinessState === "ready"
                     ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
                     : recommendation.readinessState === "completed_today"
@@ -253,77 +352,322 @@ export function TodayWorkoutView({
               </span>
             </div>
 
-            <h1 className="apple-display text-white pt-1">
-              Päivän treeni: {baseWorkout.title}
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-              {recommendation.readinessDetail}
+            <p className="text-xs sm:text-sm text-zinc-300 pt-1">
+              {recommendation.lastStrengthLog
+                ? `Edellinen voimatreeni: ${recommendation.lastStrengthLog.title} (${recommendation.lastStrengthLog.performedDate}). Välipäiviä pidetty: ${recommendation.daysSinceLastStrength ?? 0}/${recommendation.restDaysRequiredMin}–${recommendation.restDaysRequiredMax} pv.`
+                : recommendation.readinessDetail}
             </p>
           </div>
 
-          {/* Pikapainike muulle treenille / lenkille */}
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={onOpenOtherWorkoutModal}
-              className="apple-press inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#34C759]/20 via-[#FF9F0A]/20 to-[#32ADE6]/20 hover:from-[#34C759]/30 hover:to-[#32ADE6]/30 border border-white/20 text-xs sm:text-sm font-semibold text-white shadow-md"
+              className="apple-press inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#34C759]/25 to-[#32ADE6]/25 hover:from-[#34C759]/35 hover:to-[#32ADE6]/35 border border-[#34C759]/40 text-xs sm:text-sm font-semibold text-white shadow-sm"
             >
               <Footprints className="w-4 h-4 shrink-0 text-[#30D158]" />
-              <span>Teenkin tänään muun treenin / lenkin</span>
+              <span>Sanele / kirjaa lenkki tai muu treeni</span>
             </button>
 
             <button
               type="button"
-              onClick={onNavigateToProgram}
-              className="apple-press inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs font-medium text-zinc-200"
+              onClick={() => setShowSkipReasonBox((v) => !v)}
+              className="apple-press inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-semibold text-zinc-200"
             >
-              <span>Katso koko 8 viikon ohjelma</span>
-              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+              <span>En treenaa tänään (kirjaa syy)</span>
             </button>
           </div>
         </div>
 
-        {/* Liukuvan kierron pikavalitsin + edistymispalkki */}
-        <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 w-full sm:w-auto flex-1">
+        {/* Pikapaneeli: Miksi en treenannut tänään / miksi siirrän treeniä? */}
+        {showSkipReasonBox && (
+          <div className="mt-3.5 rounded-2xl bg-black/45 border border-[#FF9F0A]/40 p-3.5 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-[#FFD60A]">
+                Kirjaa miksi et tee treeniä tänään (tausta-äly huomioi syyn eikä muuta ohjelmaa):
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowSkipReasonBox(false)}
+                className="text-zinc-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {SKIP_DAY_REASONS.map((reason) => (
+                <button
+                  key={reason}
+                  type="button"
+                  onClick={() => setSkipReasonText(reason)}
+                  className={`apple-press px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                    skipReasonText === reason
+                      ? "bg-[#FF9F0A]/25 border-[#FF9F0A] text-[#FFD60A]"
+                      : "bg-white/[0.04] border-white/10 text-zinc-300"
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                type="text"
+                value={skipReasonText}
+                onChange={(e) => setSkipReasonText(e.target.value)}
+                placeholder="Sanele tai kirjoita syy..."
+                className="flex-1 rounded-xl bg-black/50 border border-white/15 px-3 py-2 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
+              />
+              <VoiceInputButton
+                onTranscript={handleVoiceSkipReasonDictation}
+                label="Sanele syy"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const cleanSkipReason =
+                    cleanSpokenToSelkosuomi(skipReasonText) || skipReasonText;
+                  const restLog: WorkoutLog = {
+                    id: `log-rest-${Date.now()}`,
+                    performedDate: todayISO,
+                    category: "rest",
+                    title: `Lepopäivä / siirto · ${cleanSkipReason}`,
+                    cycleNumber: null,
+                    workoutNumber: null,
+                    programId: null,
+                    durationMinutes: 0,
+                    rpe: 1,
+                    exercises: [],
+                    feelings: `[Huomio: ${cleanSkipReason}] Treeni siirretty tai pidetty palautumispäivä.`,
+                    oxygenScore: 4,
+                    energyScore: 4,
+                    recoveryStatus: cleanSkipReason
+                      .toLowerCase()
+                      .includes("flunssa")
+                      ? "flunssainen"
+                      : cleanSkipReason.toLowerCase().includes("väsymys") ||
+                        cleanSkipReason.toLowerCase().includes("alaselkä")
+                      ? "tukkoinen"
+                      : "normaali",
+                    source: "workout_view",
+                    createdAt: new Date().toISOString(),
+                  };
+                  onSaveStrengthLog(restLog, false, cleanSkipReason);
+                  setShowSkipReasonBox(false);
+                }}
+                className="apple-press px-4 py-2 rounded-xl bg-[#34C759] text-black text-xs font-bold shrink-0"
+              >
+                Tallenna syy & lepopäivä
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* VÄLIPÄIVÄN ÄLYKÄS SUOSITUS: Jos tänään ei suositella punttisarjoja, kerrotaan selkeästi mitä tänään kannattaa tehdä! */}
+        {recommendation.readinessState === "rest_recommended" &&
+          todaysLogs.length === 0 && (
+            <div className="mt-3.5 rounded-2xl border border-[#34C759]/40 bg-gradient-to-r from-[#34C759]/12 via-[#32ADE6]/10 to-transparent p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1 text-xs sm:text-sm">
+                <div className="font-bold text-[#30D158] flex items-center gap-1.5">
+                  <Footprints className="w-4 h-4 shrink-0" />
+                  <span>
+                    Ei punttisarjoja tänään – välipäivän suositus (välipäivä{" "}
+                    {(recommendation.daysSinceLastStrength ?? 0) + 1}/
+                    {recommendation.restDaysRequiredMin}–
+                    {recommendation.restDaysRequiredMax})
+                  </span>
+                </div>
+                <p className="text-zinc-200 leading-relaxed text-xs">
+                  Keskushermosto ja alaselkä palautuvat nyt edellisestä
+                  voimatreenistä ({recommendation.lastStrengthLog?.title}).{" "}
+                  <strong className="text-white">
+                    Tänään sopii erinomaisesti 20–30 min kevyt PK-lenkki,
+                    palauttava kävely tai lepo.
+                  </strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenOtherWorkoutModal}
+                className="apple-press shrink-0 self-start sm:self-center px-3.5 py-2 rounded-xl bg-[#34C759] text-black text-xs font-bold shadow-sm"
+              >
+                Kirjaa päivän lenkki / lepo
+              </button>
+            </div>
+          )}
+
+        {/* Jos tänään on jo tehty ja kirjattu treeni tai lenkki, näytetään se heti tässä ensimmäisenä! */}
+        {todaysLogs.length > 0 && (
+          <div className="mt-4 pt-3.5 border-t border-white/10 space-y-2.5">
+            <div className="text-xs font-bold uppercase tracking-wider text-[#30D158] flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Tänään kirjattu suoritus ({todaysLogs.length} kpl)</span>
+            </div>
+            {todaysLogs.map((tLog) => {
+              const cat = SPORT_CATEGORIES[tLog.category];
+              return (
+                <div
+                  key={tLog.id}
+                  className="rounded-2xl border border-[#34C759]/35 bg-[#34C759]/10 p-3.5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                        style={cat.badgeStyle}
+                      >
+                        {cat.shortLabel}
+                      </span>
+                      <span className="text-sm font-bold text-white">
+                        {tLog.title}
+                      </span>
+                    </div>
+                    {tLog.durationMinutes ? (
+                      <span className="text-xs font-semibold text-zinc-300">
+                        {tLog.durationMinutes} min
+                      </span>
+                    ) : null}
+                  </div>
+                  {tLog.feelings && (
+                    <p className="mt-1.5 text-xs text-zinc-200 leading-relaxed">
+                      {tLog.feelings}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* VÄLITÖN TSEMPPARI- & FYSIIKKAPALAUTE (Ponnahtaa esiin heti kun lenkki tai voimatreeni on kirjattu!) */}
+      {instantFeedback && (
+        <section
+          role="status"
+          className={`apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border transition-all ${
+            instantFeedback.tone === "positive"
+              ? "border-[#34C759]/60 bg-gradient-to-br from-[#34C759]/18 via-[#0A84FF]/10 to-transparent shadow-[0_0_25px_rgba(52,199,89,0.18)]"
+              : "border-[#FF9F0A]/60 bg-gradient-to-br from-[#FF9F0A]/18 via-[#0A84FF]/10 to-transparent"
+          }`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold ${
+                    instantFeedback.tone === "positive"
+                      ? "bg-[#34C759] text-black"
+                      : "bg-[#FF9F0A] text-black"
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>{instantFeedback.badgeText}</span>
+                </span>
+                <span className="text-xs font-semibold text-[#64D2FF]">
+                  Valmentajan välitön palaute & kuormitusanalyysi
+                </span>
+              </div>
+
+              <h2 className="text-base sm:text-lg font-bold text-white">
+                {instantFeedback.headline}
+              </h2>
+
+              <p className="text-xs sm:text-sm text-zinc-100 leading-relaxed">
+                {instantFeedback.encouragement}
+              </p>
+
+              <div className="rounded-2xl bg-black/40 border border-white/10 p-3 space-y-1.5 text-xs text-zinc-300">
+                <div>
+                  <strong className="text-[#64D2FF]">
+                    Fysiologinen vaikutus:
+                  </strong>{" "}
+                  {instantFeedback.physiologicalNote}
+                </div>
+                <div>
+                  <strong className="text-[#30D158]">Seuraava askel:</strong>{" "}
+                  {instantFeedback.nextStepHint}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onDismissFeedback}
+              aria-label="Sulje palaute"
+              className="apple-press p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* KORTTI 2: SEURAAVA VOIMATREENI OHJELMASSA (Oma selkeä otsikkokortti erillään päivän tilasta) */}
+      <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64D2FF]">
+              {isRecommendedWorkout
+                ? "Seuraavana vuorossa oleva voimatreeni"
+                : "Valittu voimatreeni"}
+            </span>
+            <h1 className="apple-display text-white mt-0.5">
+              {baseWorkout.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-300 mt-0.5">
+              {baseWorkout.subtitle} · {baseWorkout.structureLabel}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onNavigateToProgram}
+            className="apple-press self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs font-medium text-zinc-200"
+          >
+            <span>Koko 8 vk ohjelma</span>
+            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+          </button>
+        </div>
+
+        {/* Valmentajan ydinohje kyseiselle treenille */}
+        <div className="mt-3.5 rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/25 p-3 flex items-start gap-2.5">
+          <Zap className="w-4 h-4 text-[#64D2FF] shrink-0 mt-0.5" />
+          <div className="text-xs text-zinc-200 leading-relaxed">
+            {baseWorkout.coachNotes}
+          </div>
+        </div>
+
+        {/* Harjoitusvalitsin + Kuittaa kaikki sarjat */}
+        <div className="mt-3.5 pt-3.5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto flex-1">
             <label
               htmlFor="workout-selector"
               className="text-xs font-medium text-zinc-400 shrink-0"
             >
-              Valittu harjoitus:
+              Vaihda:
             </label>
             <select
               id="workout-selector"
               value={baseWorkout.id}
               onChange={(e) => onSelectWorkoutId(e.target.value)}
-              className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-2 text-xs sm:text-sm font-medium text-white focus:border-[#0A84FF] focus:outline-none"
+              className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-1.5 text-xs font-medium text-white focus:border-[#0A84FF] focus:outline-none"
             >
               {programs.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.title} ({p.structureLabel})
-                  {p.id === recommendation.nextWorkout.id ? " ★" : ""}
+                  {p.id === recommendation.nextWorkout.id
+                    ? " (Vuorossa nyt)"
+                    : ""}
                 </option>
               ))}
             </select>
-
-            {!isRecommendedWorkout && (
-              <button
-                type="button"
-                onClick={() =>
-                  onSelectWorkoutId(recommendation.nextWorkout.id)
-                }
-                className="apple-press text-left sm:text-center text-xs text-[#64D2FF] hover:underline px-1 py-1"
-              >
-                Palauta suositeltuun ({recommendation.nextWorkout.title})
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={markEntireWorkoutDone}
-              className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-xs font-semibold text-[#64D2FF]"
+              className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-xs font-semibold text-[#64D2FF]"
             >
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>
@@ -336,21 +680,10 @@ export function TodayWorkoutView({
               type="button"
               onClick={resetToPlanned}
               title="Palauta oletuspainot ja -toistot"
-              className="apple-press p-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
+              className="apple-press p-1.5 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
-          </div>
-        </div>
-
-        {/* Valmentajan muistutus kyseiselle treenille */}
-        <div className="mt-4 rounded-2xl bg-gradient-to-r from-[#007AFF]/12 via-[#0A84FF]/8 to-transparent border border-[#007AFF]/25 p-3.5 flex items-start gap-3">
-          <Zap className="w-4 h-4 text-[#64D2FF] shrink-0 mt-0.5" />
-          <div className="text-xs sm:text-sm text-zinc-200">
-            <span className="font-semibold text-white">
-              {baseWorkout.subtitle} ({baseWorkout.structureLabel}):{" "}
-            </span>
-            {baseWorkout.coachNotes}
           </div>
         </div>
       </section>
@@ -596,10 +929,8 @@ export function TodayWorkoutView({
           </div>
 
           <VoiceInputButton
-            onTranscript={(text) =>
-              setFeelings((prev) => (prev ? `${prev} ${text}` : text))
-            }
-            label="Sanele treenifiilikset"
+            onTranscript={handleVoiceFeelingsDictation}
+            label="Sanele vastaus (muuntaa selkosuomeksi)"
           />
         </div>
 
@@ -690,19 +1021,79 @@ export function TodayWorkoutView({
           </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="workout-feelings-textarea"
-            className="block text-xs font-medium text-zinc-300 mb-1.5"
-          >
-            Miten treeni meni / miten happi ja voimat riittivät?
-          </label>
+        {/* Poikkeaman syy / treenin toteutuma (jos treeni ei mennyt 100 % suunnitelman mukaan, valmentaja ottaa syyn huomioon) */}
+        <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-3.5 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-white">
+              Menikö treeni suunnitelman mukaan vai poikkesiko jokin?
+            </span>
+            <span className="text-[11px] text-zinc-400">
+              Tausta-äly huomioi syyn palautumis- ja trendianalyysissä
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {STRENGTH_DEVIATION_CHIPS.map((chip) => {
+              const active = deviationReason === chip;
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => setDeviationReason(chip)}
+                  className={`apple-press px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                    active
+                      ? chip === "Suunnitelman mukaan ✓"
+                        ? "bg-[#34C759]/25 border-[#34C759] text-[#30D158]"
+                        : "bg-[#FF9F0A]/25 border-[#FF9F0A] text-[#FFD60A]"
+                      : "bg-black/40 border-white/12 text-zinc-300 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {chip}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label
+                htmlFor="workout-feelings-textarea"
+                className="block text-xs sm:text-sm font-semibold text-white"
+              >
+                Miten treeni meni, miten happi ja voimat riittivät (tai miksi muokkasit)?
+              </label>
+              <span className="text-[11px] text-zinc-400">
+                Paina mikrofoninappia ja puhu vapaasti – sovellus muotoilee sanelun automaattisesti selkosuomeksi Supabaseen ja poimii hapen & voimat.
+              </span>
+            </div>
+
+            <VoiceInputButton
+              onTranscript={handleVoiceFeelingsDictation}
+              label="Sanele vastaus"
+            />
+          </div>
+
+          {(selkosuomiPolishing || selkosuomiBadge) && (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#34C759]/15 border border-[#34C759]/35 px-3 py-1 text-[11px] font-semibold text-[#30D158]">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>
+                {selkosuomiPolishing
+                  ? "Viimeistellään sanelua selkosuomeksi..."
+                  : selkosuomiBadge}
+              </span>
+            </div>
+          )}
+
           <textarea
             id="workout-feelings-textarea"
             rows={2}
             value={feelings}
-            onChange={(e) => setFeelings(e.target.value)}
-            placeholder="Esim. 175 kg kolmonen tuli terävästi (1,5 toistoa varaa), 3×5×150 kg nousevalla nopeudella. Happi kulki hyvin..."
+            onChange={(e) => {
+              setFeelings(e.target.value);
+              setSelkosuomiBadge(null);
+            }}
+            placeholder="Esim. 170 kg kolmonen tuli terävästi, happi kulki hyvin ja voimat riittivät loppuun asti..."
             className="w-full rounded-2xl bg-black/40 border border-white/15 p-3.5 text-sm text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
           />
         </div>
@@ -723,14 +1114,14 @@ export function TodayWorkoutView({
             onClick={() => handleCompleteWorkout(true)}
             className="apple-press inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/45 text-xs sm:text-sm font-semibold text-[#64D2FF]"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>Tallenna & pyydä valmentajan palaute</span>
+            <Bot className="w-4 h-4" />
+            <span>Tallenna & pyydä valmentajan syväanalyysi</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleCompleteWorkout(false)}
-            className="apple-press inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#007AFF] to-[#0A84FF] hover:opacity-95 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-[#007AFF]/30"
+            className="apple-press inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:opacity-95 text-xs sm:text-sm font-bold text-black shadow-lg shadow-[#34C759]/25"
           >
             <Dumbbell className="w-4 h-4" />
             <span>Kuittaa päivän voimatreeni tehdyksi</span>

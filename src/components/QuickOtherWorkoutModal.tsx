@@ -2,8 +2,14 @@
 
 import { SPORT_CATEGORIES } from "@/lib/programData";
 import { RecoveryStatus, SportCategory, WorkoutLog } from "@/lib/types";
+import {
+  cleanSpokenToSelkosuomi,
+  formatStandardWorkoutTitle,
+  parseSpokenFeelingsToSelkosuomi,
+  parseSpokenWorkout,
+} from "@/lib/workoutParser";
 import { Check, Sparkles, X } from "lucide-react";
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { VoiceInputButton } from "./VoiceInputButton";
 
 interface QuickOtherWorkoutModalProps {
@@ -23,6 +29,16 @@ const QUICK_CATEGORIES: SportCategory[] = [
   "strength",
 ];
 
+const RUN_TYPES = ["Kevyt PK", "Intervalli", "Reipas VK", "Palauttava PK1"];
+
+const RUN_DEVIATION_CHIPS = [
+  "Suunnitelman mukaan ✓",
+  "Kevyt & palauttava",
+  "Jalat hieman raskaat salista",
+  "Aikapula – lyhyempi suoritus",
+  "Tukkoisuutta / huonot unet",
+];
+
 export function QuickOtherWorkoutModal({
   isOpen,
   initialDate,
@@ -35,13 +51,17 @@ export function QuickOtherWorkoutModal({
 
   const [performedDate, setPerformedDate] = useState(initialDate);
   const [category, setCategory] = useState<SportCategory>("run");
-  const [title, setTitle] = useState("Aamulenkki kevyellä sykkeellä");
+  const [workoutType, setWorkoutType] = useState<string>("Kevyt PK");
+  const [distanceKm, setDistanceKm] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState("25");
   const [rpe, setRpe] = useState("6.0");
   const [oxygenScore, setOxygenScore] = useState<number>(5);
   const [energyScore, setEnergyScore] = useState<number>(4);
   const [recoveryStatus, setRecoveryStatus] =
     useState<RecoveryStatus>("erinomainen");
+  const [deviationChip, setDeviationChip] = useState<string>(
+    "Suunnitelman mukaan ✓"
+  );
   const [feelings, setFeelings] = useState("");
   const [aiParsing, setAiParsing] = useState(false);
 
@@ -49,7 +69,6 @@ export function QuickOtherWorkoutModal({
     setPerformedDate(initialDate);
   }, [initialDate]);
 
-  // Native <dialog> open/close management + Safari closedBy fallback per modern-web-guidance
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -71,7 +90,6 @@ export function QuickOtherWorkoutModal({
     };
     dialog.addEventListener("close", handleClose);
 
-    // Fallback for browsers without native closedby="any" support
     if (!("closedBy" in HTMLDialogElement.prototype)) {
       let pressedOutside = false;
       const outside = (e: PointerEvent) => {
@@ -105,71 +123,114 @@ export function QuickOtherWorkoutModal({
     };
   }, [onClose]);
 
+  const parsedKm = useMemo(() => {
+    if (!distanceKm.trim()) return null;
+    const n = parseFloat(distanceKm.replace(",", "."));
+    return Number.isNaN(n) || n <= 0 ? null : n;
+  }, [distanceKm]);
+
+  const parsedDur = useMemo(() => {
+    const n = parseInt(durationMinutes, 10);
+    return Number.isNaN(n) || n <= 0 ? null : n;
+  }, [durationMinutes]);
+
+  const standardizedTitle = useMemo(
+    () =>
+      formatStandardWorkoutTitle({
+        category,
+        workoutType,
+        distanceKm: parsedKm,
+        durationMinutes: category === "rest" ? 0 : parsedDur,
+      }),
+    [category, workoutType, parsedKm, parsedDur]
+  );
+
   const handleSelectCategory = (cat: SportCategory) => {
     setCategory(cat);
-    const defaults: Record<SportCategory, { t: string; d: string; rpe: string }> = {
-      run: { t: "Kevyt juoksulenkki (PK1)", d: "25", rpe: "6.0" },
-      tennis: { t: "Tennis – pelit & pallottelu", d: "60", rpe: "7.5" },
-      ski: { t: "Hiihtolenkki", d: "45", rpe: "7.0" },
-      other: { t: "Kehonhuolto / muu liikunta", d: "30", rpe: "5.5" },
-      rest: { t: "Lepopäivä – hermoston palautuminen", d: "0", rpe: "1.0" },
-      strength: { t: "Ylimääräinen voimaharjoitus", d: "50", rpe: "8.0" },
+    const defaults: Record<
+      SportCategory,
+      { type: string; d: string; rpe: string }
+    > = {
+      run: { type: "Kevyt PK", d: "25", rpe: "6.0" },
+      tennis: { type: "Pelit & pallottelu", d: "60", rpe: "7.5" },
+      ski: { type: "Vapaa / luistelu", d: "45", rpe: "7.0" },
+      other: { type: "Kehonhuolto", d: "30", rpe: "5.5" },
+      rest: { type: "Palautuminen", d: "0", rpe: "1.0" },
+      strength: { type: "Voimaharjoitus", d: "50", rpe: "8.0" },
     };
-    setTitle(defaults[cat].t);
+    setWorkoutType(defaults[cat].type);
     setDurationMinutes(defaults[cat].d);
     setRpe(defaults[cat].rpe);
   };
 
+  // Kun käyttäjä sanelee, jäsennetään automaattisesti laji, km, tyyppi (kevyt/intervalli), kesto, tuntemukset ja muunnetaan selkosuomeksi!
   const handleVoiceTranscript = (text: string) => {
-    const nextFeelings = feelings ? `${feelings} ${text}` : text;
-    setFeelings(nextFeelings);
+    const combinedText = feelings ? `${feelings} ${text}` : text;
+    const selko = parseSpokenFeelingsToSelkosuomi(combinedText, "run");
+    setFeelings(selko.selkosuomiText);
+    setDeviationChip(selko.suggestedDeviationChip);
 
-    // Älykäs esitäyttö puheesta
-    const lower = text.toLowerCase();
-    if (lower.includes("tenni")) {
-      setCategory("tennis");
-      setTitle("Tennis");
-    } else if (lower.includes("hiihd") || lower.includes("hiiht")) {
-      setCategory("ski");
-      setTitle("Hiihtolenkki");
-    } else if (lower.includes("juoks") || lower.includes("lenk")) {
-      setCategory("run");
-      setTitle(lower.includes("aamu") ? "Aamulenkki" : "Juoksulenkki");
-    } else if (lower.includes("lepo")) {
-      setCategory("rest");
-      setTitle("Lepopäivä");
-      setDurationMinutes("0");
+    const parsed = parseSpokenWorkout(combinedText, performedDate);
+    setCategory(parsed.category);
+    setWorkoutType(parsed.workoutType);
+    if (parsed.distanceKm !== null) {
+      setDistanceKm(String(parsed.distanceKm).replace(".", ","));
     }
+    setDurationMinutes(String(parsed.durationMinutes));
+    setRpe(String(parsed.rpe));
+    setOxygenScore(parsed.oxygenScore);
+    setEnergyScore(parsed.energyScore);
+    setRecoveryStatus(parsed.recoveryStatus);
+    setPerformedDate(parsed.performedDate);
 
-    const minMatch = lower.match(/(\d+)\s*(min|minuuttia)/i);
-    if (minMatch) {
-      setDurationMinutes(minMatch[1]);
-    } else if (lower.includes("tunnin") || lower.includes("tunti")) {
-      setDurationMinutes("60");
-    }
+    // Viimeistellään sanelu selkosuomeksi taustalla
+    void fetch("/api/selkosuomi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rawText: combinedText, mode: "run" }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.selkosuomiText) {
+          setFeelings(data.selkosuomiText);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const buildStructuredFeelings = () => {
+    const metaParts: string[] = [
+      `Tyyppi: ${workoutType}`,
+      ...(parsedKm ? [`Matka: ${String(parsedKm).replace(".", ",")} km`] : []),
+      ...(parsedDur && category !== "rest" ? [`Kesto: ${parsedDur} min`] : []),
+      `Happi: ${oxygenScore}/5`,
+      `Vire: ${recoveryStatus}`,
+      ...(deviationChip && deviationChip !== "Suunnitelman mukaan ✓"
+        ? [`[Huomio: ${deviationChip}]`]
+        : []),
+    ];
+    const cleanNote = cleanSpokenToSelkosuomi(feelings);
+    return cleanNote
+      ? `${metaParts.join(" · ")}. Yhteenveto: ${cleanNote}`
+      : metaParts.join(" · ");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dur = parseInt(durationMinutes, 10);
     const rpeVal = parseFloat(rpe);
 
     const newLog: WorkoutLog = {
       id: `log-${Date.now()}`,
       performedDate,
       category,
-      title:
-        title.trim() ||
-        SPORT_CATEGORIES[category].label,
+      title: standardizedTitle,
       cycleNumber: null,
       workoutNumber: null,
       programId: null,
-      durationMinutes: Number.isNaN(dur) ? null : dur,
+      durationMinutes: category === "rest" ? 0 : parsedDur,
       rpe: Number.isNaN(rpeVal) ? null : rpeVal,
       exercises: [],
-      feelings:
-        feelings.trim() ||
-        "Suoritus kirjattu suoraan kalenteriin ja Supabaseen.",
+      feelings: buildStructuredFeelings(),
       oxygenScore,
       energyScore,
       recoveryStatus,
@@ -178,6 +239,8 @@ export function QuickOtherWorkoutModal({
     };
 
     onSaveLog(newLog);
+    setFeelings("");
+    setDistanceKm("");
     dialogRef.current?.close();
   };
 
@@ -185,10 +248,12 @@ export function QuickOtherWorkoutModal({
     if (!onSendToCoach) return;
     const summaryText =
       feelings.trim() ||
-      `Tein ${performedDate}: ${title} (${durationMinutes} min). Happi ${oxygenScore}/5, voimat ${energyScore}/5, vire: ${recoveryStatus}.`;
+      `Tein ${performedDate}: ${standardizedTitle}. Happi ${oxygenScore}/5, voimat ${energyScore}/5, vire: ${recoveryStatus}.`;
     setAiParsing(true);
     try {
       await onSendToCoach(summaryText);
+      setFeelings("");
+      setDistanceKm("");
       dialogRef.current?.close();
     } finally {
       setAiParsing(false);
@@ -203,14 +268,14 @@ export function QuickOtherWorkoutModal({
       aria-labelledby={titleId}
       className="rounded-3xl outline-none"
     >
-      <div className="apple-glass-heavy rounded-3xl p-5 sm:p-6 text-[#F5F5F7] border border-white/15 max-h-[90dvh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="apple-glass-heavy rounded-3xl p-4 sm:p-6 text-[#F5F5F7] border border-white/15 max-h-[90dvh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3 pb-3.5 border-b border-white/10">
           <div>
-            <span className="text-xs font-medium uppercase tracking-wider text-[#0A84FF]">
-              Poikkeaminen saliohjelmasta / kalenterikirjaus
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#30D158]">
+              Lenkin & muun treenin kirjaus
             </span>
             <h2 id={titleId} className="apple-title mt-0.5 text-white">
-              Kirjaa muu treeni, lenkki tai lepopäivä
+              Sanele tai kirjaa suoritus
             </h2>
           </div>
           <button
@@ -224,15 +289,15 @@ export function QuickOtherWorkoutModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          {/* Puhesyöttö */}
-          <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-xs text-zinc-300">
+          {/* 1. Puhesyöttö heti päällimmäisenä */}
+          <div className="rounded-2xl bg-[#34C759]/10 border border-[#34C759]/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-xs text-zinc-200">
               <strong className="text-white block mb-0.5">
-                Nopea puhesyöttö (fi-FI)
+                Sanele lenkki tai treeni (poimii km, tyypin & keston)
               </strong>
               Sano esim.{" "}
               <em>
-                &ldquo;Juoksin tänään aamulenkin 22 minuuttia kevyellä sykkeellä&rdquo;
+                &ldquo;Juoksin tänään 5 kilometriä kevyttä PK-lenkkiä 28 minuuttia, happi kulki hyvin&rdquo;
               </em>
             </div>
             <VoiceInputButton
@@ -241,12 +306,37 @@ export function QuickOtherWorkoutModal({
             />
           </div>
 
-          {/* Lajivalinta Apple-väreillä */}
+          {/* 2. Vakioitu esikatselukortti (näyttää heti millainen merkintä kalenteriin syntyy) */}
+          <div className="rounded-2xl border border-white/15 bg-black/50 p-3.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              Muodostuva vakiomerkintä kalenteriin & päivän näkymään:
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                style={SPORT_CATEGORIES[category].badgeStyle}
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: SPORT_CATEGORIES[category].hex }}
+                />
+                {SPORT_CATEGORIES[category].shortLabel}
+              </span>
+              <span className="text-sm font-bold text-white">
+                {standardizedTitle}
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-zinc-300">
+              {buildStructuredFeelings()}
+            </div>
+          </div>
+
+          {/* 3. Lajivalinta */}
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-2">
-              Valitse laji (värikoodattu kalenteriin)
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Laji
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
               {QUICK_CATEGORIES.map((catId) => {
                 const meta = SPORT_CATEGORIES[catId];
                 const active = category === catId;
@@ -255,191 +345,172 @@ export function QuickOtherWorkoutModal({
                     key={catId}
                     type="button"
                     onClick={() => handleSelectCategory(catId)}
-                    className={`apple-press flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs font-medium border transition-all ${
+                    className={`apple-press flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-left text-xs font-semibold border transition-all ${
                       active
                         ? "bg-white/15 border-white/40 text-white shadow-sm"
                         : "bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]"
                     }`}
                   >
                     <span
-                      className={`w-3 h-3 rounded-full shrink-0 ${meta.dotClass}`}
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${meta.dotClass}`}
                     />
-                    <span className="truncate">{meta.label}</span>
+                    <span className="truncate">{meta.shortLabel}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Päivämäärä, otsikko ja kesto */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label
-                htmlFor="quick-date"
-                className="block text-xs font-medium text-zinc-300 mb-1"
-              >
-                Päivämäärä
-              </label>
-              <input
-                id="quick-date"
-                type="date"
-                value={performedDate}
-                onChange={(e) => setPerformedDate(e.target.value)}
-                className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
-                required
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="quick-title"
-                className="block text-xs font-medium text-zinc-300 mb-1"
-              >
-                Suorituksen otsikko
-              </label>
-              <input
-                id="quick-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Esim. Aamulenkki PK1 tai Tennis"
-                className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-
+          {/* 4. Lenkin tyyppi (Kevyt PK / Intervalli / Reipas VK) + Matka (km) + Kesto (min) */}
           {category !== "rest" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="quick-duration"
-                  className="block text-xs font-medium text-zinc-300 mb-1"
-                >
-                  Kesto (min)
-                </label>
-                <input
-                  id="quick-duration"
-                  type="number"
-                  min={0}
-                  max={480}
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="quick-rpe"
-                  className="block text-xs font-medium text-zinc-300 mb-1"
-                >
-                  Kuormitus (RPE 1–10)
-                </label>
-                <input
-                  id="quick-rpe"
-                  type="number"
-                  step="0.5"
-                  min={1}
-                  max={10}
-                  value={rpe}
-                  onChange={(e) => setRpe(e.target.value)}
-                  className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
-                />
+            <div className="space-y-3">
+              {category === "run" && (
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                    Lenkin luonne
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {RUN_TYPES.map((rt) => (
+                      <button
+                        key={rt}
+                        type="button"
+                        onClick={() => setWorkoutType(rt)}
+                        className={`apple-press rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                          workoutType === rt
+                            ? "border-[#34C759] bg-[#34C759]/20 text-[#30D158]"
+                            : "border-white/10 bg-white/[0.04] text-zinc-300"
+                        }`}
+                      >
+                        {rt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label
+                    htmlFor="quick-distance"
+                    className="block text-xs font-medium text-zinc-300 mb-1"
+                  >
+                    Matka (km)
+                  </label>
+                  <input
+                    id="quick-distance"
+                    type="text"
+                    inputMode="decimal"
+                    value={distanceKm}
+                    onChange={(e) => setDistanceKm(e.target.value)}
+                    placeholder="esim. 5"
+                    className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="quick-duration"
+                    className="block text-xs font-medium text-zinc-300 mb-1"
+                  >
+                    Kesto (min)
+                  </label>
+                  <input
+                    id="quick-duration"
+                    type="number"
+                    min={0}
+                    max={480}
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(e.target.value)}
+                    className="w-full rounded-xl bg-black/40 border border-white/15 px-3 py-2 text-sm text-white focus:border-[#0A84FF] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="quick-date"
+                    className="block text-xs font-medium text-zinc-300 mb-1"
+                  >
+                    Päivämäärä
+                  </label>
+                  <input
+                    id="quick-date"
+                    type="date"
+                    value={performedDate}
+                    onChange={(e) => setPerformedDate(e.target.value)}
+                    className="w-full rounded-xl bg-black/40 border border-white/15 px-2.5 py-2 text-xs sm:text-sm text-white focus:border-[#0A84FF] focus:outline-none"
+                    required
+                  />
+                </div>
               </div>
             </div>
           )}
 
-          {/* Subjektiiviset mittarit: Happi, Voimat, Palautuminen */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            <div>
-              <span className="block text-xs font-medium text-zinc-300 mb-1.5">
-                Miten happi kulki? (1–5)
-              </span>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map((n) => (
+          {/* 5. Pikavalinta: Miten lenkki/treeni sujui tai miksi poikkesi? */}
+          <div>
+            <span className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Suorituksen toteutuma / mahdollinen poikkeaman syy:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {RUN_DEVIATION_CHIPS.map((chip) => {
+                const active = deviationChip === chip;
+                return (
                   <button
-                    key={n}
+                    key={chip}
                     type="button"
-                    onClick={() => setOxygenScore(n)}
-                    className={`apple-press flex-1 py-1.5 rounded-lg text-xs font-semibold border ${
-                      oxygenScore === n
-                        ? "bg-[#34C759]/25 border-[#34C759] text-[#30D158]"
-                        : "bg-white/[0.04] border-white/10 text-zinc-400"
+                    onClick={() => setDeviationChip(chip)}
+                    className={`apple-press px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                      active
+                        ? chip === "Suunnitelman mukaan ✓" ||
+                          chip === "Kevyt & palauttava"
+                          ? "bg-[#34C759]/20 border-[#34C759] text-[#30D158]"
+                          : "bg-[#FF9F0A]/20 border-[#FF9F0A] text-[#FFD60A]"
+                        : "bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]"
                     }`}
                   >
-                    {n}
+                    {chip}
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <span className="block text-xs font-medium text-zinc-300 mb-1.5">
-                Jaksaminen / voimat (1–5)
-              </span>
-              <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setEnergyScore(n)}
-                    className={`apple-press flex-1 py-1.5 rounded-lg text-xs font-semibold border ${
-                      energyScore === n
-                        ? "bg-[#0A84FF]/25 border-[#0A84FF] text-[#409CFF]"
-                        : "bg-white/[0.04] border-white/10 text-zinc-400"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="quick-recovery"
-                className="block text-xs font-medium text-zinc-300 mb-1.5"
-              >
-                Hermoston & kehon vire
-              </label>
-              <select
-                id="quick-recovery"
-                value={recoveryStatus}
-                onChange={(e) =>
-                  setRecoveryStatus(e.target.value as RecoveryStatus)
-                }
-                className="w-full rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
-              >
-                <option value="erinomainen">Erinomainen / tuore</option>
-                <option value="normaali">Normaali</option>
-                <option value="tukkoinen">Tukkoinen / raskaat jalat</option>
-                <option value="flunssainen">Flunssainen / nuha</option>
-              </select>
+                );
+              })}
             </div>
           </div>
 
-          {/* Vapaa tuntemuskenttä */}
-          <div>
-            <label
-              htmlFor="quick-feelings"
-              className="block text-xs font-medium text-zinc-300 mb-1"
-            >
-              Tuntemukset ja huomiot valmentajalle
-            </label>
+          {/* 6. Tuntemukset & saneluteksti (selkosuomeksi Supabaseen) */}
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label
+                htmlFor="quick-feelings"
+                className="block text-xs font-medium text-zinc-300"
+              >
+                Miten treeni meni / miten happi ja voimat riittivät? (muuntuu selkosuomeksi)
+              </label>
+              <VoiceInputButton
+                onTranscript={handleVoiceTranscript}
+                label="Sanele vastaus"
+              />
+            </div>
             <textarea
               id="quick-feelings"
-              rows={3}
+              rows={2}
               value={feelings}
-              onChange={(e) => setFeelings(e.target.value)}
-              placeholder="Esim. Happi kulki tosi hyvin ja jaksoin loppuun asti, syke pysyi matalana..."
-              className="w-full rounded-xl bg-black/40 border border-white/15 p-3 text-sm text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
+              onChange={(e) => {
+                const val = e.target.value;
+                setFeelings(val);
+                const parsed = parseSpokenWorkout(val, performedDate);
+                if (parsed.distanceKm !== null) {
+                  setDistanceKm(String(parsed.distanceKm).replace(".", ","));
+                }
+                if (parsed.shouldLog) {
+                  setWorkoutType(parsed.workoutType);
+                }
+              }}
+              placeholder="Esim. Kevyt 5 km lenkki, happi kulki erinomaisesti ja syke pysyi matalana..."
+              className="w-full rounded-xl bg-black/40 border border-white/15 p-3 text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-white/10">
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="apple-press px-4 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 text-xs sm:text-sm font-medium text-zinc-300"
+              className="apple-press px-4 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 text-xs font-medium text-zinc-300"
             >
               Peruuta
             </button>
@@ -448,22 +519,20 @@ export function QuickOtherWorkoutModal({
                 type="button"
                 disabled={aiParsing}
                 onClick={handleAnalyzeWithCoach}
-                className="apple-press inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-xs sm:text-sm font-semibold text-[#64D2FF]"
+                className="apple-press inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-xs font-semibold text-[#64D2FF]"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>
-                  {aiParsing
-                    ? "Valmentaja kirjaa..."
-                    : "Kirjaa & pyydä valmentajan analyysi"}
+                  {aiParsing ? "Tallennetaan..." : "Tallenna & kysy valmentajalta"}
                 </span>
               </button>
             )}
             <button
               type="submit"
-              className="apple-press inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#34C759] hover:bg-[#30D158] text-xs sm:text-sm font-semibold text-black shadow-lg shadow-[#34C759]/20"
+              className="apple-press inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#34C759] hover:bg-[#30D158] text-xs font-semibold text-black shadow-lg shadow-[#34C759]/20"
             >
               <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>Tallenna kalenteriin</span>
+              <span>Tallenna suoritus</span>
             </button>
           </div>
         </form>

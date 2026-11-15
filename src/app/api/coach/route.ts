@@ -10,6 +10,7 @@ import {
   SportCategory,
   WorkoutLog,
 } from "@/lib/types";
+import { parseSpokenWorkout } from "@/lib/workoutParser";
 
 function loadKnowledgeDocs(): string {
   try {
@@ -59,7 +60,6 @@ function fallbackExtractWorkout(
 ): DetectedWorkoutPayload {
   const lower = message.toLowerCase();
 
-  // Tarkista onko kyseessä suorituksen kertominen eikä pelkkä kysymys
   const isQuestionOnly =
     lower.endsWith("?") &&
     !lower.includes("juoksin") &&
@@ -73,114 +73,22 @@ function fallbackExtractWorkout(
     return { shouldLog: false };
   }
 
-  let category: SportCategory | null = null;
-  if (
-    /(juoks|lenkki|aamulenk|iltalenk|hölkk|pk-lenk|juoksemassa)/i.test(lower)
-  ) {
-    category = "run";
-  } else if (/(tenni|nelinpeli|kaksinpeli|pallottel)/i.test(lower)) {
-    category = "tennis";
-  } else if (/(hiihd|hiiht|ladul|luisteluhiih|perinteis)/i.test(lower)) {
-    category = "ski";
-  } else if (
-    /(lepopäivä|pidin lepoa|täysi lepo|huilipäivä)/i.test(lower)
-  ) {
-    category = "rest";
-  } else if (
-    /(kävin salilla|tein treenin|kuntopyör|kävely|kehonhuolto|venyttely|uinti|uimassa|pyöräil)/i.test(
-      lower
-    )
-  ) {
-    category = "other";
-  }
-
-  if (!category) {
+  const parsed = parseSpokenWorkout(message, todayISO);
+  if (!parsed.shouldLog) {
     return { shouldLog: false };
   }
 
-  let performedDate = todayISO;
-  if (lower.includes("toissapäivänä")) {
-    performedDate = shiftISODate(todayISO, -2);
-  } else if (lower.includes("eilen") || lower.includes("eilinen")) {
-    performedDate = shiftISODate(todayISO, -1);
-  }
-
-  // Poimi kesto minuutteina
-  let durationMinutes = 30;
-  const minMatch = lower.match(/(\d+)\s*(min|minuuttia|minuutin)/i);
-  const hourMinMatch = lower.match(/(\d+(?:[.,]\d+)?)\s*(tuntia|tunti|h\b)/i);
-  if (minMatch) {
-    durationMinutes = parseInt(minMatch[1], 10);
-  } else if (hourMinMatch) {
-    durationMinutes = Math.round(
-      parseFloat(hourMinMatch[1].replace(",", ".")) * 60
-    );
-  } else if (lower.includes("puoli tuntia")) {
-    durationMinutes = 30;
-  } else if (lower.includes("tunnin") || lower.includes("tunti")) {
-    durationMinutes = 60;
-  } else if (lower.includes("puolitoista tuntia")) {
-    durationMinutes = 90;
-  } else if (category === "rest") {
-    durationMinutes = 0;
-  }
-
-  // Arvioi tuntemukset, happi ja palautuminen
-  let oxygenScore = 4;
-  let energyScore = 4;
-  let recoveryStatus: RecoveryStatus = "normaali";
-  let rpe = 6.5;
-
-  if (
-    /(happi kulki|tosi hyvin|kevyesti|lentokeli|erinomai|vahva|helppo|kevyellä sykkeellä)/i.test(
-      lower
-    )
-  ) {
-    oxygenScore = 5;
-    energyScore = 5;
-    recoveryStatus = "erinomainen";
-    rpe = lower.includes("kevy") ? 5.5 : 7.0;
-  }
-  if (
-    /(tukkoi|raskas|väsy|hapotti|painoi|jumissa|jäykkä)/i.test(lower)
-  ) {
-    oxygenScore = 2;
-    energyScore = 2;
-    recoveryStatus = "tukkoinen";
-    rpe = 8.5;
-  }
-  if (/(flunssa|nuha|kurkku|räkä|kuume|aivastel)/i.test(lower)) {
-    oxygenScore = 2;
-    energyScore = 2;
-    recoveryStatus = "flunssainen";
-    rpe = 4.0;
-  }
-
-  const labelMap: Record<SportCategory, string> = {
-    run: lower.includes("aamu") ? "Aamulenkki" : "Juoksulenkki",
-    tennis: "Tennis",
-    ski: "Hiihtolenkki",
-    strength: "Voimatreeni",
-    other: "Muu harjoitus",
-    rest: "Lepopäivä",
-  };
-
-  const title =
-    category === "rest"
-      ? "Lepopäivä & palautuminen"
-      : `${labelMap[category]} ${durationMinutes} min`;
-
   return {
     shouldLog: true,
-    category,
-    title,
-    performedDate,
-    durationMinutes,
-    rpe,
-    feelings: message.trim(),
-    oxygenScore,
-    energyScore,
-    recoveryStatus,
+    category: parsed.category,
+    title: parsed.standardizedTitle,
+    performedDate: parsed.performedDate,
+    durationMinutes: parsed.durationMinutes,
+    rpe: parsed.rpe,
+    feelings: parsed.structuredFeelings,
+    oxygenScore: parsed.oxygenScore,
+    energyScore: parsed.energyScore,
+    recoveryStatus: parsed.recoveryStatus,
   };
 }
 
@@ -489,9 +397,19 @@ ${knowledgeBase}`;
       aiDetected && aiDetected.shouldLog
         ? {
             shouldLog: true,
-            category: (aiDetected.category as SportCategory) || fallbackDetected.category || "other",
-            title: aiDetected.title || fallbackDetected.title || "Harjoitus",
-            performedDate: aiDetected.performedDate || fallbackDetected.performedDate || todayISO,
+            category:
+              (aiDetected.category as SportCategory) ||
+              fallbackDetected.category ||
+              "other",
+            // Käytetään aina vakiomuotoista otsikkoa (esim. "Juoksu (Kevyt PK) · 5 km · 28 min")
+            title:
+              fallbackDetected.title ||
+              aiDetected.title ||
+              "Harjoitus",
+            performedDate:
+              aiDetected.performedDate ||
+              fallbackDetected.performedDate ||
+              todayISO,
             durationMinutes:
               typeof aiDetected.durationMinutes === "number"
                 ? aiDetected.durationMinutes
@@ -500,9 +418,14 @@ ${knowledgeBase}`;
               typeof aiDetected.rpe === "number"
                 ? aiDetected.rpe
                 : fallbackDetected.rpe ?? 6.5,
-            feelings: aiDetected.feelings || message.trim(),
-            oxygenScore: aiDetected.oxygenScore ?? fallbackDetected.oxygenScore ?? 4,
-            energyScore: aiDetected.energyScore ?? fallbackDetected.energyScore ?? 4,
+            feelings:
+              fallbackDetected.feelings ||
+              aiDetected.feelings ||
+              message.trim(),
+            oxygenScore:
+              aiDetected.oxygenScore ?? fallbackDetected.oxygenScore ?? 4,
+            energyScore:
+              aiDetected.energyScore ?? fallbackDetected.energyScore ?? 4,
             recoveryStatus:
               (aiDetected.recoveryStatus as RecoveryStatus) ||
               fallbackDetected.recoveryStatus ||

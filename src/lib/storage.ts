@@ -595,6 +595,47 @@ export function applyProgramProposalOptimistic(
   return updated;
 }
 
+export function saveProgramWorkoutOptimistic(
+  updatedWorkout: ProgramWorkout,
+  currentPrograms: ProgramWorkout[]
+): ProgramWorkout[] {
+  const stamped: ProgramWorkout = {
+    ...updatedWorkout,
+    updatedAt: new Date().toISOString(),
+  };
+  const updated = currentPrograms.map((p) =>
+    p.id === stamped.id ? stamped : p
+  );
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(STORAGE_KEYS.PROGRAMS, JSON.stringify(updated));
+  }
+
+  void supabase
+    .from("treenimaster_programs")
+    .upsert({
+      id: stamped.id,
+      cycle_number: stamped.cycleNumber,
+      workout_number: stamped.workoutNumber,
+      phase: stamped.phase,
+      title: stamped.title,
+      structure_label: stamped.structureLabel,
+      rest_days_aftermin: stamped.restDaysAfterMin,
+      rest_days_aftermax: stamped.restDaysAfterMax,
+      rest_between_sets: stamped.restBetweenSets,
+      coach_notes: stamped.coachNotes,
+      exercises: stamped.exercises,
+      updated_at: stamped.updatedAt,
+    })
+    .then(({ error }) => {
+      if (error) {
+        console.warn("Supabase ohjelman muokkaus epäonnistui:", error.message);
+      }
+    });
+
+  return updated;
+}
+
 // ============================================================================
 // NEXT WORKOUT ENGINE (LIUKUVA MIKROSYKLI & PALAUTUMISLOGIIKKA)
 // ============================================================================
