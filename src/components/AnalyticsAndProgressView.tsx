@@ -4,6 +4,7 @@ import { computeContinuousCoachingIntelligence } from "@/lib/coachIntelligence";
 import { SPORT_CATEGORIES } from "@/lib/programData";
 import { NextWorkoutRecommendation } from "@/lib/storage";
 import { ProgramWorkout, WorkoutLog } from "@/lib/types";
+import { extractDistanceKmFromLog } from "@/lib/workoutParser";
 import {
   Activity,
   AlertCircle,
@@ -13,17 +14,21 @@ import {
   CheckCircle2,
   Cpu,
   Dumbbell,
+  Edit3,
   Footprints,
-  TrendingUp,
+  Trash2,
   Zap,
 } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
+import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
 interface AnalyticsAndProgressViewProps {
   programs: ProgramWorkout[];
   logs: WorkoutLog[];
   recommendation: NextWorkoutRecommendation;
+  onSaveLog: (log: WorkoutLog) => void;
+  onDeleteLog: (logId: string) => void;
   onNavigateToProgram: () => void;
   onNavigateToCoach: () => void;
 }
@@ -32,13 +37,31 @@ export function AnalyticsAndProgressView({
   programs,
   logs,
   recommendation,
+  onSaveLog,
+  onDeleteLog,
   onNavigateToProgram,
   onNavigateToCoach,
 }: AnalyticsAndProgressViewProps) {
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+
   const intel = useMemo(
     () =>
       computeContinuousCoachingIntelligence(programs, logs, recommendation),
     [programs, logs, recommendation]
+  );
+
+  const runAndSkiLogs = useMemo(
+    () =>
+      [...logs]
+        .filter((l) => l.category === "run" || l.category === "ski")
+        .sort((a, b) => b.performedDate.localeCompare(a.performedDate)),
+    [logs]
+  );
+
+  const totalRunMinutes = useMemo(
+    () =>
+      runAndSkiLogs.reduce((acc, l) => acc + (l.durationMinutes || 0), 0),
+    [runAndSkiLogs]
   );
 
   // Rakennetaan 12 kierron maastavedon & penkin huippupainojen graafinen sarja
@@ -75,10 +98,9 @@ export function AnalyticsAndProgressView({
   }, [programs, logs, recommendation.nextWorkout.cycleNumber]);
 
   const activeLogsChronological = useMemo(() => {
-    return [...logs]
-      .filter((l) => l.category !== "rest")
-      .sort((a, b) => a.performedDate.localeCompare(b.performedDate))
-      .slice(-10);
+    return [...logs].sort((a, b) =>
+      b.performedDate.localeCompare(a.performedDate)
+    );
   }, [logs]);
 
   return (
@@ -402,15 +424,152 @@ export function AnalyticsAndProgressView({
         </div>
       </section>
 
-      {/* 4. SUORITUSTEN VIREYS-, HAPPI- JA TOTEUTUMAHISTORIA */}
+      {/* 3.5 JUOKSUKILOMETRIT & LENKKIEN SEURANTA (Yhteiskilometrit + helppo km-lisäys esim. Withingsistä) */}
+      <section className="apple-glass rounded-3xl p-5 sm:p-6 border border-[#34C759]/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#30D158]">
+              <Footprints className="w-3.5 h-3.5" />
+              <span>Juoksukilometrit & kestävyyslaskuri</span>
+            </div>
+            <h2 className="apple-title text-white mt-0.5">
+              Juoksukilometrit yhteensä:{" "}
+              <span className="text-[#30D158]">
+                {String(intel.totalRunDistanceKm).replace(".", ",")} km
+              </span>
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Voit lisätä tai muokata minkä tahansa lenkin kilometrit (esim.
+              Withings-sovelluksesta katsotun matkan) suoraan alta, jolloin
+              yhteiskilometrit päivittyvät heti.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 shrink-0">
+            <div className="rounded-2xl bg-black/45 border border-white/10 px-3.5 py-2.5 text-center">
+              <div className="text-[10px] font-semibold uppercase text-zinc-400">
+                Yhteensä km
+              </div>
+              <div className="text-base sm:text-lg font-extrabold text-[#30D158]">
+                {String(intel.totalRunDistanceKm).replace(".", ",")} km
+              </div>
+            </div>
+            <div className="rounded-2xl bg-black/45 border border-white/10 px-3.5 py-2.5 text-center">
+              <div className="text-[10px] font-semibold uppercase text-zinc-400">
+                Lenkit
+              </div>
+              <div className="text-base sm:text-lg font-extrabold text-white">
+                {runAndSkiLogs.length} kpl
+              </div>
+            </div>
+            <div className="rounded-2xl bg-black/45 border border-white/10 px-3.5 py-2.5 text-center">
+              <div className="text-[10px] font-semibold uppercase text-zinc-400">
+                Kokonaisaika
+              </div>
+              <div className="text-base sm:text-lg font-extrabold text-[#64D2FF]">
+                {totalRunMinutes} min
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {runAndSkiLogs.length === 0 ? (
+          <div className="mt-4 text-xs text-zinc-400">
+            Ei vielä kirjattuja lenkkejä. Kun kirjaat tai sanelet lenkin, sen
+            kilometrit lasketaan automaattisesti tähän.
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2.5">
+            {runAndSkiLogs.map((rLog) => {
+              const km = extractDistanceKmFromLog(rLog);
+              const isEditingThis = editingLogId === rLog.id;
+
+              return (
+                <div
+                  key={rLog.id}
+                  className="rounded-2xl bg-black/35 border border-white/10 p-3.5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <SportCharacterAvatar
+                        category={rLog.category}
+                        title={rLog.title}
+                        feelings={rLog.feelings}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-white">
+                            {rLog.title}
+                          </span>
+                          {km !== null ? (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-[#34C759]/25 border border-[#34C759]/50 text-xs font-extrabold text-[#30D158]">
+                              {String(km).replace(".", ",")} km
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setEditingLogId(rLog.id)}
+                              className="apple-press px-2.5 py-0.5 rounded-lg bg-[#34C759]/15 hover:bg-[#34C759]/25 border border-dashed border-[#34C759]/60 text-xs font-bold text-[#30D158]"
+                            >
+                              + Lisää kilometrit (Withings)
+                            </button>
+                          )}
+                          {rLog.durationMinutes ? (
+                            <span className="text-xs text-zinc-400">
+                              {rLog.durationMinutes} min
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="text-xs text-zinc-400 mt-0.5">
+                          {rLog.performedDate} · {rLog.feelings}
+                        </div>
+                      </div>
+                    </div>
+
+                    {!isEditingThis && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingLogId(rLog.id)}
+                        className="apple-press inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-[#64D2FF]" />
+                        <span>Muokkaa / km</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditingThis && (
+                    <WorkoutLogEditor
+                      log={rLog}
+                      onSave={(updated) => {
+                        onSaveLog(updated);
+                        setEditingLogId(null);
+                      }}
+                      onCancel={() => setEditingLogId(null)}
+                      onDelete={(id) => {
+                        onDeleteLog(id);
+                        setEditingLogId(null);
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* 4. KAIKKIEN SUORITUSTEN HISTORIA & MUOKKAUS */}
       <section className="apple-glass rounded-3xl p-5 sm:p-6">
         <h2 className="apple-title text-white">
-          Kirjattujen harjoitusten vaste, happi & mahdolliset poikkeamat (
-          {activeLogsChronological.length} viimeisintä)
+          Kaikki kirjatut harjoitukset & muokkaus (
+          {activeLogsChronological.length} kpl)
         </h2>
         <p className="text-xs text-zinc-400 mt-0.5 mb-4">
-          Näet yhdellä silmäyksellä jokaisen voimatreenin ja lenkin keston,
-          happi- ja vireysarvosanat (1–5) sekä mahdolliset poikkeamien syyt.
+          Voit muokata mitä tahansa aiempaa treeniä, lisätä puuttuneet
+          kilometrit tai muokata sarjoja painamalla &ldquo;Muokkaa&rdquo;.
+          Muutokset tallentuvat suoraan Supabaseen.
         </p>
 
         <div className="space-y-3">
@@ -418,6 +577,8 @@ export function AnalyticsAndProgressView({
             const cat = SPORT_CATEGORIES[log.category];
             const o2Pct = ((log.oxygenScore || 4) / 5) * 100;
             const enPct = ((log.energyScore || 4) / 5) * 100;
+            const kmVal = extractDistanceKmFromLog(log);
+            const isEditingThis = editingLogId === log.id;
 
             return (
               <div
@@ -425,7 +586,7 @@ export function AnalyticsAndProgressView({
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5 flex-wrap">
                     <SportCharacterAvatar
                       category={log.category}
                       title={log.title}
@@ -441,6 +602,19 @@ export function AnalyticsAndProgressView({
                     <span className="text-sm sm:text-base font-bold text-white">
                       {log.title}
                     </span>
+                    {kmVal !== null ? (
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#34C759]/25 border border-[#34C759]/50 text-xs font-extrabold text-[#30D158]">
+                        {String(kmVal).replace(".", ",")} km
+                      </span>
+                    ) : log.category === "run" || log.category === "ski" ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditingLogId(log.id)}
+                        className="apple-press px-2.5 py-0.5 rounded-lg bg-[#34C759]/15 hover:bg-[#34C759]/25 border border-dashed border-[#34C759]/50 text-xs font-semibold text-[#30D158]"
+                      >
+                        + Lisää km
+                      </button>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-zinc-400">
                     {log.durationMinutes ? (
@@ -450,72 +624,109 @@ export function AnalyticsAndProgressView({
                     <span className="font-semibold text-zinc-200">
                       {log.performedDate}
                     </span>
+                    {!isEditingThis && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditingLogId(log.id)}
+                          className="apple-press ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-[#64D2FF]" />
+                          <span>Muokkaa</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteLog(log.id)}
+                          title="Poista suoritus"
+                          className="apple-press p-1.5 rounded-xl bg-white/6 hover:bg-[#FF453A]/20 border border-white/10 text-zinc-400 hover:text-[#FF6961]"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Graafiset mittaripalkit: Happi & Tangon nopeus/Vireys */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <div className="flex justify-between text-[11px] text-zinc-300 mb-1">
-                      <span>Hapen kulku</span>
-                      <span className="font-bold text-[#30D158]">
-                        {log.oxygenScore || 4} / 5
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#34C759]"
-                        style={{ width: `${o2Pct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[11px] text-zinc-300 mb-1">
-                      <span>Voimat / tangon nopeus</span>
-                      <span className="font-bold text-[#64D2FF]">
-                        {log.energyScore || 4} / 5
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#0A84FF]"
-                        style={{ width: `${enPct}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Jos voimatreeni, näytetään tehdyt sarjat */}
-                {log.exercises && log.exercises.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                    {log.exercises.map((ex) => (
-                      <div
-                        key={ex.id}
-                        className="rounded-xl bg-black/40 border border-white/8 px-3 py-2 text-xs"
-                      >
-                        <div className="font-semibold text-white">
-                          {ex.name}
+                {isEditingThis ? (
+                  <WorkoutLogEditor
+                    log={log}
+                    onSave={(updated) => {
+                      onSaveLog(updated);
+                      setEditingLogId(null);
+                    }}
+                    onCancel={() => setEditingLogId(null)}
+                    onDelete={(id) => {
+                      onDeleteLog(id);
+                      setEditingLogId(null);
+                    }}
+                  />
+                ) : (
+                  <>
+                    {/* Graafiset mittaripalkit: Happi & Tangon nopeus/Vireys */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <div className="flex justify-between text-[11px] text-zinc-300 mb-1">
+                          <span>Hapen kulku</span>
+                          <span className="font-bold text-[#30D158]">
+                            {log.oxygenScore || 4} / 5
+                          </span>
                         </div>
-                        <div className="mt-0.5 text-[#30D158] font-medium">
-                          {ex.sets
-                            .map(
-                              (s) =>
-                                `${s.actualReps || s.reps}×${
-                                  s.actualWeightKg || s.weightKg
-                                } kg`
-                            )
-                            .join(", ")}
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#34C759]"
+                            style={{ width: `${o2Pct}%` }}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                {log.feelings && (
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    {log.feelings}
-                  </p>
+                      <div>
+                        <div className="flex justify-between text-[11px] text-zinc-300 mb-1">
+                          <span>Voimat / tangon nopeus</span>
+                          <span className="font-bold text-[#64D2FF]">
+                            {log.energyScore || 4} / 5
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-[#0A84FF]"
+                            style={{ width: `${enPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Jos voimatreeni, näytetään tehdyt sarjat */}
+                    {log.exercises && log.exercises.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        {log.exercises.map((ex) => (
+                          <div
+                            key={ex.id}
+                            className="rounded-xl bg-black/40 border border-white/8 px-3 py-2 text-xs"
+                          >
+                            <div className="font-semibold text-white">
+                              {ex.name}
+                            </div>
+                            <div className="mt-0.5 text-[#30D158] font-medium">
+                              {ex.sets
+                                .map(
+                                  (s) =>
+                                    `${s.actualReps || s.reps}×${
+                                      s.actualWeightKg || s.weightKg
+                                    } kg`
+                                )
+                                .join(", ")}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {log.feelings && (
+                      <p className="text-xs text-zinc-300 leading-relaxed">
+                        {log.feelings}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             );

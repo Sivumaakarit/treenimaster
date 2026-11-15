@@ -540,6 +540,8 @@ export default function TreenimasterPage() {
                 recommendation={recommendation}
                 onNavigateToProgram={() => setActiveTab("program")}
                 onNavigateToCoach={() => setActiveTab("coach")}
+                onSaveLog={(log) => handleSaveWorkoutLog(log, false)}
+                onDeleteLog={handleDeleteLog}
               />
             )}
           </div>

@@ -5,6 +5,7 @@ import { NextWorkoutRecommendation } from "@/lib/storage";
 import { SPORT_CATEGORIES } from "@/lib/programData";
 import {
   cleanSpokenToSelkosuomi,
+  extractDistanceKmFromLog,
   parseSpokenFeelingsToSelkosuomi,
 } from "@/lib/workoutParser";
 import {
@@ -34,12 +35,9 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import {
-  CHARACTER_LABELS,
-  CharacterSportType,
-  SportCharacterAvatar,
-} from "./SportCharacterAvatar";
+import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
+import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
 const STRENGTH_DEVIATION_CHIPS = [
   "Suunnitelman mukaan ✓",
@@ -132,65 +130,6 @@ export function TodayWorkoutView({
 
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
-  const [editLogDraft, setEditLogDraft] = useState<WorkoutLog | null>(null);
-  const [polishingLoggedId, setPolishingLoggedId] = useState<string | null>(
-    null
-  );
-
-  const startEditingLoggedWorkout = (log: WorkoutLog) => {
-    setEditingLoggedId(log.id);
-    setEditLogDraft({ ...log });
-  };
-
-  const handlePolishDraftFeelingsToSelkosuomi = (rawText: string) => {
-    if (!editLogDraft) return;
-    const cleaned = cleanSpokenToSelkosuomi(rawText);
-    setEditLogDraft((prev) => (prev ? { ...prev, feelings: cleaned } : prev));
-    setPolishingLoggedId(editLogDraft.id);
-    void fetch("/api/selkosuomi", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        rawText,
-        mode: editLogDraft.category === "strength" ? "strength" : "run",
-      }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.selkosuomiText) {
-          setEditLogDraft((prev) =>
-            prev ? { ...prev, feelings: data.selkosuomiText } : prev
-          );
-        }
-      })
-      .catch(() => {})
-      .finally(() => setPolishingLoggedId(null));
-  };
-
-  const applyCharacterPresetToDraft = (charType: CharacterSportType) => {
-    if (!editLogDraft) return;
-    const mapping: Record<
-      CharacterSportType,
-      { cat: SportCategory; prefix: string }
-    > = {
-      runner: { cat: "run", prefix: "Juoksu" },
-      lifter: { cat: "strength", prefix: "Voimatreeni" },
-      skier: { cat: "ski", prefix: "Hiihto" },
-      tennis: { cat: "tennis", prefix: "Tennis" },
-      badminton: { cat: "other", prefix: "Sulkapallo" },
-      golf: { cat: "other", prefix: "Golf" },
-      recovery: { cat: "other", prefix: "Kehonhuolto" },
-    };
-    const m = mapping[charType];
-    const durPart = editLogDraft.durationMinutes
-      ? ` · ${editLogDraft.durationMinutes} min`
-      : "";
-    setEditLogDraft({
-      ...editLogDraft,
-      category: m.cat,
-      title: `${m.prefix}${durPart}`,
-    });
-  };
 
   const handleVoiceFeelingsDictation = (rawSpeech: string) => {
     const combinedRaw = feelings ? `${feelings} ${rawSpeech}` : rawSpeech;
@@ -575,9 +514,8 @@ export function TodayWorkoutView({
             </div>
             {todaysLogs.map((tLog) => {
               const cat = SPORT_CATEGORIES[tLog.category];
-              const isEditingThisLog =
-                editingLoggedId === tLog.id && editLogDraft !== null;
-              const currentItem = isEditingThisLog ? editLogDraft : tLog;
+              const isEditingThisLog = editingLoggedId === tLog.id;
+              const kmVal = extractDistanceKmFromLog(tLog);
 
               return (
                 <div
@@ -585,11 +523,11 @@ export function TodayWorkoutView({
                   className="rounded-2xl border border-[#34C759]/40 bg-gradient-to-r from-[#34C759]/12 via-white/[0.03] to-transparent p-3.5 sm:p-4 transition-all"
                 >
                   <div className="flex items-start gap-3.5">
-                    {/* Hauska lajikuvahahmo (Juoksija, Punttimies, Hiihtäjä, Tennis, Sulkapallo, Golf, Huolto) */}
+                    {/* Hauska lajikuvahahmo */}
                     <SportCharacterAvatar
-                      category={currentItem.category}
-                      title={currentItem.title}
-                      feelings={currentItem.feelings}
+                      category={tLog.category}
+                      title={tLog.title}
+                      feelings={tLog.feelings}
                       size="lg"
                     />
 
@@ -603,11 +541,24 @@ export function TodayWorkoutView({
                             {cat.shortLabel}
                           </span>
                           <span className="text-sm sm:text-base font-bold text-white">
-                            {currentItem.title}
+                            {tLog.title}
                           </span>
-                          {currentItem.durationMinutes ? (
+                          {kmVal !== null ? (
+                            <span className="px-2.5 py-0.5 rounded-lg bg-[#34C759]/25 border border-[#34C759]/50 text-xs font-extrabold text-[#30D158]">
+                              {String(kmVal).replace(".", ",")} km
+                            </span>
+                          ) : tLog.category === "run" || tLog.category === "ski" ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingLoggedId(tLog.id)}
+                              className="apple-press px-2.5 py-0.5 rounded-lg bg-[#34C759]/15 hover:bg-[#34C759]/25 border border-dashed border-[#34C759]/50 text-xs font-semibold text-[#30D158]"
+                            >
+                              + Lisää km (esim. Withings)
+                            </button>
+                          ) : null}
+                          {tLog.durationMinutes ? (
                             <span className="px-2 py-0.5 rounded-lg bg-white/10 text-xs font-semibold text-zinc-200">
-                              {currentItem.durationMinutes} min
+                              {tLog.durationMinutes} min
                             </span>
                           ) : null}
                         </div>
@@ -617,7 +568,7 @@ export function TodayWorkoutView({
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => startEditingLoggedWorkout(tLog)}
+                              onClick={() => setEditingLoggedId(tLog.id)}
                               className="apple-press inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-semibold text-white"
                             >
                               <Edit3 className="w-3.5 h-3.5 text-[#64D2FF]" />
@@ -638,154 +589,28 @@ export function TodayWorkoutView({
                       </div>
 
                       {!isEditingThisLog ? (
-                        currentItem.feelings && (
+                        tLog.feelings && (
                           <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
-                            {currentItem.feelings}
+                            {tLog.feelings}
                           </p>
                         )
                       ) : (
-                        /* INLINE-MUOKKAUS PÄIVÄN KIRJATULLE SUORITUKSELLE */
-                        <div className="mt-2 pt-3 border-t border-white/15 space-y-3">
-                          {/* Lajihahmon pikavalinta */}
-                          <div>
-                            <span className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
-                              Valitse laji & kuvahahmo:
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {(
-                                [
-                                  "runner",
-                                  "lifter",
-                                  "skier",
-                                  "tennis",
-                                  "badminton",
-                                  "golf",
-                                  "recovery",
-                                ] as CharacterSportType[]
-                              ).map((cType) => (
-                                <button
-                                  key={cType}
-                                  type="button"
-                                  onClick={() =>
-                                    applyCharacterPresetToDraft(cType)
-                                  }
-                                  className="apple-press px-2.5 py-1 rounded-xl bg-black/50 hover:bg-white/15 border border-white/15 text-xs font-semibold text-zinc-200"
-                                >
-                                  {CHARACTER_LABELS[cType]}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div className="sm:col-span-2">
-                              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                                Otsikko
-                              </label>
-                              <input
-                                type="text"
-                                value={editLogDraft.title}
-                                onChange={(e) =>
-                                  setEditLogDraft({
-                                    ...editLogDraft,
-                                    title: e.target.value,
-                                  })
+                        <WorkoutLogEditor
+                          log={tLog}
+                          onSave={(updated) => {
+                            onSaveStrengthLog(updated, false);
+                            setEditingLoggedId(null);
+                          }}
+                          onCancel={() => setEditingLoggedId(null)}
+                          onDelete={
+                            onDeleteLog
+                              ? (id) => {
+                                  onDeleteLog(id);
+                                  setEditingLoggedId(null);
                                 }
-                                className="w-full rounded-xl bg-black/60 border border-white/20 px-3 py-1.5 text-xs sm:text-sm font-bold text-white focus:border-[#0A84FF] focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                                Kesto (min)
-                              </label>
-                              <input
-                                type="number"
-                                min={0}
-                                max={480}
-                                value={editLogDraft.durationMinutes ?? 0}
-                                onChange={(e) =>
-                                  setEditLogDraft({
-                                    ...editLogDraft,
-                                    durationMinutes:
-                                      parseInt(e.target.value, 10) || 0,
-                                  })
-                                }
-                                className="w-full rounded-xl bg-black/60 border border-white/20 px-3 py-1.5 text-xs sm:text-sm font-bold text-white focus:border-[#0A84FF] focus:outline-none"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <label className="text-[11px] font-semibold text-zinc-300">
-                                Yhteenveto & tuntemukset (selkosuomeksi Supabaseen)
-                              </label>
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handlePolishDraftFeelingsToSelkosuomi(
-                                      editLogDraft.feelings
-                                    )
-                                  }
-                                  className="apple-press px-2.5 py-1 rounded-xl bg-[#0A84FF]/25 border border-[#0A84FF]/50 text-[11px] font-semibold text-[#64D2FF]"
-                                >
-                                  {polishingLoggedId === tLog.id
-                                    ? "Muotoillaan..."
-                                    : "Muotoile selkosuomeksi"}
-                                </button>
-                                <VoiceInputButton
-                                  onTranscript={(txt) =>
-                                    handlePolishDraftFeelingsToSelkosuomi(txt)
-                                  }
-                                  label="Sanele uusi"
-                                />
-                              </div>
-                            </div>
-                            <textarea
-                              rows={2}
-                              value={editLogDraft.feelings}
-                              onChange={(e) =>
-                                setEditLogDraft({
-                                  ...editLogDraft,
-                                  feelings: e.target.value,
-                                })
-                              }
-                              className="w-full rounded-xl bg-black/60 border border-white/20 p-2.5 text-xs sm:text-sm text-white focus:border-[#0A84FF] focus:outline-none"
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-end gap-2 pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingLoggedId(null);
-                                setEditLogDraft(null);
-                              }}
-                              className="apple-press px-3 py-1.5 rounded-xl bg-white/10 text-xs font-semibold text-zinc-300"
-                            >
-                              Peruuta
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const cleanedFinal: WorkoutLog = {
-                                  ...editLogDraft,
-                                  feelings: cleanSpokenToSelkosuomi(
-                                    editLogDraft.feelings
-                                  ),
-                                };
-                                onSaveStrengthLog(cleanedFinal, false);
-                                setEditingLoggedId(null);
-                                setEditLogDraft(null);
-                              }}
-                              className="apple-press inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#34C759] text-black text-xs font-bold shadow-sm"
-                            >
-                              <Save className="w-3.5 h-3.5" />
-                              <span>Tallenna muutokset</span>
-                            </button>
-                          </div>
-                        </div>
+                              : undefined
+                          }
+                        />
                       )}
                     </div>
                   </div>

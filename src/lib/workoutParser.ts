@@ -270,16 +270,12 @@ export function parseSpokenWorkout(
     durationMinutes,
   });
 
-  // 7. Vakioitu yhteenvetoteksti
-  const summaryParts: string[] = [
-    `Tyyppi: ${workoutType}`,
-    ...(distanceKm ? [`Matka: ${String(distanceKm).replace(".", ",")} km`] : []),
-    ...(durationMinutes > 0 ? [`Kesto: ${durationMinutes} min`] : []),
-    `Happi: ${oxygenScore}/5`,
-    `Vire: ${recoveryStatus}`,
-  ];
-
-  const structuredFeelings = `${summaryParts.join(" · ")}. Yhteenveto: ${cleanSpokenToSelkosuomi(cleaned)}`;
+  // 7. Vakioitu yhteenvetoteksti (kirjataan vain mitä käyttäjä oikeasti sanoi selkosuomeksi + matka km)
+  const cleanUserSentence = cleanSpokenToSelkosuomi(cleaned);
+  const kmPrefix = distanceKm
+    ? `Matka: ${String(distanceKm).replace(".", ",")} km. `
+    : "";
+  const structuredFeelings = `${kmPrefix}${cleanUserSentence}`.trim();
 
   return {
     shouldLog: hasActivityKeyword,
@@ -295,6 +291,69 @@ export function parseSpokenWorkout(
     standardizedTitle,
     structuredFeelings,
   };
+}
+
+/**
+ * Poimii kilometrimäärän (km) mistä tahansa WorkoutLog-merkinnästä (otsikosta tai tekstistä).
+ */
+export function extractDistanceKmFromLog(log: WorkoutLog): number | null {
+  const combined = `${log.title || ""} ${log.feelings || ""}`;
+  const m = combined.match(/(\d+(?:[.,]\d+)?)\s*(?:km|kilometriä|kilsaa)\b/i);
+  if (m) {
+    const val = parseFloat(m[1].replace(",", "."));
+    if (!Number.isNaN(val) && val > 0 && val < 300) {
+      return Math.round(val * 100) / 100;
+    }
+  }
+  return null;
+}
+
+/**
+ * Päivittää tai lisää kilometrimäärän (esim. Withings-sovelluksesta katsotun km-lukeman)
+ * suoraan suorituksen otsikkoon ja yhteenvetoon.
+ */
+export function applyDistanceKmToTitleAndFeelings(
+  title: string,
+  feelings: string,
+  kmString: string
+): { title: string; feelings: string } {
+  const trimmed = kmString.trim().replace(",", ".");
+  const kmNum = trimmed ? parseFloat(trimmed) : null;
+  const validKm =
+    kmNum !== null && !Number.isNaN(kmNum) && kmNum > 0
+      ? Math.round(kmNum * 100) / 100
+      : null;
+  const kmFormatted = validKm ? `${String(validKm).replace(".", ",")} km` : "";
+
+  // 1. Päivitetään otsikko: poistetaan mahdollinen vanha "· X,X km" ja lisätään uusi ennen kestoa tai loppuun
+  let cleanTitle = title
+    .replace(/\s*·\s*\d+(?:[.,]\d+)?\s*km\b/gi, "")
+    .replace(/\b\d+(?:[.,]\d+)?\s*km\s*·\s*/gi, "")
+    .trim();
+
+  if (validKm) {
+    if (/\s*·\s*\d+\s*min\b/i.test(cleanTitle)) {
+      cleanTitle = cleanTitle.replace(
+        /(\s*·\s*\d+\s*min\b)/i,
+        ` · ${kmFormatted}$1`
+      );
+    } else {
+      cleanTitle = `${cleanTitle} · ${kmFormatted}`;
+    }
+  }
+
+  // 2. Päivitetään tekstikentän Matka-merkintä
+  let cleanFeelings = feelings
+    .replace(/Matka:\s*\d+(?:[.,]\d+)?\s*km\s*(?:·|\.)?\s*/gi, "")
+    .trim();
+
+  if (validKm) {
+    cleanFeelings = cleanFeelings
+      ? `Matka: ${kmFormatted}. ${cleanFeelings}`
+      : `Matka: ${kmFormatted}.`;
+  }
+
+  return { title: cleanTitle, feelings: cleanFeelings };
 }
 
 export interface ParsedFeelingsSelkosuomi {

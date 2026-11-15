@@ -201,19 +201,21 @@ export function QuickOtherWorkoutModal({
 
   const buildStructuredFeelings = () => {
     const metaParts: string[] = [
-      `Tyyppi: ${workoutType}`,
       ...(parsedKm ? [`Matka: ${String(parsedKm).replace(".", ",")} km`] : []),
-      ...(parsedDur && category !== "rest" ? [`Kesto: ${parsedDur} min`] : []),
-      `Happi: ${oxygenScore}/5`,
-      `Vire: ${recoveryStatus}`,
       ...(deviationChip && deviationChip !== "Suunnitelman mukaan ✓"
         ? [`[Huomio: ${deviationChip}]`]
         : []),
     ];
     const cleanNote = cleanSpokenToSelkosuomi(feelings);
-    return cleanNote
-      ? `${metaParts.join(" · ")}. Yhteenveto: ${cleanNote}`
-      : metaParts.join(" · ");
+    if (cleanNote && metaParts.length > 0) {
+      return `${metaParts.join(" · ")}. ${cleanNote}`;
+    }
+    if (cleanNote) {
+      return cleanNote;
+    }
+    return metaParts.length > 0
+      ? metaParts.join(" · ")
+      : `${workoutType}${parsedDur ? ` (${parsedDur} min)` : ""}.`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -22,7 +22,8 @@ export async function POST(req: Request) {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Muunna käyttäjän puhekielinen treenisanelu siistiksi, ytimekkääksi ja selkeäksi suomen kieleksi (selkosuomeksi, 1–2 virkettä) Supabase-tietokantaan tallennusta varten. Säilytä kaikki faktat (kilot, kilometrit, kesto, hapen kulku, voimat, mahdollinen kipu tai syy miksi treeni poikkesi).
+      contents: `Muunna käyttäjän puhekielinen treenisanelu siistiksi, ytimekkääksi ja selkeäksi suomen kieleksi (selkosuomeksi, 1–2 virkettä) Supabase-tietokantaan tallennusta varten.
+TÄRKEÄÄ: ÄLÄ KOSKAAN keksi tai lisää väitteitä (kuten "Happi kulki erinomaisesti" tai mitään muutakaan), joita käyttäjä ei sanelussaan oikeasti sanonut! Säilytä vain käyttäjän kertomat faktat (kilot, kilometrit, kesto, intervallit/vedot, tai mainitut tuntemukset) puhtaana selkosuomena.
 
 Sanelu: "${rawText}"
 Konteksti: ${mode}`,

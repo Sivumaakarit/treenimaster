@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Clock,
   Dumbbell,
+  Edit3,
   Flame,
   HeartPulse,
   Plus,
@@ -17,11 +18,13 @@ import { SPORT_CATEGORIES } from "@/lib/programData";
 import { RecoveryStatus, SportCategory, WorkoutLog } from "@/lib/types";
 import { formatLocalISODate } from "@/lib/storage";
 import {
+  extractDistanceKmFromLog,
   formatStandardWorkoutTitle,
   parseSpokenWorkout,
 } from "@/lib/workoutParser";
 import { VoiceInputButton } from "./VoiceInputButton";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
+import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
 interface CalendarViewProps {
   logs: WorkoutLog[];
@@ -71,6 +74,7 @@ export function CalendarView({
   );
   const [selectedDateISO, setSelectedDateISO] = useState<string>(todayISO);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
   // Manuaalisen / sanelulisäyksen tila
   const [newCategory, setNewCategory] = useState<SportCategory>("run");
@@ -616,6 +620,9 @@ export function CalendarView({
               ) : (
                 selectedDayLogs.map((log) => {
                   const cat = SPORT_CATEGORIES[log.category];
+                  const isEditingThis = editingLogId === log.id;
+                  const kmVal = extractDistanceKmFromLog(log);
+
                   return (
                     <div
                       key={log.id}
@@ -645,78 +652,121 @@ export function CalendarView({
                             </h4>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => onDeleteLog(log.id)}
-                          aria-label="Poista suoritus"
-                          className="apple-press rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/20 hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
 
-                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-zinc-300">
-                        {typeof log.durationMinutes === "number" &&
-                          log.durationMinutes > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
-                              <Clock className="h-3 w-3 text-zinc-400" />
-                              {log.durationMinutes} min
-                            </span>
-                          )}
-                        {log.rpe && (
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
-                            <Flame className="h-3 w-3 text-amber-400" />
-                            RPE {log.rpe}
-                          </span>
-                        )}
-                        {log.oxygenScore && (
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
-                            <Wind className="h-3 w-3 text-sky-400" />
-                            Happi {log.oxygenScore}/5
-                          </span>
-                        )}
-                        {log.energyScore && (
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
-                            <HeartPulse className="h-3 w-3 text-emerald-400" />
-                            Vire {log.energyScore}/5
-                          </span>
-                        )}
-                      </div>
-
-                      {log.exercises && log.exercises.length > 0 && (
-                        <div className="mt-3 space-y-2 border-t border-white/10 pt-2.5">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
-                            <Dumbbell className="h-3.5 w-3.5 text-[#64D2FF]" />
-                            <span>Toteutuneet sarjat:</span>
-                          </div>
-                          {log.exercises.map((ex) => (
-                            <div
-                              key={ex.id}
-                              className="rounded-xl bg-black/40 border border-white/8 px-3 py-2 text-xs"
+                        {!isEditingThis && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditingLogId(log.id)}
+                              className="apple-press inline-flex items-center gap-1 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 px-2.5 py-1 text-xs font-semibold text-white"
                             >
-                              <div className="font-semibold text-white">
-                                {ex.name}
-                              </div>
-                              <div className="mt-1 flex flex-wrap gap-1.5">
-                                {ex.sets.map((s) => (
-                                  <span
-                                    key={s.id}
-                                    className="inline-flex items-center rounded-md bg-[#0A84FF]/15 px-2 py-0.5 text-[11px] font-medium text-[#64D2FF]"
-                                  >
-                                    {s.actualReps || s.reps} ×{" "}
-                                    {s.actualWeightKg || s.weightKg} kg
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                              <Edit3 className="h-3.5 w-3.5 text-[#64D2FF]" />
+                              <span>Muokkaa</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDeleteLog(log.id)}
+                              aria-label="Poista suoritus"
+                              className="apple-press rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/20 hover:text-red-400"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                      {log.feelings && (
-                        <div className="mt-2.5 rounded-xl bg-black/40 border border-white/8 p-2.5 text-xs leading-relaxed text-zinc-200">
-                          {log.feelings}
-                        </div>
+                      {isEditingThis ? (
+                        <WorkoutLogEditor
+                          log={log}
+                          onSave={(updated) => {
+                            onAddLog(updated);
+                            setEditingLogId(null);
+                          }}
+                          onCancel={() => setEditingLogId(null)}
+                          onDelete={(id) => {
+                            onDeleteLog(id);
+                            setEditingLogId(null);
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-zinc-300">
+                            {kmVal !== null ? (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-[#34C759]/25 border border-[#34C759]/50 px-2.5 py-0.5 font-extrabold text-[#30D158]">
+                                {String(kmVal).replace(".", ",")} km
+                              </span>
+                            ) : log.category === "run" || log.category === "ski" ? (
+                              <button
+                                type="button"
+                                onClick={() => setEditingLogId(log.id)}
+                                className="apple-press rounded-lg bg-[#34C759]/15 border border-dashed border-[#34C759]/50 px-2 py-0.5 text-xs font-semibold text-[#30D158]"
+                              >
+                                + Lisää km
+                              </button>
+                            ) : null}
+                            {typeof log.durationMinutes === "number" &&
+                              log.durationMinutes > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
+                                  <Clock className="h-3 w-3 text-zinc-400" />
+                                  {log.durationMinutes} min
+                                </span>
+                              )}
+                            {log.rpe && (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
+                                <Flame className="h-3 w-3 text-amber-400" />
+                                RPE {log.rpe}
+                              </span>
+                            )}
+                            {log.oxygenScore && (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
+                                <Wind className="h-3 w-3 text-sky-400" />
+                                Happi {log.oxygenScore}/5
+                              </span>
+                            )}
+                            {log.energyScore && (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.06] px-2 py-0.5">
+                                <HeartPulse className="h-3 w-3 text-emerald-400" />
+                                Vire {log.energyScore}/5
+                              </span>
+                            )}
+                          </div>
+
+                          {log.exercises && log.exercises.length > 0 && (
+                            <div className="mt-3 space-y-2 border-t border-white/10 pt-2.5">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
+                                <Dumbbell className="h-3.5 w-3.5 text-[#64D2FF]" />
+                                <span>Toteutuneet sarjat:</span>
+                              </div>
+                              {log.exercises.map((ex) => (
+                                <div
+                                  key={ex.id}
+                                  className="rounded-xl bg-black/40 border border-white/8 px-3 py-2 text-xs"
+                                >
+                                  <div className="font-semibold text-white">
+                                    {ex.name}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap gap-1.5">
+                                    {ex.sets.map((s) => (
+                                      <span
+                                        key={s.id}
+                                        className="inline-flex items-center rounded-md bg-[#0A84FF]/15 px-2 py-0.5 text-[11px] font-medium text-[#64D2FF]"
+                                      >
+                                        {s.actualReps || s.reps} ×{" "}
+                                        {s.actualWeightKg || s.weightKg} kg
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {log.feelings && (
+                            <div className="mt-2.5 rounded-xl bg-black/40 border border-white/8 p-2.5 text-xs leading-relaxed text-zinc-200">
+                              {log.feelings}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   );
