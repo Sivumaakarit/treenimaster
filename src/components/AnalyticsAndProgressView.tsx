@@ -18,6 +18,7 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useMemo } from "react";
+import { SportCharacterAvatar } from "./SportCharacterAvatar";
 
 interface AnalyticsAndProgressViewProps {
   programs: ProgramWorkout[];
@@ -424,7 +425,13 @@ export function AnalyticsAndProgressView({
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <SportCharacterAvatar
+                      category={log.category}
+                      title={log.title}
+                      feelings={log.feelings}
+                      size="sm"
+                    />
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
                       style={cat.badgeStyle}

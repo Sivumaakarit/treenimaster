@@ -487,6 +487,7 @@ export default function TreenimasterPage() {
                 onDismissFeedback={() => setInstantFeedback(null)}
                 onSelectWorkoutId={(id) => setSelectedWorkoutId(id)}
                 onSaveStrengthLog={handleSaveWorkoutLog}
+                onDeleteLog={handleDeleteLog}
                 onOpenOtherWorkoutModal={() => setOtherModalOpen(true)}
                 onNavigateToProgram={() => setActiveTab("program")}
               />

@@ -21,6 +21,7 @@ import {
   parseSpokenWorkout,
 } from "@/lib/workoutParser";
 import { VoiceInputButton } from "./VoiceInputButton";
+import { SportCharacterAvatar } from "./SportCharacterAvatar";
 
 interface CalendarViewProps {
   logs: WorkoutLog[];
@@ -620,21 +621,29 @@ export function CalendarView({
                       key={log.id}
                       className="rounded-2xl border border-white/12 bg-white/[0.04] p-4"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span
-                            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                            style={cat.badgeStyle}
-                          >
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <SportCharacterAvatar
+                            category={log.category}
+                            title={log.title}
+                            feelings={log.feelings}
+                            size="md"
+                          />
+                          <div className="min-w-0">
                             <span
-                              className="h-2 w-2 rounded-full"
-                              style={{ backgroundColor: cat.hex }}
-                            />
-                            {cat.label}
-                          </span>
-                          <h4 className="mt-2 text-sm font-bold text-white">
-                            {log.title}
-                          </h4>
+                              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                              style={cat.badgeStyle}
+                            >
+                              <span
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: cat.hex }}
+                              />
+                              {cat.label}
+                            </span>
+                            <h4 className="mt-1.5 text-sm font-bold text-white">
+                              {log.title}
+                            </h4>
+                          </div>
                         </div>
                         <button
                           type="button"

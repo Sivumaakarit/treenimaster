@@ -1,4 +1,4 @@
-import { RecoveryStatus, SportCategory } from "./types";
+import { RecoveryStatus, SportCategory, WorkoutLog } from "./types";
 
 export interface ParsedWorkoutSummary {
   shouldLog: boolean;
@@ -109,8 +109,14 @@ export function parseSpokenWorkout(
   ) {
     category = "run";
     hasActivityKeyword = true;
-  } else if (/(tenni|nelinpeli|kaksinpeli|pallottel)/i.test(lower)) {
+  } else if (/(tenni|nelinpeli|kaksinpeli|pallottel|padel)/i.test(lower)) {
     category = "tennis";
+    hasActivityKeyword = true;
+  } else if (/(sulkapallo|sulkis)/i.test(lower)) {
+    category = "other";
+    hasActivityKeyword = true;
+  } else if (/(golf|kierros golfia|rangella)/i.test(lower)) {
+    category = "other";
     hasActivityKeyword = true;
   } else if (/(hiihd|hiiht|ladul|luisteluhiih|perinteis)/i.test(lower)) {
     category = "ski";
@@ -138,7 +144,9 @@ export function parseSpokenWorkout(
   // 3. Treenin tyyppi / tehoalue
   let workoutType = "Kevyt PK";
   if (category === "run") {
-    if (/(intervall|veto|vetoja|spurt|mäkived|hiit|kovat vedot)/i.test(lower)) {
+    if (/(tabata)/i.test(lower)) {
+      workoutType = "Intervalli / Tabata";
+    } else if (/(intervall|veto|vetoja|spurt|mäkived|hiit|kovat vedot|kiihdytys)/i.test(lower)) {
       workoutType = "Intervalli";
     } else if (/(reipas|vk|vauhtikestävyys|kova lenkki|kovavauhti)/i.test(lower)) {
       workoutType = "Reipas VK";
@@ -152,6 +160,7 @@ export function parseSpokenWorkout(
   } else if (category === "tennis") {
     if (lower.includes("nelinpeli")) workoutType = "Nelinpeli";
     else if (lower.includes("kaksinpeli")) workoutType = "Kaksinpeli";
+    else if (lower.includes("padel")) workoutType = "Padel";
     else workoutType = "Pelit & pallottelu";
   } else if (category === "ski") {
     if (lower.includes("luistelu") || lower.includes("vapaa"))
@@ -159,7 +168,11 @@ export function parseSpokenWorkout(
     else if (lower.includes("perintei")) workoutType = "Perinteinen";
     else workoutType = "PK-hiihto";
   } else if (category === "other") {
-    if (lower.includes("kävel")) workoutType = "Kävelylenkki";
+    if (lower.includes("sulkapallo") || lower.includes("sulkis"))
+      workoutType = "Sulkapallo";
+    else if (lower.includes("golf") || lower.includes("range"))
+      workoutType = "Golf";
+    else if (lower.includes("kävel")) workoutType = "Kävelylenkki";
     else if (lower.includes("pyörä")) workoutType = "Pyöräily";
     else workoutType = "Huoltava harjoitus";
   } else if (category === "rest") {
@@ -301,20 +314,39 @@ export function cleanSpokenToSelkosuomi(rawSpeech: string): string {
 
   let text = rawSpeech.trim();
 
-  // Poistetaan täytesanat ("tota", "niinku", "sillee", "öö", "tuota noin")
+  // Poistetaan alun puhekieliset aloitussanat ("Joo", "No", "Elikkä", "Tota")
+  text = text.replace(
+    /^(joo+|noo?|eli|elikkä|tota|tuota|hei|okei|noniin|no niin)[,\s]+/i,
+    ""
+  );
+
+  // Siistitään tyypilliset puhekieliset rakenteet yleiskieleksi
   text = text
-    .replace(/\b(tota noin|tuota noin|tota|tuota|niinku|niin sanotusti|sillee|vähän niinku|öö+|ää+|hmm+)\b/gi, " ")
+    .replace(
+      /\b(tein tänään semmosen|tein semmosen|kävin tekemässä semmosen|vedin tänään semmosen)\b/gi,
+      "Suoritettu"
+    )
+    .replace(
+      /\b(tota noin|tuota noin|tota|tuota|niinku|niin sanotusti|sillee|vähän niinku|tai semmonen|semmonen|semmosen|tämmönen|tämmösen|öö+|ää+|hmm+)\b/gi,
+      " "
+    )
+    .replace(/\b(siin oli|siinä oli)\b/gi, "mukana")
+    .replace(/\b(ja sitte|ja sit|sitte|sit)\b/gi, "sekä")
     .replace(/\b(mä)\b/gi, "")
-    .replace(/\b(문|mul oli|mulla oli)\b/gi, "oli")
+    .replace(/\b(mul oli|mulla oli)\b/gi, "oli")
     .replace(/\b( mut | mutta ku )\b/gi, ", mutta ")
     .replace(/\b(et |että ku )\b/gi, "että ")
-    .replace(/\b(sit |sitten ku )\b/gi, "ja ")
     .replace(/\b(ihan ok|ihan okei|ihan jees)\b/gi, "hyvin")
     .replace(/\b(tosi hyvin)\b/gi, "erinomaisesti")
-    .replace(/\b(kilsaa|kilsan)\b/gi, "km")
-    .replace(/\b(minsaa|minsan)\b/gi, "min")
+    .replace(/\b(kilsaa|kilsan|kilometriä)\b/gi, "km")
+    .replace(/\b(minsaa|minsan|minuuttia)\b/gi, "min")
+    .replace(/\b(minuutti ja 15)\b/gi, "1 min 15 s palautus")
+    .replace(/\b(minuutin kiihdytys)\b/gi, "1 min kiihdytys")
     .replace(/\b(kiloo|kilon)\b/gi, "kg")
+    .replace(/\b(aamulenkin)\b/gi, "aamulenkki")
+    .replace(/\b(iltalenkin)\b/gi, "iltalenkki")
     .replace(/\s+/g, " ")
+    .replace(/\s+,/g, ",")
     .trim();
 
   // Muunnetaan alkukirjain isoksi ja varmistetaan piste lopussa
@@ -326,6 +358,57 @@ export function cleanSpokenToSelkosuomi(rawSpeech: string): string {
   }
 
   return text;
+}
+
+/**
+ * Tarkistaa ja siistii vanhan tai puhekielisen WorkoutLog-merkinnän selkosuomeksi
+ * (sekä otsikon että tuntemukset), jotta Supabasessa ja näkymissä ei näy raakaa puhekieltä.
+ */
+export function sanitizeWorkoutLogToSelkosuomi(log: WorkoutLog): {
+  log: WorkoutLog;
+  changed: boolean;
+} {
+  if (log.category === "strength") {
+    return { log, changed: false };
+  }
+
+  const rawFeelings = log.feelings || "";
+  const hasColloquialSpeech =
+    /\b(joo|semmosen|semmonen|tämmönen|niinku|tota|sitte|siin oli|Sanelu:)\b/i.test(
+      rawFeelings
+    ) || log.title === "Aamulenkki";
+
+  if (!hasColloquialSpeech) {
+    return { log, changed: false };
+  }
+
+  const parsed = parseSpokenWorkout(
+    `${log.title} ${rawFeelings}`,
+    log.performedDate
+  );
+  const newTitle =
+    log.title === "Aamulenkki" || log.title === "Juoksulenkki"
+      ? parsed.standardizedTitle
+      : log.title;
+
+  const cleanedFeelings = rawFeelings.includes("Tyyppi:")
+    ? rawFeelings
+        .replace(/Sanelu:\s*"([^"]+)"/i, (_, inner) => {
+          return `Yhteenveto: ${cleanSpokenToSelkosuomi(inner)}`;
+        })
+        .replace(/Yhteenveto:\s*"([^"]+)"/i, (_, inner) => {
+          return `Yhteenveto: ${cleanSpokenToSelkosuomi(inner)}`;
+        })
+    : parsed.structuredFeelings;
+
+  return {
+    log: {
+      ...log,
+      title: newTitle,
+      feelings: cleanedFeelings,
+    },
+    changed: newTitle !== log.title || cleanedFeelings !== log.feelings,
+  };
 }
 
 /**

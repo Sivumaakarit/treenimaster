@@ -10,6 +10,7 @@ import {
 } from "@/lib/workoutParser";
 import { Check, Sparkles, X } from "lucide-react";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
 
 interface QuickOtherWorkoutModalProps {
@@ -306,55 +307,80 @@ export function QuickOtherWorkoutModal({
             />
           </div>
 
-          {/* 2. Vakioitu esikatselukortti (näyttää heti millainen merkintä kalenteriin syntyy) */}
-          <div className="rounded-2xl border border-white/15 bg-black/50 p-3.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Muodostuva vakiomerkintä kalenteriin & päivän näkymään:
-            </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                style={SPORT_CATEGORIES[category].badgeStyle}
-              >
+          {/* 2. Vakioitu esikatselukortti + hauska kuvahahmo (näyttää heti millainen merkintä kalenteriin syntyy) */}
+          <div className="rounded-2xl border border-white/15 bg-black/50 p-3.5 flex items-start gap-3.5">
+            <SportCharacterAvatar
+              category={category}
+              title={standardizedTitle}
+              feelings={`${workoutType} ${feelings}`}
+              size="lg"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Muodostuva vakiomerkintä kalenteriin & päivän näkymään:
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: SPORT_CATEGORIES[category].hex }}
-                />
-                {SPORT_CATEGORIES[category].shortLabel}
-              </span>
-              <span className="text-sm font-bold text-white">
-                {standardizedTitle}
-              </span>
-            </div>
-            <div className="mt-1 text-xs text-zinc-300">
-              {buildStructuredFeelings()}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                  style={SPORT_CATEGORIES[category].badgeStyle}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: SPORT_CATEGORIES[category].hex }}
+                  />
+                  {SPORT_CATEGORIES[category].shortLabel}
+                </span>
+                <span className="text-sm font-bold text-white">
+                  {standardizedTitle}
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-zinc-300">
+                {buildStructuredFeelings()}
+              </div>
             </div>
           </div>
 
-          {/* 3. Lajivalinta */}
+          {/* 3. Lajivalinta & valmiit kuvahahmot (Juoksija, Hiihtäjä, Punttimies, Tennis, Sulkapallo, Golf, Huolto) */}
           <div>
             <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-              Laji
+              Laji & kuvahahmo
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-              {QUICK_CATEGORIES.map((catId) => {
-                const meta = SPORT_CATEGORIES[catId];
-                const active = category === catId;
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {[
+                { label: "Juoksija (Lenkki)", cat: "run" as SportCategory, type: "Kevyt PK", d: "25", rpe: "6.0" },
+                { label: "Hiihtäjä (Hiihto)", cat: "ski" as SportCategory, type: "Vapaa / luistelu", d: "45", rpe: "7.0" },
+                { label: "Tennis / Padel", cat: "tennis" as SportCategory, type: "Pelit & pallottelu", d: "60", rpe: "7.5" },
+                { label: "Sulkapallo", cat: "other" as SportCategory, type: "Sulkapallo", d: "60", rpe: "7.5" },
+                { label: "Golf", cat: "other" as SportCategory, type: "Golf", d: "120", rpe: "5.5" },
+                { label: "Punttimies (Sali)", cat: "strength" as SportCategory, type: "Voimaharjoitus", d: "60", rpe: "8.0" },
+                { label: "Kehonhuolto / Muu", cat: "other" as SportCategory, type: "Kehonhuolto", d: "30", rpe: "5.0" },
+                { label: "Lepopäivä", cat: "rest" as SportCategory, type: "Palautuminen", d: "0", rpe: "1.0" },
+              ].map((item) => {
+                const active =
+                  category === item.cat &&
+                  (item.cat !== "other" || workoutType === item.type);
                 return (
                   <button
-                    key={catId}
+                    key={item.label}
                     type="button"
-                    onClick={() => handleSelectCategory(catId)}
-                    className={`apple-press flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-left text-xs font-semibold border transition-all ${
+                    onClick={() => {
+                      setCategory(item.cat);
+                      setWorkoutType(item.type);
+                      setDurationMinutes(item.d);
+                      setRpe(item.rpe);
+                    }}
+                    className={`apple-press flex items-center gap-2 px-2.5 py-2 rounded-xl text-left text-xs font-semibold border transition-all ${
                       active
                         ? "bg-white/15 border-white/40 text-white shadow-sm"
                         : "bg-white/[0.04] border-white/10 text-zinc-300 hover:bg-white/[0.08]"
                     }`}
                   >
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${meta.dotClass}`}
+                    <SportCharacterAvatar
+                      category={item.cat}
+                      title={item.type}
+                      size="sm"
                     />
-                    <span className="truncate">{meta.shortLabel}</span>
+                    <span className="truncate">{item.label}</span>
                   </button>
                 );
               })}

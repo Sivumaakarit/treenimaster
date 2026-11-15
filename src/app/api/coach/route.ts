@@ -10,7 +10,10 @@ import {
   SportCategory,
   WorkoutLog,
 } from "@/lib/types";
-import { parseSpokenWorkout } from "@/lib/workoutParser";
+import {
+  cleanSpokenToSelkosuomi,
+  parseSpokenWorkout,
+} from "@/lib/workoutParser";
 
 function loadKnowledgeDocs(): string {
   try {
@@ -267,7 +270,7 @@ VALMENNUSPERIAATTEET (EHDOTTOMAT SÄÄNNÖT):
    - performedDate: muodossa YYYY-MM-DD (tänään on ${todayISO}; jos käyttäjä sanoo "eilen", laske eilinen päivämäärä)
    - durationMinutes: kesto minuutteina (esim. "tunnin" = 60, "22 minuuttia" = 22)
    - rpe: arvioitu kuormitus 1-10
-   - feelings: tiivistelmä käyttäjän subjektiivisista tuntemuksista (miten happi kulki, miten jaksoi, väsymys, palautuminen)
+   - feelings: KIRJOITA AINA SIISTIÄ, KIELIOPILLISESTI PUHDASTA SELKOSUOMEA (1–2 virkettä yleiskielellä, esim. "Aamulenkki 22 min Tabata-intervallityylillä (1 min kiihdytys ja 1 min 15 s palautus). Happi kulki erinomaisesti."). ÄLÄ KOSKAAN kopioi puhekielistä sanelua ("joo tein tänään semmosen...", "niinku", "tota") sellaisenaan!
    - oxygenScore: 1-5 (miten happi kulki)
    - energyScore: 1-5 (miten voimat/jaksaminen riittivät)
    - recoveryStatus: 'erinomainen' | 'normaali' | 'tukkoinen' | 'flunssainen'
@@ -419,9 +422,9 @@ ${knowledgeBase}`;
                 ? aiDetected.rpe
                 : fallbackDetected.rpe ?? 6.5,
             feelings:
+              cleanSpokenToSelkosuomi(aiDetected.feelings || "") ||
               fallbackDetected.feelings ||
-              aiDetected.feelings ||
-              message.trim(),
+              cleanSpokenToSelkosuomi(message),
             oxygenScore:
               aiDetected.oxygenScore ?? fallbackDetected.oxygenScore ?? 4,
             energyScore:

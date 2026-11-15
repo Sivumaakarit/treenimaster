@@ -7,6 +7,7 @@ import {
   ProgramWorkout,
   WorkoutLog,
 } from "./types";
+import { sanitizeWorkoutLogToSelkosuomi } from "./workoutParser";
 
 const STORAGE_KEYS = {
   PROGRAMS: "treenimaster_programs_v2",
@@ -280,7 +281,17 @@ export function getLocalLogs(todayISO: string = formatLocalISODate()): WorkoutLo
       window.localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(seeds));
       return seeds;
     }
-    return JSON.parse(raw) as WorkoutLog[];
+    const parsed = JSON.parse(raw) as WorkoutLog[];
+    let anyChanged = false;
+    const sanitized = parsed.map((l) => {
+      const res = sanitizeWorkoutLogToSelkosuomi(l);
+      if (res.changed) anyChanged = true;
+      return res.log;
+    });
+    if (anyChanged) {
+      window.localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(sanitized));
+    }
+    return sanitized;
   } catch {
     return createInitialSeedLogs(todayISO);
   }
@@ -385,7 +396,16 @@ export async function syncInitialDataWithSupabase(
         const logRows = localLogs.map(mapWorkoutLogToRow);
         void supabase.from("treenimaster_logs").upsert(logRows);
       } else {
-        finalLogs = remoteLogs.map(mapRowToWorkoutLog);
+        finalLogs = remoteLogs.map((r) => {
+          const mapped = mapRowToWorkoutLog(r);
+          const sanitized = sanitizeWorkoutLogToSelkosuomi(mapped);
+          if (sanitized.changed) {
+            void supabase
+              .from("treenimaster_logs")
+              .upsert(mapWorkoutLogToRow(sanitized.log));
+          }
+          return sanitized.log;
+        });
         if (typeof window !== "undefined") {
           window.localStorage.setItem(
             STORAGE_KEYS.LOGS,
