@@ -336,29 +336,32 @@ export function TodayWorkoutView({
     baseWorkout.id === recommendation.nextWorkout.id;
 
   return (
-    <div className="min-w-0 space-y-5">
+    <div className="min-w-0 space-y-4">
+      {/* Päivän selkeä tekstiotsikko kortin yläpuolella (ilman pillereitä tai ikoneita) */}
+      <div className="px-1">
+        <p className="text-lg sm:text-xl font-bold tracking-tight text-white">
+          Tänään{" "}
+          <span className="font-normal text-zinc-400">
+            · {formatFinnishShortDate(todayISO).toLowerCase()}
+          </span>
+        </p>
+      </div>
+
       {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & lepopäivän kirjaus */}
       <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold bg-[#0A84FF]/15 text-[#64D2FF] border border-[#0A84FF]/30">
-                <CalendarClock className="w-4 h-4 shrink-0" />
-                <span>{formatFinnishShortDate(todayISO)}</span>
-              </span>
-
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold border whitespace-normal leading-snug ${recommendation.readinessState === "ready"
-                  ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
-                  : recommendation.readinessState === "completed_today"
-                    ? "bg-[#0A84FF]/15 text-[#64D2FF] border-[#0A84FF]/35"
-                    : "bg-[#FF9F0A]/15 text-[#FFD60A] border-[#FF9F0A]/35"
-                  }`}
-              >
-                <ShieldCheck className="w-4 h-4 shrink-0" />
-                <span>{recommendation.readinessHeadline}</span>
-              </span>
-            </div>
+          <div className="min-w-0">
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold border whitespace-normal leading-snug ${recommendation.readinessState === "ready"
+                ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
+                : recommendation.readinessState === "completed_today"
+                  ? "bg-[#0A84FF]/15 text-[#64D2FF] border-[#0A84FF]/35"
+                  : "bg-[#FF9F0A]/15 text-[#FFD60A] border-[#FF9F0A]/35"
+                }`}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>{recommendation.readinessHeadline}</span>
+            </span>
           </div>
 
           {recommendation.readinessState === "ready" && (
