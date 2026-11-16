@@ -2,122 +2,169 @@
 
 ---
 
-## 1. VALMENTAJAN ROOLI JA OHJEET (SYSTEM PROMPT)
+## 1. 12 KIERRON KOKONAISVALTAINEN VOIMAOHJELMA (8 + 4 VIIKKOA)
 
-### Persoona ja viestintätyyli
-* **Rooli:** Kokenut, analyyttinen ja suora fysiikka- ja voimavalmentaja ("Treenimaster").
-* **Tyyli:** Asiallinen, selkeä, kannustava mutta realistinen ja tarvittaessa jarruttava. Ei turhaa pehmentelyä, vaan suorat perustelut fysiologian, biomekaniikan ja hermoston toiminnan kautta.
-* **Kieli:** Suomi.
+Tämä ohjelma pohjautuu toteutuneeseen 1,5 vuoden harjoitushistoriaasi, aaltomaiseen kuormitukseen ja liukuvaan mikrosykliin ilman keinotekoisia 7 päivän viikkorajoitteita.
 
-### Valmennusfilosofia
-1. **Minimalistinen ja korkealaatuinen tekeminen:** Ei eristäviä apuliikkeitä tai turhaa "pumppailua" pääliikkeiden päälle. Kaikki energia keskitetään pääliikkeisiin (Maastaveto, Penkkipunnerrus, Etukyykky, Lisäpainoleuanveto) sekä kehonhallintaan/nopeusvoimaan (käsilläseisonnat, nopeusmaastaveto, pikavoimapenkki).
-2. **Hermostollinen tehokkuus & Post-Activation Potentiation (PAP):** Valmennus hyödyntää aaltoperiodisaatiota ja kontrastivoimaa: raskas, terävä herätesarja (1–3 toistoa, RPE ~8.5–9) herättää korkean kynnyksen motoriset yksiköt, minkä jälkeen tehtävät back-off-työsarjat (esim. 2–3 × 5) tai tasaiset perusvoimaviikot (3 × 4 / 4 × 4) rakentavat varsinaisen voimapohjan.
-3. **Ei kalenteriviikkoon (7 pv) hirttäytymistä:** Ohjelma etenee **liukuvalla mikrosyklillä** (kierto n. 9–12 päivää). Harjoitukset tehdään kiinteässä järjestyksessä (Treeni 1 → Treeni 2 → Treeni 3), ja väleihin otetaan aina tarvittava määrä lepopäiviä palautumisen mukaan.
-4. **Palautumisen kunnioittaminen (lähes 50-vuotiaan fysiologia):** Keskushermoston (CNS) syvä palautuminen sekä jänteiden ja nivelten sopeutuminen vievät enemmän aikaa kuin lihasten energiavarastojen täyttyminen. Raskaiden maastavetojen jälkeen pidetään poikkeuksetta **2–3 täyttä lepopäivää** ennen etukyykkyä, eikä maastavetoa ja etukyykkyä koskaan tehdä samassa harjoituksessa.
-5. **Pitkän aikavälin seuranta ja reagointi:**
-   * Seuraa aina toteutuneita nostoja suhteessa suunniteltuun haarukkaan ja huomioi nostajan tuntemukset (esim. tangon liikenopeus, flunssan oireet, tukkoisuus).
-   * Jos nostaja oireilee (esim. flunssa "kaulan yläpuolella" tai yleinen väsymys), priorisoi aina lepo ja immuunijärjestelmän palautuminen ennen ennätys- tai maksimipäiviä.
-   * Jätä tavallisissa treeneissä pääsarjoihin aina 1–1,5 toiston tekninen reservi (ei jatkuvaa RPE 10 -puristusta), jotta hermosto ei pala loppuun.
-
----
-
-## 2. KÄYTTÄJÄN TAUSTATIEDOT, TAVOITTEET JA RAJOITTEET
-
-### Perustiedot ja fysiologia
-* **Ikä:** Lähes 50-vuotias (49 v).
-* **Harjoitustausta:** Vahva ja pitkäjänteinen voimaharjoittelutausta; takana vähintään 1,5 vuoden yhtenäinen dokumentoitu treenihistoria kovilla kuormilla.
-* **Palautuminen ja kuormituksensieto:** Pystyy ja haluaa treenata kovaa ja tiukasti (pitää selkeästä fyysisestä kuormituksesta), mutta vaatii raskaiden vetopäivien jälkeen 2–3 täyttä lepopäivää, jotta alaselkä, jänteet ja keskushermosto palautuvat.
-* **Päälajit ja liikevalikoima:** Kuntosali (voimanostopainotteinen minimalismi: maastaveto, penkkipunnerrus, etukyykky, lisäpainoleuanveto) sekä kehonhallinta ja nopeusvoima (käsilläseisonnat, keskivartalo, nopeusmaastaveto, pikavoimapenkki). Lisäksi aerobinen / monipuolinen liikunta (juoksu/lenkki, tennis, hiihto).
-
-### Tavoitteet
-* Maksimivoiman ja suorituskyvyn jatkuva nostaminen pääliikkeissä (DL, B, S, L) ilman ylikuntoa tai loukkaantumisia.
-* Noudattaa omaksi ja toimivaksi koettua progressiomallia: raskas heräte (ykkönen, kakkonen tai kolmonen) + 2–3 työsarjaa (vitosia), vuoroteltuna tasaisempien perusvoimakiertojen (3 × 4 tai 4 × 4) kanssa, huipentuen 4 viikon piikkausjaksoon ja uusiin ennätystesteihin.
-* **Seuraavan 12 viikon (8 kiertoa + 4 viikon piikkaus) ennätystavoitteet:**
-  * **Maastaveto (DL):** 210–212,5 kg
-  * **Penkkipunnerrus (B):** 117,5 kg
-  * **Etukyykky (S):** 135–137,5 kg
-  * **Lisäpainoleuanveto (L):** +57,5–60 kg
-
-### Rajoitteet ja huomiot
-* **Ei maastavetoa ja etukyykkyä samana päivänä:** Alaselkä ja keskivartalo kuormittuvat liikaa, jos molemmat raskaat alavartalon liikkeet ovat samassa treenissä.
-* **Flunssa-alttius piikkauksen aikana:** Keskusteluhistorian piikkausjakson aikana esiintyi lievää "kaulan yläpuolella" olevaa nuhaa, aivastelua ja kylmyyden tunnetta, mikä ratkaistiin jättämällä kevyt viritystreeni väliin ja korvaamalla se kevyellä verenkierron herättelyllä ilman tankokuormaa.
-
----
-
-## 3. NYKYINEN VOIMAOHJELMA (KOKONAISUUDESSAAN: 8 KIERRON PERUSVOIMA + 4 VIIKON PIIKKAUS)
-
-### Laskentapohjana käytetyt tuoreet maksimit (1RM)
-* **Maastaveto (DL):** 205 kg *(testattu 200 kg varalla)*
-* **Penkkipunnerrus (B):** 112,5 kg *(testattu 110 kg hyväksytty, 115 kg melkein)*
+### 1.1 Laskentapohjat (1RM)
+* **Maastaveto (DL):** 205 kg *(testattu 200 kg pienellä reservillä)*
+* **Penkkipunnerrus (B):** 112,5 kg *(110 kg helppo, 115 kg hilkulla)*
 * **Etukyykky (S):** 132,5 kg
-* **Lisäpainoleuanveto (L):** +55 kg *(testattu 1 × +55 kg)*
+* **Lisäpainoleuanveto (L):** +55 kg
 
 ---
 
-### Liukuva 3 treenin kierto ja lepopäivät (Kokonaiskierto n. 10–12 päivää)
-Treenit suoritetaan järjestyksessä **1 → 2 → 3** riippumatta viikonpäivistä:
+## 2. MIKROSYKLIN RAKENNE & LEPOAJAT
 
-1. **Treeni 1 (A-päivä): Raskas maastaveto, Pääpenkki & Raskaat lisäpainoleuat**
-   * *Palautus sarjojen välillä:* 3–5 minuuttia.
-   * *Lepo treenin jälkeen:* **2–3 täyttä lepopäivää** (alaselän ja hermoston täysi palautuminen; älä mene etukyykkyyn, jos alaselkä on kolmantena päivänä vielä tukkoinen).
-2. **Treeni 2 (B-päivä): Etukyykky & Volyymileuanveto**
-   * *Sisältö:* Etukyykyn pääsarjat progression mukaan + päälle yksi rajoille viety (perusvoimakierroilla) tai kevennetty (kevennys-/piikkauskierroilla) volyymisarja leuanvetoa (esim. 10–12 × +20–22,5 kg).
-   * *Lepo treenin jälkeen:* **1–2 täyttä lepopäivää**.
-3. **Treeni 3 (C-päivä / Extrapäivä): Nopeusvoima & Kehonhallinta**
-   * *Sisältö:*
-     * **Käsilläseisonnat & keskivartalo:** Olkapäiden tuki, lapojen hallinta ja korsettipaineet.
-     * **Nopeusmaastaveto:** 5–8 × 1 × 135–140 kg (vain maksimaalinen irrotusnopeus lattiasta ilman uupumusta).
-     * **Pikavoimapenkki:** 4 kierrosta aaltoja (3 × 60 kg → 1 × 70 kg) tai dynaaminen 8 × 3 × 60 kg.
-     * *(Valinnainen lisä kovemmilla kierroilla: kevyet boksihypyt tai raskas pystypunnerrus)*.
-   * *Lepo treenin jälkeen:* **2 täyttä lepopäivää** ennen uuden kierron Treeniä 1.
+Kierto etenee järjestyksessä ilman kiinteitä viikonpäiviä:
 
----
+### Treeni 1 (A-päivä): Pääveto, pääpenkki & lisäpainoleuat
+* **Maastaveto (DL)**
+* **Penkkipunnerrus (B)**
+* **Lisäpainoleuanveto (L)** – jätetään 1–1,5 toistoa varaa
+* **Lepo:** 2 täyttä lepopäivää (keskushermoston ja alaselän täydellinen toipuminen)
 
-### Osa A: 8 kierron tiukennettu perusvoimajakso (Kovempi volyymi & intensiteetti)
+### Treeni 2 (B-päivä): Etukyykky & rajoille viety volyymileuka
+* **Etukyykky (S)** – jätetään 1–1,5 toistoa varaa
+* **Leuanveto (L) volyymi / hypertrofiasarja:** 1 kova sarja rajoille asti päivän fiiliksen mukaan joko +15 kg (n. 12–15 toistoa) tai +20–22,5 kg (n. 9–12 toistoa). *Huom: kevennys- ja piikkauskierroilla jätetään 2–3 toistoa varaa!*
+* **Lepo:** 1–2 lepopäivää
 
-#### Progressiosäännöt (4 kierron aalto × 2 blokkia):
-* **Kierrot 1 & 5 (Raskas kolmonen + back-off vitoset):** 1 × 3 (jätä 1–1,5 toistoa varaa, RPE 8.5–9) + **3 × 5**
-* **Kierrot 2 & 6 (Kova tasainen perusvoima):** **4 × 4**
-* **Kierrot 3 & 7 (Tiukka kakkonen/ykkönen + back-off):** 1 × 2 (Kierto 3) tai 1 × 1 (Kierto 7) + **3 × 5** (Kierto 3) / **3 × 4** (Kierto 7)
-* **Kierrot 4 & 8 (Kevyt huoltava kierto / Deload):** **2 × 3** (Kierto 4) tai **2 × 2** (Kierto 8)
-
-#### Tarkat kilot ja sarjat kierroittain (Kierrot 1–8):
-
-| Kierto | Rakenne | Maastaveto (DL) *(Treeni 1)* | Penkkipunnerrus (B) *(Treeni 1)* | Lisäpainoleuat (L) *(Treeni 1)* | Etukyykky (S) *(Treeni 2)* | Volyymileuat *(Treeni 2)* |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Kierto 1** | **Raskas 3 + 3 × 5** | 1×3×175 kg + **3×5×150 kg** | 1×3×97,5 kg + **3×5×85 kg** | 1×3×+42,5 kg + **3×5×+30 kg** | 1×3×115 kg + **3×5×100 kg** | 1 × 10–12 × +20 kg (rajoille) |
-| **Kierto 2** | **Kova volyymi: 4 × 4** | **4×4×162,5 kg** | **4×4×90 kg** | **4×4×+35 kg** | **4×4×107,5 kg** | 1 × 10–12 × +20 kg (rajoille) |
-| **Kierto 3** | **Tiukka 2 + 3 × 5** | 1×2×185 kg + **3×5×155 kg** | 1×2×102,5 kg + **3×5×87,5 kg** | 1×2×+47,5 kg + **3×5×+32,5 kg** | 1×2×120 kg + **3×5×102,5 kg** | 1 × 10–12 × +20–22,5 kg (rajoille) |
-| **Kierto 4** | *Kevyt huolto (2 × 3)* | 2×3×135 kg | 2×3×75 kg | 2×3×+20 kg | 2×3×87,5 kg | 1 × 8 × +10–15 kg (reserviä) |
-| **Kierto 5** | **Raskas 3 + 3 × 5** | 1×3×180 kg + **3×5×155 kg** | 1×3×100 kg + **3×5×87,5 kg** | 1×3×+45 kg + **3×5×+32,5 kg** | 1×3×117,5 kg + **3×5×102,5 kg** | 1 × 10–12 × +20–22,5 kg (rajoille) |
-| **Kierto 6** | **Kova volyymi: 4 × 4** | **4×4×167,5 kg** | **4×4×92,5 kg** | **4×4×+37,5 kg** | **4×4×110 kg** | 1 × 10–12 × +22,5 kg (rajoille) |
-| **Kierto 7** | **Huippu 1 + 3 × 4** | 1×1×195 kg + **3×4×162,5 kg** | 1×1×107,5 kg + **3×4×90 kg** | 1×1×+50–52,5 kg + **3×4×+35 kg** | 1×1×125–127,5 kg + **3×4×105 kg** | 1 × 10 × +22,5 kg (rajoille) |
-| **Kierto 8** | *Valmisteleva kevennys (2 × 2)* | 2×2×140 kg | 2×2×75 kg | 2×2×+20 kg | 2×2×90 kg | 1 × 6–8 × +10 kg (kevyt) |
+### Treeni 3 (C-päivä / Extrapäivä): Pikavoima & keskivartalo
+* **Käsilläseisonnat & keskivartalo** (kehonhallinta, korsettipaineet ilman maitohappoa)
+* **Pikavoimapenkki:** 4 kierrosta kontrastiaallolla (3 × 60 kg → 1 × 70 kg) TAI dynaaminen 8 × 3 × 60 kg (palautus 45–60 s)
+* **Nopeusmaastaveto:** 5–6 × 1 × 135–140 kg (maksimaalinen irrotusnopeus alustasta ilman uupumusta)
+* **Kevyet boksihypyt** (halutessa 3 × 3 kimmotustyönä)
+* **Lepo:** 1–2 lepopäivää ennen uuden kierron alkua
 
 ---
 
-### Osa B: 4 viikon piikkausjakso (Viikot 9–12)
+## 3. OSA 1: 8 KIERRON PERUSVOIMAJAKSO
 
-8 kierron perusvoimablokin jälkeen volyymi leikataan minimiin ja haetaan maksimitehot ulos:
+### Perusvoimajakson aaltokaava:
+* **Herätekierrot (1, 3, 5, 7):** 1 raskas noususarja (1–3 toistoa, RPE ~8.5–9) + 2 × 5 back-off (~72–77 %)
+* **Perusvoimakierrot (2, 6):** 3 × 4 tasaisella kuormalla (~78–81 %)
+* **Kevennyskierrot (4, 8):** 2 × 3 tai 2 × 2 kevyesti hermoston huoltamiseksi
 
-* **Viikko 9 (Raskas kakkonen + terävät kolmoset):**
-  * Pääsarja: **1 × 2 @ ~92 %** + Back-off: **2 × 3 @ 80 %**
-  * *Kiloina:* DL: 1×2×187,5–190 kg + 2×3×165 kg | B: 1×2×102,5–105 kg + 2×3×90 kg | S: 1×2×122,5 kg + 2×3×105 kg | L: 1×2×+50 kg + 2×3×+42,5 kg.
-  * *Treeni 2 volyymileuat:* Kevyt 1 × 6–8 × +15 kg (jätetään reilusti varaa).
-* **Viikko 10 (Maksimituntuma @ 95 %):**
-  * Pääsarja: **1 × 1 @ 95 %** + Back-off: **1 × 3 @ 80 %**
-  * *Kiloina:* DL: 1×1×195 kg + 1×3×165 kg | B: 1×1×107,5 kg + 1×3×90 kg | S: 1×1×125 kg + 1×3×105 kg | L: 1×1×+52,5 kg + 1×3×+42,5 kg.
-* **Viikko 11 (Viritys ja kevennys):**
-  * Pelkkiä räjähtäviä submaksimaalisia ykkösiä ilman väsymystä:
-    * DL: 2 × 1 × 160 kg
-    * B: 2 × 1 × 90 kg
-    * S: 2 × 1 × 105–110 kg
-    * L: 2 × 1 × +25 kg
-* **Viikko 12 (UUSI ENNÄTYSTESTI – H-HETKET):**
-  * **Torstai (H-hetki 1: DL + B + L):**
-    * **Maastaveto:** Lämmittelyt → 1 × 185 kg → 1 × 200 kg → **1 × 210–212,5 kg (UUSI ENNÄTYS)**
-    * **Penkkipunnerrus:** Lämmittelyt → 1 × 102,5 kg → 1 × 107,5 kg → 1 × 112,5 kg → **1 × 117,5 kg (UUSI ENNÄTYS)**
-    * **Lisäpainoleuat:** Lämmittelyt → 1 × +40 kg → 1 × +50 kg → **1 × +57,5–60 kg (UUSI ENNÄTYS)**
-  * **Perjantai & Lauantai:** Täydet lepopäivät.
-  * **Sunnuntai (H-hetki 2: Etukyykky):**
-    * **Etukyykky:** Lämmittelyt → 1 × 115 kg → 1 × 125 kg → **1 × 135–137,5 kg (UUSI ENNÄTYS)**
+### Kierto 1 (Sisäänajo & heräte)
+* **Penkkipunnerrus:** 1 × 3 × 95 kg + 2 × 5 × 82,5 kg
+* **Maastaveto:** 1 × 3 × 170 kg + 2 × 5 × 147,5 kg
+* **Lisäpainoleuka (Treeni 1):** 1 × 3 × +40 kg + 2 × 5 × +27,5 kg
+* **Etukyykky (Treeni 2):** 1 × 3 × 112,5 kg + 2 × 5 × 97,5 kg
+* **Volyymileuka (Treeni 2):** 1 × max × +15 kg (n. 12–15 toistoa) tai +20 kg (n. 10–12 toistoa) (rajoille asti)
+
+### Kierto 2 (Tasainen perusvoima)
+* **Penkkipunnerrus:** 3 × 4 × 87,5 kg
+* **Maastaveto:** 3 × 4 × 157,5 kg
+* **Lisäpainoleuka (Treeni 1):** 3 × 4 × +32,5 kg
+* **Etukyykky (Treeni 2):** 3 × 4 × 102,5–105 kg
+* **Volyymileuka (Treeni 2):** 1 × max × +15 kg tai +20–22,5 kg (rajoille asti)
+
+### Kierto 3 (Terävämpi heräte)
+* **Penkkipunnerrus:** 1 × 2 × 100 kg + 2 × 5 × 85 kg
+* **Maastaveto:** 1 × 2 × 180 kg + 2 × 5 × 152,5 kg
+* **Lisäpainoleuka (Treeni 1):** 1 × 2 × +45 kg + 2 × 5 × +30 kg
+* **Etukyykky (Treeni 2):** 1 × 2 × 117,5 kg + 2 × 5 × 100 kg
+* **Volyymileuka (Treeni 2):** 1 × max × +15 kg tai +20 kg (rajoille asti)
+
+### Kierto 4 (Huoltava / kevennys)
+* **Penkkipunnerrus:** 2 × 3 × 72,5 kg
+* **Maastaveto:** 2 × 3 × 130–135 kg
+* **Lisäpainoleuka (Treeni 1):** 2 × 3 × +15 kg
+* **Etukyykky (Treeni 2):** 2 × 3 × 85 kg
+* **Volyymileuka (Treeni 2):** 1 × 6–8 × +10 kg (kevyt huoltava pumppi, jätä 3–4 toistoa varaa)
+
+### Kierto 5 (Korotettu kuorma)
+* **Penkkipunnerrus:** 1 × 3 × 97,5 kg + 2 × 5 × 85 kg
+* **Maastaveto:** 1 × 3 × 175 kg + 2 × 5 × 152,5 kg
+* **Lisäpainoleuka (Treeni 1):** 1 × 3 × +42,5 kg + 2 × 5 × +30 kg
+* **Etukyykky (Treeni 2):** 1 × 3 × 115 kg + 2 × 5 × 100 kg
+* **Volyymileuka (Treeni 2):** 1 × max × +15 kg tai +20–22,5 kg (rajoille asti)
+
+### Kierto 6 (Tasainen kova perusvoima)
+* **Penkkipunnerrus:** 3 × 4 × 90 kg
+* **Maastaveto:** 3 × 4 × 162,5 kg
+* **Lisäpainoleuka (Treeni 1):** 3 × 4 × +35 kg
+* **Etukyykky (Treeni 2):** 3 × 4 × 107,5 kg
+* **Volyymileuka (Treeni 2):** 1 × max × +15 kg tai +20–22,5 kg (rajoille asti)
+
+### Kierto 7 (Perusvoimajakson huippukierto)
+* **Penkkipunnerrus:** 1 × 1 × 105–107,5 kg + 2 × 5 × 87,5 kg
+* **Maastaveto:** 1 × 1 × 190–192,5 kg + 2 × 5 × 157,5 kg
+* **Lisäpainoleuka (Treeni 1):** 1 × 1 × +50 kg + 2 × 5 × +32,5 kg
+* **Etukyykky (Treeni 2):** 1 × 1 × 122,5–125 kg + 2 × 5 × 102,5 kg
+* **Volyymileuka (Treeni 2):** 1 × 8–12 × +15–20 kg (tiukka sarja, mutta jätä 1 toisto varaa ennen kevennystä)
+
+### Kierto 8 (Valmisteleva kevennys)
+* **Penkkipunnerrus:** 2 × 2 × 75 kg
+* **Maastaveto:** 2 × 2 × 135–140 kg
+* **Lisäpainoleuka (Treeni 1):** 2 × 2 × +20 kg
+* **Etukyykky (Treeni 2):** 2 × 2 × 90 kg
+* **Volyymileuka (Treeni 2):** 1 × 6 × +10 kg (kevyt liikerata, ei uupumusta)
+
+---
+
+## 4. OSA 2: 4 VIIKON PIIKKAUSJAKSO (Huipennus uusiin ennätyksiin)
+
+Piikkausjaksolla volyymia pudotetaan radikaalisti ja hermoston kiihtyvyys viritetään absoluuttiseen huippuunsa. Back-off-vitoset ja rajoille viedyt uupumussarjat jäävät pois, jotta kaikki voima kanavoituu uusiin ennätyksiin.
+
+### Tavoitteet piikkauksen päätteeksi:
+* **Maastaveto:** 210–215 kg
+* **Penkkipunnerrus:** 115–120 kg
+* **Lisäpainoleuka:** +57,5–60 kg
+* **Etukyykky:** 135–140 kg
+
+### Viikko 9 (Piikkausvko 1: Raskas hermostollinen kakkonen)
+* **Tarkoitus:** Poistetaan volyymi, nostetaan absoluuttista intensiteettiä hallitusti.
+* **Treeni 1 (A-päivä):**
+  * DL: Nousu → 1 × 2 × 185 kg (ei pudotussarjoja)
+  * B: Nousu → 1 × 2 × 102,5 kg
+  * L: Nousu → 1 × 2 × +47,5 kg
+  * *2 lepopäivää*
+* **Treeni 2 (B-päivä):**
+  * S: Nousu → 1 × 2 × 122,5 kg
+  * L: 1 × 6–8 × +15 kg (terävä pumppi, jätä 2–3 toistoa varaa)
+  * *1–2 lepopäivää*
+* **Treeni 3 (C-päivä):**
+  * B pikavoima: 6 × 2 × 65 kg (maksimaalinen räjähtävyys)
+  * DL nopeus: 4 × 1 × 140 kg
+  * Käsilläseisonta & kevyet vatsat
+
+### Viikko 10 (Piikkausvko 2: Submaksimaalinen heräteykkönen)
+* **Tarkoitus:** Herätetään korkean kynnyksen motoriset yksiköt koskettamatta vielä aivan maksimia.
+* **Treeni 1 (A-päivä):**
+  * DL: Nousu → 1 × 1 × 195 kg (napakkana, 1 toisto varaa)
+  * B: Nousu → 1 × 1 × 107,5 kg
+  * L: Nousu → 1 × 1 × +50–52,5 kg
+  * *2 lepopäivää*
+* **Treeni 2 (B-päivä):**
+  * S: Nousu → 1 × 1 × 127,5 kg
+  * L: 1 × 5 × +15 kg (kevyt ylläpito, ei uupumusta)
+  * *1–2 lepopäivää*
+* **Treeni 3 (C-päivä):**
+  * B pikavoima: 5 × 2 × 65 kg
+  * DL nopeus: 3 × 1 × 140 kg
+  * Käsilläseisonta
+
+### Viikko 11 (Piikkausvko 3: Nopeusviritys & kevennys)
+* **Tarkoitus:** Karsitaan väsymys kokonaan pois, tanko liikkuu pelkällä vauhdilla.
+* **Treeni 1 (A-päivä):**
+  * DL: 2 × 1 × 160 kg (pelkkä räjähtävä irrotus lattiasta)
+  * B: 3 × 1 × 90 kg (maksimaalinen kiihtyvyys rinnalta)
+  * L: 2 × 2 × +25 kg
+  * *2 lepopäivää*
+* **Treeni 2 (B-päivä):**
+  * S: 2 × 1 × 105 kg (kevyt liikerata, hyvä vatsapaine)
+  * L: Jätetään pois tai 1 × 3 × BW (oma paino)
+  * Keskivartalon kevyt aktivointi
+  * *2 lepopäivää*
+* **Treeni 3:** Jätetään kokonaan väliin. Täysi lepo ennen testiviikkoa.
+
+### Viikko 12 (Piikkausvko 4: ENNÄTYSVIIKKO / H-HETKET)
+* **Testipäivä 1: DL + B + L (Uudet ennätykset)**
+  * **Penkkipunnerrus (B):** Lämmittelyt → 1 × 100 kg → 1 × 107,5 kg → **1 × 115–117,5 kg (UUSI ENNÄTYS!)**
+  * **Maastaveto (DL):** Lämmittelyt → 1 × 180 kg → 1 × 197,5 kg → **1 × 207,5–212,5 kg (UUSI ENNÄTYS!)**
+  * **Lisäpainoleuanveto (L):** Lämmittelyt → 1 × +40 kg → 1 × +50 kg → **1 × +57,5–60 kg (UUSI ENNÄTYS!)**
+  * *Pidä 2 täyttä lepopäivää testipäivien välissä.*
+* **Testipäivä 2: Etukyykky (S)**
+  * **Etukyykky (S):** Lämmittelyt → 1 × 115 kg → 1 × 125 kg → **1 × 135–140 kg (UUSI ENNÄTYS!)**
+  * *Päälle kevyet palauttavat vatsojen availut ja venyttelyt.*

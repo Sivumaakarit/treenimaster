@@ -347,13 +347,13 @@ export function computeContinuousCoachingIntelligence(
       name: "Maastaveto (DL)",
       start1RM: BASE_1RM.deadlift,
       currentEstimated1RM: Math.round((BASE_1RM.deadlift + cycleProgressBonus) * 2) / 2,
-      target1RM: 210,
+      target1RM: 212.5,
       targetLabel: BASE_1RM.targetDeadlift,
       progressPercent: Math.min(
         100,
         Math.max(15, Math.round(((1 + completedBaseWorkouts) / 24) * 100))
       ),
-      latestSetSummary: "1×3×170 kg + 3×5×150 kg",
+      latestSetSummary: "1×3×170 kg + 2×5×147,5 kg",
     },
     {
       code: "B",
@@ -367,7 +367,7 @@ export function computeContinuousCoachingIntelligence(
         100,
         Math.max(15, Math.round(((1 + completedBaseWorkouts) / 24) * 100))
       ),
-      latestSetSummary: "1×3×92,5 kg + 3×5×85 kg",
+      latestSetSummary: "1×3×95 kg + 2×5×82,5 kg",
     },
     {
       code: "S",
@@ -375,13 +375,13 @@ export function computeContinuousCoachingIntelligence(
       start1RM: BASE_1RM.frontSquat,
       currentEstimated1RM:
         Math.round((BASE_1RM.frontSquat + cycleProgressBonus * 0.55) * 2) / 2,
-      target1RM: 135,
+      target1RM: 137.5,
       targetLabel: BASE_1RM.targetFrontSquat,
       progressPercent: Math.min(
         100,
         Math.max(12, Math.round(((1 + completedBaseWorkouts) / 24) * 100))
       ),
-      latestSetSummary: "Vuorossa: 1×3×115 kg + 3×5×100 kg",
+      latestSetSummary: "Vuorossa: 1×3×112,5 kg + 2×5×97,5 kg",
     },
     {
       code: "L",
@@ -395,7 +395,7 @@ export function computeContinuousCoachingIntelligence(
         100,
         Math.max(15, Math.round(((1 + completedBaseWorkouts) / 24) * 100))
       ),
-      latestSetSummary: "1×3×+42,5 kg + 3×5×+30 kg",
+      latestSetSummary: "1×3×+40 kg + 2×5×+27,5 kg",
     },
   ];
 
@@ -403,7 +403,7 @@ export function computeContinuousCoachingIntelligence(
   const coachInsights: ContinuousIntelligenceSummary["coachInsights"] = [
     {
       title: "Jatkuva tausta-analyysi: Voimaohjelman aloitus",
-      detail: `Kierto 1 · Treeni 1 on suoritettu vahvoilla painoilla (DL 3×170 kg, Penkki 3×92,5 kg, Leuat 3×+42,5 kg). Seuraavana vuorossa on ${recommendation.nextWorkout.title}.`,
+      detail: `Kierto 1 · Treeni 1 on suoritettu suunnitelman painoilla (DL 1×3×170 kg + 2×5×147,5 kg, Penkki 1×3×95 kg + 2×5×82,5 kg, Leuat 1×3×+40 kg + 2×5×+27,5 kg). Seuraavana vuorossa on ${recommendation.nextWorkout.title}.`,
       type: "success",
     },
     {

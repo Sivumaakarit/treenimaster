@@ -752,11 +752,12 @@ export function AnalyticsAndProgressView({
               1. PAP-kontrasti ja 1–1,5 toiston tekninen reservi
             </h4>
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-              Treeni 1:n raskas 1×3 huippusarja toimii{" "}
+              Treeni 1:n raskas 1–3 toiston huippusarja toimii{" "}
               <strong>Post-Activation Potentiation (PAP)</strong> -herätteenä,
-              joka rekrytoi korkean kynnyksen motoriset yksiköt ennen 3×5
-              back-off-volyymisarjoja. Sarjoja ei viedä koskaan tekniseen
-              failureen, jotta keskushermosto (CNS) ei ylikuormitu.
+              joka rekrytoi korkean kynnyksen motoriset yksiköt ennen 2×5
+              back-off-volyymisarjoja (tai tasaisempia 3×4 perusvoimakiertoja).
+              Sarjoja ei viedä koskaan tekniseen failureen, jotta
+              keskushermosto (CNS) ei ylikuormitu.
             </p>
           </div>
 
