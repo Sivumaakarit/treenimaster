@@ -361,15 +361,17 @@ export function TodayWorkoutView({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowSkipReasonBox((v) => !v)}
-              className="apple-press inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/15 text-sm font-semibold text-zinc-100"
-            >
-              <span>En treenaa tänään (kirjaa syy)</span>
-            </button>
-          </div>
+          {recommendation.readinessState === "ready" && (
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowSkipReasonBox((v) => !v)}
+                className="apple-press inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/15 text-sm font-semibold text-zinc-100"
+              >
+                <span>En treenaa tänään (kirjaa syy)</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Pikapaneeli: Miksi en treenannut tänään / miksi siirrän treeniä? */}

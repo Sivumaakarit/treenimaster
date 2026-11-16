@@ -123,6 +123,15 @@ dialog::backdrop {
   -webkit-backdrop-filter: blur(10px);
 }
 
+/* Estää iOS Safarin automaattisen zoomauksen mobiilissa muokatessa */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Reduced motion & transparency accessibility */
 @media (prefers-reduced-motion: reduce) {
   .apple-press,

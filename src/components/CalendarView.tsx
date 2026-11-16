@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -75,6 +75,20 @@ export function CalendarView({
   const [selectedDateISO, setSelectedDateISO] = useState<string>(todayISO);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const selectedDaySectionRef = useRef<HTMLDivElement | null>(null);
+
+  const handleSelectCalendarDay = (iso: string) => {
+    setSelectedDateISO(iso);
+    setEditingLogId(null);
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        selectedDaySectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
+  };
 
   // Manuaalisen / sanelulisäyksen tila
   const [newCategory, setNewCategory] = useState<SportCategory>("run");
@@ -356,7 +370,7 @@ export function CalendarView({
                 <button
                   key={cell.iso}
                   type="button"
-                  onClick={() => setSelectedDateISO(cell.iso)}
+                  onClick={() => handleSelectCalendarDay(cell.iso)}
                   className={`apple-press group relative flex flex-col items-start justify-between rounded-xl sm:rounded-2xl border p-1.5 sm:p-2 text-left transition ${
                     viewMode === "week"
                       ? "min-h-[110px] sm:min-h-[130px]"
@@ -456,7 +470,10 @@ export function CalendarView({
         </div>
 
         {/* Oikea / alla mobiilissa: Valitun päivän yhteenveto ja lisäys */}
-        <div className="apple-card flex flex-col justify-between p-4 sm:p-6 xl:col-span-4">
+        <div
+          ref={selectedDaySectionRef}
+          className="apple-card scroll-mt-24 flex flex-col justify-between p-4 sm:p-6 xl:col-span-4"
+        >
           <div>
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-3.5">
               <div>
@@ -628,37 +645,32 @@ export function CalendarView({
                       key={log.id}
                       className="rounded-2xl border border-white/12 bg-white/[0.04] p-4"
                     >
-                      <div className="flex items-start justify-between gap-2.5">
-                        <div className="flex items-start gap-3 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <SportCharacterAvatar
                             category={log.category}
                             title={log.title}
                             feelings={log.feelings}
                             size="md"
                           />
-                          <div className="min-w-0">
+                          <span
+                            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
+                            style={cat.badgeStyle}
+                          >
                             <span
-                              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                              style={cat.badgeStyle}
-                            >
-                              <span
-                                className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: cat.hex }}
-                              />
-                              {cat.label}
-                            </span>
-                            <h4 className="mt-1.5 text-sm font-bold text-white">
-                              {log.title}
-                            </h4>
-                          </div>
+                              className="h-2 w-2 rounded-full shrink-0"
+                              style={{ backgroundColor: cat.hex }}
+                            />
+                            {cat.shortLabel}
+                          </span>
                         </div>
 
                         {!isEditingThis && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => setEditingLogId(log.id)}
-                              className="apple-press inline-flex items-center gap-1 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 px-2.5 py-1 text-xs font-semibold text-white"
+                              className="apple-press inline-flex items-center gap-1 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-3 py-1.5 text-xs font-semibold text-white whitespace-nowrap"
                             >
                               <Edit3 className="h-3.5 w-3.5 text-[#64D2FF]" />
                               <span>Muokkaa</span>
@@ -667,13 +679,17 @@ export function CalendarView({
                               type="button"
                               onClick={() => onDeleteLog(log.id)}
                               aria-label="Poista suoritus"
-                              className="apple-press rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/20 hover:text-red-400"
+                              className="apple-press rounded-xl p-1.5 text-zinc-400 hover:bg-red-500/20 hover:text-red-400"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         )}
                       </div>
+
+                      <h4 className="mt-2.5 text-base font-bold text-white leading-snug">
+                        {log.title}
+                      </h4>
 
                       {isEditingThis ? (
                         <WorkoutLogEditor
