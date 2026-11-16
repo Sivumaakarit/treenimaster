@@ -67,7 +67,7 @@ export interface WorkoutLog {
   oxygenScore?: number | null; // 1-5
   energyScore?: number | null; // 1-5
   recoveryStatus: RecoveryStatus;
-  source: "workout_view" | "coach_chat" | "calendar" | "voice";
+  source: "workout_view" | "coach_chat" | "calendar" | "voice" | "withings";
   createdAt: string;
 }
 

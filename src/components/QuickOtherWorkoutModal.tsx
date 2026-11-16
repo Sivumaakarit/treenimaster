@@ -12,12 +12,14 @@ import { Check, Sparkles, X } from "lucide-react";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
+import { WithingsConnectCard } from "./WithingsConnectCard";
 
 interface QuickOtherWorkoutModalProps {
   isOpen: boolean;
   initialDate: string;
   onClose: () => void;
   onSaveLog: (log: WorkoutLog) => void;
+  onSyncedWithingsLogs?: (logs: WorkoutLog[], message: string) => void;
   onSendToCoach?: (naturalText: string) => Promise<void>;
 }
 
@@ -45,6 +47,7 @@ export function QuickOtherWorkoutModal({
   initialDate,
   onClose,
   onSaveLog,
+  onSyncedWithingsLogs,
   onSendToCoach,
 }: QuickOtherWorkoutModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -292,6 +295,17 @@ export function QuickOtherWorkoutModal({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          {/* 0. Withings-yhdistäminen & suora haku */}
+          <WithingsConnectCard
+            compact
+            onSyncedLogs={(synced, msg) => {
+              onSyncedWithingsLogs?.(synced, msg);
+              if (synced.length > 0) {
+                dialogRef.current?.close();
+              }
+            }}
+          />
+
           {/* 1. Puhesyöttö heti päällimmäisenä */}
           <div className="rounded-2xl bg-[#34C759]/10 border border-[#34C759]/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-xs text-zinc-200">

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
+import { WithingsConnectCard } from "./WithingsConnectCard";
 import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
 interface AnalyticsAndProgressViewProps {
@@ -29,6 +30,7 @@ interface AnalyticsAndProgressViewProps {
   recommendation: NextWorkoutRecommendation;
   onSaveLog: (log: WorkoutLog) => void;
   onDeleteLog: (logId: string) => void;
+  onSyncedWithingsLogs?: (logs: WorkoutLog[], message: string) => void;
   onNavigateToProgram: () => void;
   onNavigateToCoach: () => void;
 }
@@ -39,6 +41,7 @@ export function AnalyticsAndProgressView({
   recommendation,
   onSaveLog,
   onDeleteLog,
+  onSyncedWithingsLogs,
   onNavigateToProgram,
   onNavigateToCoach,
 }: AnalyticsAndProgressViewProps) {
@@ -471,6 +474,15 @@ export function AnalyticsAndProgressView({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Withings-yhdistäminen ja automaattinen lenkkien haku */}
+        <div className="mt-4">
+          <WithingsConnectCard
+            onSyncedLogs={(synced, msg) =>
+              onSyncedWithingsLogs?.(synced, msg)
+            }
+          />
         </div>
 
         {runAndSkiLogs.length === 0 ? (

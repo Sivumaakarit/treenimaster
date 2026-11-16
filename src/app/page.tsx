@@ -98,7 +98,73 @@ export default function TreenimasterPage() {
       );
       setSelectedWorkoutId(updatedRec.nextWorkout.id);
     });
+
+    // Tarkista Withings OAuth-paluu URL-parametreista
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const wStatus = params.get("withings");
+      if (wStatus === "connected") {
+        window.history.replaceState({}, "", window.location.pathname);
+        showToast("Withings yhdistetty! Haetaan treenit...");
+        void fetch("/api/withings/sync", { method: "POST" })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data?.logs && Array.isArray(data.logs)) {
+              setLogs((prev) => {
+                const map = new Map(prev.map((l) => [l.id, l]));
+                for (const wl of data.logs as WorkoutLog[]) {
+                  map.set(wl.id, wl);
+                }
+                const merged = Array.from(map.values()).sort((a, b) =>
+                  b.performedDate.localeCompare(a.performedDate)
+                );
+                window.localStorage.setItem(
+                  "treenimaster_logs_v3",
+                  JSON.stringify(merged)
+                );
+                return merged;
+              });
+              showToast(
+                `Withings yhdistetty! Haettu ${data.logs.length} treeniä.`
+              );
+            }
+          });
+      } else if (wStatus === "missing_env") {
+        window.history.replaceState({}, "", window.location.pathname);
+        showToast(
+          "Lisää WITHINGS_CLIENT_ID ja WITHINGS_CLIENT_SECRET Verceliin ensin."
+        );
+      } else if (wStatus === "error") {
+        window.history.replaceState({}, "", window.location.pathname);
+        showToast("Withings-yhdistäminen keskeytyi tai epäonnistui.");
+      }
+    }
   }, []);
+
+  const handleWithingsSyncedLogs = (
+    syncedLogs: WorkoutLog[],
+    message: string
+  ) => {
+    if (syncedLogs.length > 0) {
+      setLogs((prev) => {
+        const map = new Map(prev.map((l) => [l.id, l]));
+        for (const wl of syncedLogs) {
+          map.set(wl.id, wl);
+        }
+        const merged = Array.from(map.values()).sort((a, b) =>
+          b.performedDate.localeCompare(a.performedDate)
+        );
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(
+            "treenimaster_logs_v3",
+            JSON.stringify(merged)
+          );
+        }
+        return merged;
+      });
+    }
+    showToast(message);
+  };
 
   const recommendation = useMemo(
     () => computeNextRecommendedWorkout(programs, logs, todayISO),
@@ -550,6 +616,7 @@ export default function TreenimasterPage() {
                 onNavigateToCoach={() => setActiveTab("coach")}
                 onSaveLog={(log) => handleSaveWorkoutLog(log, false)}
                 onDeleteLog={handleDeleteLog}
+                onSyncedWithingsLogs={handleWithingsSyncedLogs}
               />
             )}
           </div>
@@ -655,6 +722,7 @@ export default function TreenimasterPage() {
         initialDate={todayISO}
         onClose={() => setOtherModalOpen(false)}
         onSaveLog={(log) => handleSaveWorkoutLog(log, false)}
+        onSyncedWithingsLogs={handleWithingsSyncedLogs}
         onSendToCoach={handleNaturalCoachParseFromModal}
       />
     </div>
