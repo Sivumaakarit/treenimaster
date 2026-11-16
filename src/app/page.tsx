@@ -430,31 +430,16 @@ export default function TreenimasterPage() {
             </button>
           </nav>
 
-          {/* Oikea: Pikatoiminto & Supabase-tila */}
-          <div className="flex shrink-0 items-center gap-2">
+          {/* Oikea: Pikatoiminto (+ Lenkki / muu) */}
+          <div className="flex shrink-0 items-center">
             <button
               type="button"
               onClick={() => setOtherModalOpen(true)}
-              className="apple-press inline-flex items-center gap-1.5 rounded-xl border border-[#34C759]/35 bg-[#34C759]/15 px-3 py-2 text-xs font-semibold text-[#30D158] hover:bg-[#34C759]/25"
+              className="apple-press inline-flex items-center gap-1.5 rounded-xl border border-[#34C759]/40 bg-[#34C759]/18 px-3.5 py-2 text-xs sm:text-sm font-semibold text-[#30D158] hover:bg-[#34C759]/25 whitespace-nowrap"
             >
-              <PlusCircle className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">Muu treeni / lenkki</span>
-              <span className="sm:hidden">Lenkki</span>
+              <PlusCircle className="h-4 w-4 shrink-0" />
+              <span>Lenkki / muu</span>
             </button>
-
-            <div
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                cloudConnected
-                  ? "border-[#34C759]/35 bg-[#34C759]/15 text-[#30D158]"
-                  : "border-[#0A84FF]/30 bg-[#0A84FF]/15 text-[#64D2FF]"
-              }`}
-              title="Tallennetaan automaattisesti Treenimaster Supabase-pilveen"
-            >
-              <Cloud className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden md:inline">
-                {cloudConnected ? "Pilvisynkronointi päällä" : "Yhdistetty"}
-              </span>
-            </div>
           </div>
         </div>
       </header>

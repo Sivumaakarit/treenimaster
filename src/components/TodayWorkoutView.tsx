@@ -74,16 +74,14 @@ interface TodayWorkoutViewProps {
   onNavigateToProgram: () => void;
 }
 
-function formatFinnishDateFull(isoDate: string): string {
+function formatFinnishShortDate(isoDate: string): string {
   const [y, m, d] = isoDate.split("-").map(Number);
   const dt = new Date(y, (m || 1) - 1, d || 1);
-  const formatted = new Intl.DateTimeFormat("fi-FI", {
+  const weekday = new Intl.DateTimeFormat("fi-FI", {
     weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
   }).format(dt);
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${capitalized} ${d}.${m}.`;
 }
 
 export function TodayWorkoutView({
@@ -339,50 +337,35 @@ export function TodayWorkoutView({
 
   return (
     <div className="min-w-0 space-y-5">
-      {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & pikakirjaus */}
+      {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & lepopäivän kirjaus */}
       <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="min-w-0 space-y-1">
+          <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0A84FF]/15 text-[#64D2FF] border border-[#0A84FF]/30">
-                <CalendarClock className="w-3.5 h-3.5 shrink-0" />
-                <span>Tänään · {formatFinnishDateFull(todayISO)}</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold bg-[#0A84FF]/15 text-[#64D2FF] border border-[#0A84FF]/30">
+                <CalendarClock className="w-4 h-4 shrink-0" />
+                <span>{formatFinnishShortDate(todayISO)}</span>
               </span>
 
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${recommendation.readinessState === "ready"
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold border whitespace-normal leading-snug ${recommendation.readinessState === "ready"
                   ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
                   : recommendation.readinessState === "completed_today"
                     ? "bg-[#0A84FF]/15 text-[#64D2FF] border-[#0A84FF]/35"
                     : "bg-[#FF9F0A]/15 text-[#FFD60A] border-[#FF9F0A]/35"
                   }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">{recommendation.readinessHeadline}</span>
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>{recommendation.readinessHeadline}</span>
               </span>
             </div>
-
-            <p className="text-xs sm:text-sm text-zinc-300 pt-1">
-              {recommendation.lastStrengthLog
-                ? `Edellinen voimatreeni: ${recommendation.lastStrengthLog.title} (${recommendation.lastStrengthLog.performedDate}). Välipäiviä pidetty: ${recommendation.daysSinceLastStrength ?? 0}/${recommendation.restDaysRequiredMin}–${recommendation.restDaysRequiredMax} pv.`
-                : recommendation.readinessDetail}
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={onOpenOtherWorkoutModal}
-              className="apple-press inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#34C759]/25 to-[#32ADE6]/25 hover:from-[#34C759]/35 hover:to-[#32ADE6]/35 border border-[#34C759]/40 text-xs sm:text-sm font-semibold text-white shadow-sm"
-            >
-              <Footprints className="w-4 h-4 shrink-0 text-[#30D158]" />
-              <span>Sanele / kirjaa lenkki tai muu treeni</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setShowSkipReasonBox((v) => !v)}
-              className="apple-press inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-semibold text-zinc-200"
+              className="apple-press inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/15 text-sm font-semibold text-zinc-100"
             >
               <span>En treenaa tänään (kirjaa syy)</span>
             </button>
@@ -475,8 +458,8 @@ export function TodayWorkoutView({
         {/* VÄLIPÄIVÄN ÄLYKÄS SUOSITUS: Jos tänään ei suositella punttisarjoja, kerrotaan selkeästi mitä tänään kannattaa tehdä! */}
         {recommendation.readinessState === "rest_recommended" &&
           todaysLogs.length === 0 && (
-            <div className="mt-3.5 rounded-2xl border border-[#34C759]/40 bg-gradient-to-r from-[#34C759]/12 via-[#32ADE6]/10 to-transparent p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1 text-xs sm:text-sm">
+            <div className="mt-3.5 rounded-2xl border border-[#34C759]/40 bg-gradient-to-r from-[#34C759]/12 via-[#32ADE6]/10 to-transparent p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1.5 text-sm">
                 <div className="font-bold text-[#30D158] flex items-center gap-1.5">
                   <Footprints className="w-4 h-4 shrink-0" />
                   <span>
@@ -486,7 +469,7 @@ export function TodayWorkoutView({
                     {recommendation.restDaysRequiredMax})
                   </span>
                 </div>
-                <p className="text-zinc-200 leading-relaxed text-xs">
+                <p className="text-zinc-200 leading-relaxed text-sm">
                   Keskushermosto ja alaselkä palautuvat nyt edellisestä
                   voimatreenistä ({recommendation.lastStrengthLog?.title}).{" "}
                   <strong className="text-white">
@@ -498,7 +481,7 @@ export function TodayWorkoutView({
               <button
                 type="button"
                 onClick={onOpenOtherWorkoutModal}
-                className="apple-press shrink-0 self-start sm:self-center px-3.5 py-2 rounded-xl bg-[#34C759] text-black text-xs font-bold shadow-sm"
+                className="apple-press shrink-0 self-start sm:self-center px-4 py-2.5 rounded-xl bg-[#34C759] text-black text-sm font-bold shadow-sm"
               >
                 Kirjaa päivän lenkki / lepo
               </button>
@@ -685,7 +668,7 @@ export function TodayWorkoutView({
       <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64D2FF]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#64D2FF]">
               {isRecommendedWorkout
                 ? "Seuraavana vuorossa oleva voimatreeni"
                 : "Valittu voimatreeni"}
@@ -693,7 +676,7 @@ export function TodayWorkoutView({
             <h1 className="apple-display text-white mt-0.5">
               {baseWorkout.title}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-300 mt-0.5">
+            <p className="text-sm text-zinc-300 mt-0.5">
               {baseWorkout.subtitle} · {baseWorkout.structureLabel}
             </p>
           </div>
@@ -701,17 +684,17 @@ export function TodayWorkoutView({
           <button
             type="button"
             onClick={onNavigateToProgram}
-            className="apple-press self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs font-medium text-zinc-200"
+            className="apple-press self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-sm font-medium text-zinc-200"
           >
             <span>Koko 8 vk ohjelma</span>
-            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+            <ChevronRight className="w-4 h-4 shrink-0" />
           </button>
         </div>
 
         {/* Valmentajan ydinohje kyseiselle treenille */}
-        <div className="mt-3.5 rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/25 p-3 flex items-start gap-2.5">
+        <div className="mt-3.5 rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/25 p-3.5 flex items-start gap-2.5">
           <Zap className="w-4 h-4 text-[#64D2FF] shrink-0 mt-0.5" />
-          <div className="text-xs text-zinc-200 leading-relaxed">
+          <div className="text-sm text-zinc-200 leading-relaxed">
             {baseWorkout.coachNotes}
           </div>
         </div>
@@ -721,7 +704,7 @@ export function TodayWorkoutView({
           <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto flex-1">
             <label
               htmlFor="workout-selector"
-              className="text-xs font-medium text-zinc-400 shrink-0"
+              className="text-sm font-medium text-zinc-400 shrink-0"
             >
               Vaihda:
             </label>
@@ -729,7 +712,7 @@ export function TodayWorkoutView({
               id="workout-selector"
               value={baseWorkout.id}
               onChange={(e) => onSelectWorkoutId(e.target.value)}
-              className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-1.5 text-xs font-medium text-white focus:border-[#0A84FF] focus:outline-none"
+              className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-2 text-sm font-medium text-white focus:border-[#0A84FF] focus:outline-none"
             >
               {programs.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -746,9 +729,9 @@ export function TodayWorkoutView({
             <button
               type="button"
               onClick={markEntireWorkoutDone}
-              className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-xs font-semibold text-[#64D2FF]"
+              className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-sm font-semibold text-[#64D2FF]"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>
                 {completedSetsCount === totalSetsCount && totalSetsCount > 0
                   ? "Poista kuittaukset"
@@ -759,9 +742,9 @@ export function TodayWorkoutView({
               type="button"
               onClick={resetToPlanned}
               title="Palauta oletuspainot ja -toistot"
-              className="apple-press p-1.5 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
+              className="apple-press p-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -819,12 +802,12 @@ export function TodayWorkoutView({
                       </h2>
                     )}
 
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/8 text-zinc-200 border border-white/10">
+                    <span className="px-2.5 py-0.5 rounded-full text-sm font-semibold bg-white/8 text-zinc-200 border border-white/10">
                       Suunnitelma: {exercise.summary}
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400 flex items-center gap-3 flex-wrap">
+                  <p className="text-sm text-zinc-400 flex items-center gap-3 flex-wrap">
                     <span className="inline-flex items-center gap-1 text-zinc-300">
                       <Clock className="w-3.5 h-3.5 text-[#0A84FF]" />
                       Palautus: {exercise.restMinutes}
@@ -836,7 +819,7 @@ export function TodayWorkoutView({
                 <button
                   type="button"
                   onClick={() => toggleAllExerciseSets(exercise.id)}
-                  className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border shrink-0 ${allExDone
+                  className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border shrink-0 ${allExDone
                     ? "bg-[#34C759] text-black border-[#34C759]"
                     : "bg-white/8 hover:bg-white/14 text-white border-white/15"
                     }`}
@@ -884,12 +867,12 @@ export function TodayWorkoutView({
                         </button>
 
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">
                               Sarja {set.setNumber}
                             </span>
                             <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded-md ${isTop
+                              className={`text-xs sm:text-sm font-semibold px-2 py-0.5 rounded-md ${isTop
                                 ? "bg-[#FF3B30]/20 text-[#FF6961] border border-[#FF3B30]/35"
                                 : "bg-white/8 text-zinc-300"
                                 }`}
@@ -897,28 +880,28 @@ export function TodayWorkoutView({
                               {set.label}
                             </span>
                             {set.targetRpe && (
-                              <span className="text-[11px] text-zinc-400">
+                              <span className="text-xs text-zinc-400">
                                 RPE {set.targetRpe}
                               </span>
                             )}
                             {modified && (
-                              <span className="text-[11px] font-medium text-[#FFD60A] bg-[#FF9F0A]/15 px-2 py-0.5 rounded-md">
+                              <span className="text-xs font-medium text-[#FFD60A] bg-[#FF9F0A]/15 px-2 py-0.5 rounded-md">
                                 Muokattu tälle päivälle
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-zinc-400 mt-0.5">
+                          <div className="text-sm text-zinc-400 mt-0.5">
                             Tavoite: {set.reps} × {set.weightKg} kg
                           </div>
                         </div>
                       </div>
 
                       {/* Muokattavat toistot ja paino (kg) */}
-                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1 sm:pt-0 border-t border-white/5 sm:border-0">
+                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1.5 sm:pt-0 border-t border-white/5 sm:border-0">
                         <div className="flex items-center gap-1.5">
                           <label
                             htmlFor={`${set.id}-reps`}
-                            className="text-xs text-zinc-400"
+                            className="text-sm text-zinc-400"
                           >
                             Toistot:
                           </label>
@@ -934,7 +917,7 @@ export function TodayWorkoutView({
                                 e.target.value
                               )
                             }
-                            className="w-14 sm:w-16 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-xs sm:text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                            className="w-14 sm:w-16 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                           />
                         </div>
 
@@ -943,7 +926,7 @@ export function TodayWorkoutView({
                         <div className="flex items-center gap-1.5">
                           <label
                             htmlFor={`${set.id}-weight`}
-                            className="text-xs text-zinc-400"
+                            className="text-sm text-zinc-400"
                           >
                             Kg:
                           </label>
@@ -959,14 +942,14 @@ export function TodayWorkoutView({
                                 e.target.value
                               )
                             }
-                            className="w-16 sm:w-20 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-xs sm:text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                            className="w-16 sm:w-20 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                           />
                         </div>
 
                         <button
                           type="button"
                           onClick={() => toggleSetDone(exercise.id, set.id)}
-                          className={`apple-press px-3 py-1.5 rounded-xl text-xs font-semibold border shrink-0 ${set.done
+                          className={`apple-press px-3 py-1.5 rounded-xl text-sm font-semibold border shrink-0 ${set.done
                             ? "bg-[#34C759]/20 border-[#34C759]/50 text-[#30D158]"
                             : "bg-white/6 hover:bg-white/12 border-white/10 text-zinc-300"
                             }`}
