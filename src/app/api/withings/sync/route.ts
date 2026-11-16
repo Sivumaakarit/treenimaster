@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   getWithingsConfig,
   getWithingsIntegration,
+  isAllowedWithingsWorkout,
   mapWithingsWorkoutToLog,
   refreshWithingsAccessTokenIfNeeded,
   WithingsSeriesItem,
@@ -49,8 +50,12 @@ export async function POST(request: Request) {
     );
 
     const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    // Haetaan vain nykyisen ohjelman alusta (2026-11-14) lähtien, ei vanhoja lokakuun treenejä
+    const programStart = new Date("2026-11-14T00:00:00Z");
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const startDate =
+      programStart > thirtyDaysAgo ? programStart : thirtyDaysAgo;
 
     const formBody = new URLSearchParams({
       action: "getworkouts",
@@ -80,7 +85,24 @@ export async function POST(request: Request) {
     }
 
     const series: WithingsSeriesItem[] = json.body?.series || [];
-    const mappedLogs = series.map(mapWithingsWorkoutToLog);
+    // Suodatetaan VAIN juoksut, hiihdot ja salitreenit (ei kävelyitä tai satunnaisia muita treenejä)
+    const filteredSeries = series.filter(isAllowedWithingsWorkout);
+    const candidateLogs = filteredSeries.map(mapWithingsWorkoutToLog);
+
+    // Tarkistetaan olemassa olevat ei-Withings-kirjaukset, ettei samalle päivälle ja lajille tule tuplaa
+    const { data: existingLogs } = await supabase
+      .from("treenimaster_logs")
+      .select("id, performed_date, category, source")
+      .gte("performed_date", formatYMD(startDate))
+      .neq("source", "withings");
+
+    const existingKeys = new Set(
+      (existingLogs || []).map((e) => `${e.performed_date}__${e.category}`)
+    );
+
+    const mappedLogs = candidateLogs.filter(
+      (log) => !existingKeys.has(`${log.performedDate}__${log.category}`)
+    );
 
     if (mappedLogs.length > 0) {
       const rows = mappedLogs.map((log) => ({

@@ -140,6 +140,34 @@ export async function refreshWithingsAccessTokenIfNeeded(
   return saved as WithingsTokenRow;
 }
 
+/**
+ * Hyväksytään Withingsistä VAIN varsinaiset juoksut, hiihdot ja salitreenit
+ * (ei kävelyitä, pyöräilyitä tai satunnaisia automaattitunnistuksia).
+ */
+export function isAllowedWithingsWorkout(item: WithingsSeriesItem): boolean {
+  const durationMinutes = Math.round((item.enddate - item.startdate) / 60);
+  const distanceMeters = item.data?.distance ?? 0;
+
+  // 2 = Juoksu (vähintään 8 min ja vähintään 500 m jos matka mitattu)
+  if (item.category === 2) {
+    if (durationMinutes < 8) return false;
+    if (distanceMeters > 0 && distanceMeters < 500) return false;
+    return true;
+  }
+
+  // 13, 14 = Hiihto (vähintään 10 min)
+  if (item.category === 13 || item.category === 14) {
+    return durationMinutes >= 10;
+  }
+
+  // 16, 31, 32 = Kuntosali / Voimaharjoittelu (vähintään 15 min)
+  if (item.category === 16 || item.category === 31 || item.category === 32) {
+    return durationMinutes >= 15;
+  }
+
+  return false;
+}
+
 function mapWithingsCategory(catId: number): {
   category: SportCategory;
   label: string;
@@ -147,31 +175,13 @@ function mapWithingsCategory(catId: number): {
   switch (catId) {
     case 2:
       return { category: "run", label: "Juoksu" };
-    case 1:
-      return { category: "run", label: "Kävely" };
-    case 3:
-      return { category: "run", label: "Patikointi" };
     case 13:
     case 14:
       return { category: "ski", label: "Hiihto" };
-    case 15:
-      return { category: "tennis", label: "Tennis" };
-    case 21:
-      return { category: "tennis", label: "Sulkapallo" };
-    case 22:
-      return { category: "tennis", label: "Squash" };
-    case 30:
-      return { category: "other", label: "Golf" };
     case 16:
     case 31:
     case 32:
       return { category: "strength", label: "Kuntosali" };
-    case 6:
-    case 7:
-    case 18:
-      return { category: "other", label: "Pyöräily" };
-    case 8:
-      return { category: "other", label: "Uinti" };
     default:
       return { category: "other", label: "Harjoitus" };
   }
