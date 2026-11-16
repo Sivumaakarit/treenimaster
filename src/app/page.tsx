@@ -339,23 +339,46 @@ export default function TreenimasterPage() {
       {/* Apple HIG Translucent Top Header */}
       <header className="apple-nav-glass sticky top-0 z-30 border-b border-white/10">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-2 px-3.5 py-2.5 sm:px-6 sm:py-3">
-          {/* Vasen: Logo ja brändi */}
+          {/* Vasen: Pelkistetty Treenimaster-logo & tekstilogo */}
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white shadow-sm sm:h-10 sm:w-10">
-              <Dumbbell className="h-4 w-4 sm:h-5 sm:w-5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0A84FF] via-[#0066CC] to-[#34C759] shadow-[0_4px_16px_rgba(10,132,255,0.35)] ring-1 ring-white/20 sm:h-10 sm:w-10">
+              <svg
+                viewBox="0 0 28 28"
+                className="h-5 w-5 sm:h-6 sm:w-6"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 7.5H23"
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M14 7.5V21.5"
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M7.5 18.5L11.5 14.5L14.5 16.5L20.5 10.5"
+                  stroke="#9BF6B5"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-base font-bold tracking-tight text-white sm:text-lg">
-                  Treenimaster
-                </h1>
-                <span className="hidden rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-blue-300 md:inline-block">
-                  8 vk voimaohjelma + 4 vk piikkaus
+            <div className="flex min-w-0 items-center gap-2.5">
+              <h1 className="truncate text-xl font-extrabold tracking-tight sm:text-2xl">
+                <span className="text-white">Treeni</span>
+                <span className="bg-gradient-to-r from-[#64D2FF] to-[#30D158] bg-clip-text text-transparent">
+                  master
                 </span>
-              </div>
-              <p className="truncate text-[11px] text-zinc-400 sm:text-xs">
-                Henkilökohtainen fysiologia- ja tekoälyvalmentaja
-              </p>
+              </h1>
+              <span className="hidden rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-blue-300 md:inline-block">
+                8 vk voimaohjelma + 4 vk piikkaus
+              </span>
             </div>
           </div>
 

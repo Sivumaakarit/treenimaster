@@ -337,14 +337,9 @@ export function TodayWorkoutView({
 
   return (
     <div className="min-w-0 space-y-4">
-      {/* Päivän selkeä tekstiotsikko kortin yläpuolella (ilman pillereitä tai ikoneita) */}
+      {/* Päivän selkeä otsikko kortin yläpuolella */}
       <div className="px-1">
-        <p className="text-lg sm:text-xl font-bold tracking-tight text-white">
-          Tänään{" "}
-          <span className="font-normal text-zinc-400">
-            · {formatFinnishShortDate(todayISO).toLowerCase()}
-          </span>
-        </p>
+        <h2 className="apple-display text-white">Tänään</h2>
       </div>
 
       {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & lepopäivän kirjaus */}
