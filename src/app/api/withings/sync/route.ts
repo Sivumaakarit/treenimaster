@@ -89,28 +89,56 @@ export async function POST(request: Request) {
     const filteredSeries = series.filter(isAllowedWithingsWorkout);
     const candidateLogs = filteredSeries.map(mapWithingsWorkoutToLog);
 
-    // Tarkistetaan olemassa olevat ei-Withings-kirjaukset:
-    // jos samalle päivälle ja lajille on jo kirjaus (esim. saneltu lenkki),
-    // rikastetaan se Withingsin syke-, matka- ja kaloritiedoilla tuplan sijaan!
+    // Tarkistetaan olemassa olevat kirjaukset:
+    // 1) Jos sama Withings-ID on jo kannassa, EI ylikirjoiteta käyttäjän lisäämiä tuntemuksia/RPE:tä
+    // 2) Jos samalle päivälle ja lajille on manuaalinen/saneltu kirjaus, rikastetaan se Withingsin syke-, matka- ja kaloritiedoilla
     const { data: existingLogs } = await supabase
       .from("treenimaster_logs")
       .select("*")
-      .gte("performed_date", formatYMD(startDate))
-      .neq("source", "withings");
+      .gte("performed_date", formatYMD(startDate));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingById = new Map<string, any>();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingByKey = new Map<string, any>();
     for (const e of existingLogs || []) {
-      const k = `${e.performed_date}__${e.category}`;
-      if (!existingByKey.has(k)) {
-        existingByKey.set(k, e);
+      existingById.set(e.id, e);
+      if (e.source !== "withings") {
+        const k = `${e.performed_date}__${e.category}`;
+        if (!existingByKey.has(k)) {
+          existingByKey.set(k, e);
+        }
       }
     }
 
     const logsToUpsert = [];
     const returnedLogs = [];
+    const newlyImportedLogs = [];
 
     for (const wLog of candidateLogs) {
+      const existingSameId = existingById.get(wLog.id);
+      if (existingSameId) {
+        returnedLogs.push({
+          id: existingSameId.id,
+          performedDate: existingSameId.performed_date,
+          category: existingSameId.category,
+          title: existingSameId.title,
+          cycleNumber: existingSameId.cycle_number,
+          workoutNumber: existingSameId.workout_number,
+          programId: existingSameId.program_id,
+          durationMinutes: existingSameId.duration_minutes,
+          rpe: existingSameId.rpe ? Number(existingSameId.rpe) : null,
+          exercises: existingSameId.exercises || [],
+          feelings: existingSameId.feelings || "",
+          oxygenScore: existingSameId.oxygen_score,
+          energyScore: existingSameId.energy_score,
+          recoveryStatus: existingSameId.recovery_status || "normaali",
+          source: existingSameId.source || "withings",
+          createdAt: existingSameId.created_at,
+        });
+        continue;
+      }
+
       const k = `${wLog.performedDate}__${wLog.category}`;
       const existing = existingByKey.get(k);
 
@@ -175,6 +203,7 @@ export async function POST(request: Request) {
           created_at: wLog.createdAt,
         });
         returnedLogs.push(wLog);
+        newlyImportedLogs.push(wLog);
       }
     }
 
@@ -199,7 +228,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       syncedCount: returnedLogs.length,
+      newCount: newlyImportedLogs.length,
       logs: returnedLogs,
+      newLogs: newlyImportedLogs,
       lastSyncedAt: syncedAt,
     });
   } catch (err) {

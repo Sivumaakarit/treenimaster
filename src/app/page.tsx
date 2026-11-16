@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   Calendar,
@@ -46,6 +46,7 @@ import { CalendarView } from "@/components/CalendarView";
 import { CoachChatPanel } from "@/components/CoachChatPanel";
 import { QuickOtherWorkoutModal } from "@/components/QuickOtherWorkoutModal";
 import { AnalyticsAndProgressView } from "@/components/AnalyticsAndProgressView";
+import { WithingsFeelingsPromptModal } from "@/components/WithingsFeelingsPromptModal";
 
 type ActiveTab = "today" | "calendar" | "program" | "coach" | "knowledge";
 
@@ -63,6 +64,87 @@ export default function TreenimasterPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [instantFeedback, setInstantFeedback] =
     useState<InstantCoachFeedback | null>(null);
+  const [pendingWithingsPromptLog, setPendingWithingsPromptLog] =
+    useState<WorkoutLog | null>(null);
+  const withingsSyncInFlightRef = useRef<boolean>(false);
+
+  const getPromptedWithingsIds = (): Set<string> => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(
+        "treenimaster_withings_prompted_v1"
+      );
+      if (!raw) return new Set();
+      return new Set(JSON.parse(raw) as string[]);
+    } catch {
+      return new Set();
+    }
+  };
+
+  const markWithingsPrompted = (id: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      const set = getPromptedWithingsIds();
+      set.add(id);
+      window.localStorage.setItem(
+        "treenimaster_withings_prompted_v1",
+        JSON.stringify(Array.from(set).slice(-100))
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const runWithingsBackgroundSync = async (cooldownMs = 90 * 1000) => {
+    if (withingsSyncInFlightRef.current) return;
+    withingsSyncInFlightRef.current = true;
+    try {
+      const stRes = await fetch("/api/withings/status");
+      if (!stRes.ok) return;
+      const st = await stRes.json();
+      if (!st?.connected) return;
+
+      const lastMs = st.lastSyncedAt ? new Date(st.lastSyncedAt).getTime() : 0;
+      if (Date.now() - lastMs < cooldownMs) return;
+
+      const syncRes = await fetch("/api/withings/sync", { method: "POST" });
+      if (!syncRes.ok) return;
+      const data = await syncRes.json();
+
+      if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+        setLogs((prev) => {
+          const map = new Map(prev.map((l) => [l.id, l]));
+          for (const wl of data.logs as WorkoutLog[]) {
+            map.set(wl.id, wl);
+          }
+          const merged = Array.from(map.values()).sort((a, b) =>
+            b.performedDate.localeCompare(a.performedDate)
+          );
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem(
+              "treenimaster_logs_v3",
+              JSON.stringify(merged)
+            );
+          }
+          return merged;
+        });
+      }
+
+      if (data?.newLogs && Array.isArray(data.newLogs) && data.newLogs.length > 0) {
+        const prompted = getPromptedWithingsIds();
+        const unprompted = (data.newLogs as WorkoutLog[])
+          .filter((l) => !prompted.has(l.id))
+          .sort((a, b) => b.performedDate.localeCompare(a.performedDate));
+        if (unprompted.length > 0) {
+          setPendingWithingsPromptLog(unprompted[0]);
+        }
+      }
+    } catch {
+      // Hiljainen taustasynkronointi ei häiritse käyttöä
+    } finally {
+      withingsSyncInFlightRef.current = false;
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -98,46 +180,20 @@ export default function TreenimasterPage() {
       );
       setSelectedWorkoutId(updatedRec.nextWorkout.id);
 
-      // Automaattinen taustasynkronointi Withingsistä (korkeintaan 5 min välein),
-      // jotta jälkikäteen synkronoidut syke- ja kestotiedot liitetään treeneihin automaattisesti
-      void fetch("/api/withings/status")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((st) => {
-          if (!st?.connected) return;
-          const lastMs = st.lastSyncedAt
-            ? new Date(st.lastSyncedAt).getTime()
-            : 0;
-          if (Date.now() - lastMs < 5 * 60 * 1000) return;
-          return fetch("/api/withings/sync", { method: "POST" })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => {
-              if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
-                setLogs((prev) => {
-                  const map = new Map(prev.map((l) => [l.id, l]));
-                  for (const wl of data.logs as WorkoutLog[]) {
-                    map.set(wl.id, wl);
-                  }
-                  const merged = Array.from(map.values()).sort((a, b) =>
-                    b.performedDate.localeCompare(a.performedDate)
-                  );
-                  if (typeof window !== "undefined") {
-                    window.localStorage.setItem(
-                      "treenimaster_logs_v3",
-                      JSON.stringify(merged)
-                    );
-                  }
-                  return merged;
-                });
-              }
-            });
-        })
-        .catch(() => {
-          // Hiljainen taustasynkronointi ei häiritse käyttöä
-        });
+      // Automaattinen taustasynkronointi Withingsistä (korkeintaan 90 s välein)
+      void runWithingsBackgroundSync(90 * 1000);
     });
 
     // Tarkista Withings OAuth-paluu URL-parametreista
     if (typeof window !== "undefined") {
+      const handleAppForeground = () => {
+        if (document.visibilityState === "visible") {
+          void runWithingsBackgroundSync(90 * 1000);
+        }
+      };
+      document.addEventListener("visibilitychange", handleAppForeground);
+      window.addEventListener("focus", handleAppForeground);
+
       const params = new URLSearchParams(window.location.search);
       const wStatus = params.get("withings");
       if (wStatus === "connected") {
@@ -175,6 +231,11 @@ export default function TreenimasterPage() {
         window.history.replaceState({}, "", window.location.pathname);
         showToast("Withings-yhdistäminen keskeytyi tai epäonnistui.");
       }
+
+      return () => {
+        document.removeEventListener("visibilitychange", handleAppForeground);
+        window.removeEventListener("focus", handleAppForeground);
+      };
     }
   }, []);
 
@@ -790,6 +851,20 @@ export default function TreenimasterPage() {
         onSaveLog={(log) => handleSaveWorkoutLog(log, false)}
         onSyncedWithingsLogs={handleWithingsSyncedLogs}
         onSendToCoach={handleNaturalCoachParseFromModal}
+      />
+
+      {/* Withingsistä tuodun uuden lenkin vapaaehtoinen tuntemuskysely */}
+      <WithingsFeelingsPromptModal
+        log={pendingWithingsPromptLog}
+        onSave={(updatedLog) => {
+          markWithingsPrompted(updatedLog.id);
+          setPendingWithingsPromptLog(null);
+          handleSaveWorkoutLog(updatedLog, false);
+        }}
+        onSkip={(logId) => {
+          markWithingsPrompted(logId);
+          setPendingWithingsPromptLog(null);
+        }}
       />
     </div>
   );
