@@ -194,8 +194,9 @@ export function mapWithingsWorkoutToLog(item: WithingsSeriesItem): WorkoutLog {
     Math.round((item.enddate - item.startdate) / 60)
   );
   const rawDistanceMeters = item.data?.distance ?? 0;
+  // Voimatreeneihin ei koskaan liitetä kilometrimäärää (kello laskee salilla kävelyaskeleita matkaksi)
   const distanceKm =
-    rawDistanceMeters >= 100
+    (category === "run" || category === "ski") && rawDistanceMeters >= 100
       ? Math.round((rawDistanceMeters / 1000) * 10) / 10
       : null;
 

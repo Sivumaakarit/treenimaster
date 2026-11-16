@@ -297,6 +297,9 @@ export function parseSpokenWorkout(
  * Poimii kilometrimäärän (km) mistä tahansa WorkoutLog-merkinnästä (otsikosta tai tekstistä).
  */
 export function extractDistanceKmFromLog(log: WorkoutLog): number | null {
+  if (log.category === "strength" || log.category === "rest") {
+    return null;
+  }
   const combined = `${log.title || ""} ${log.feelings || ""}`;
   const m = combined.match(/(\d+(?:[.,]\d+)?)\s*(?:km|kilometriä|kilsaa)\b/i);
   if (m) {
