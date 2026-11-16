@@ -89,44 +89,94 @@ export async function POST(request: Request) {
     const filteredSeries = series.filter(isAllowedWithingsWorkout);
     const candidateLogs = filteredSeries.map(mapWithingsWorkoutToLog);
 
-    // Tarkistetaan olemassa olevat ei-Withings-kirjaukset, ettei samalle päivälle ja lajille tule tuplaa
+    // Tarkistetaan olemassa olevat ei-Withings-kirjaukset:
+    // jos samalle päivälle ja lajille on jo kirjaus (esim. saneltu lenkki),
+    // rikastetaan se Withingsin syke-, matka- ja kaloritiedoilla tuplan sijaan!
     const { data: existingLogs } = await supabase
       .from("treenimaster_logs")
-      .select("id, performed_date, category, source")
+      .select("*")
       .gte("performed_date", formatYMD(startDate))
       .neq("source", "withings");
 
-    const existingKeys = new Set(
-      (existingLogs || []).map((e) => `${e.performed_date}__${e.category}`)
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingByKey = new Map<string, any>();
+    for (const e of existingLogs || []) {
+      const k = `${e.performed_date}__${e.category}`;
+      if (!existingByKey.has(k)) {
+        existingByKey.set(k, e);
+      }
+    }
 
-    const mappedLogs = candidateLogs.filter(
-      (log) => !existingKeys.has(`${log.performedDate}__${log.category}`)
-    );
+    const logsToUpsert = [];
+    const returnedLogs = [];
 
-    if (mappedLogs.length > 0) {
-      const rows = mappedLogs.map((log) => ({
-        id: log.id,
-        performed_date: log.performedDate,
-        category: log.category,
-        title: log.title,
-        cycle_number: null,
-        workout_number: null,
-        program_id: null,
-        duration_minutes: log.durationMinutes,
-        rpe: log.rpe,
-        exercises: [],
-        feelings: log.feelings,
-        oxygen_score: log.oxygenScore,
-        energy_score: log.energyScore,
-        recovery_status: log.recoveryStatus,
-        source: log.source,
-        created_at: log.createdAt,
-      }));
+    for (const wLog of candidateLogs) {
+      const k = `${wLog.performedDate}__${wLog.category}`;
+      const existing = existingByKey.get(k);
 
+      if (existing) {
+        const withingsMetrics = wLog.feelings.replace(
+          /^Tuotu Withingsistä:\s*/i,
+          ""
+        );
+        const baseFeelings = String(existing.feelings || "")
+          .replace(/\s*Withings:[\s\S]*$/i, "")
+          .trim();
+        const enrichedFeelings = baseFeelings
+          ? `${baseFeelings} Withings: ${withingsMetrics}`
+          : `Withings: ${withingsMetrics}`;
+
+        const enrichedRow = {
+          ...existing,
+          feelings: enrichedFeelings,
+          rpe: existing.rpe ?? wLog.rpe,
+        };
+        logsToUpsert.push(enrichedRow);
+        returnedLogs.push({
+          id: existing.id,
+          performedDate: existing.performed_date,
+          category: existing.category,
+          title: existing.title,
+          cycleNumber: existing.cycle_number,
+          workoutNumber: existing.workout_number,
+          programId: existing.program_id,
+          durationMinutes: existing.duration_minutes,
+          rpe: enrichedRow.rpe ? Number(enrichedRow.rpe) : null,
+          exercises: existing.exercises || [],
+          feelings: enrichedFeelings,
+          oxygenScore: existing.oxygen_score,
+          energyScore: existing.energy_score,
+          recoveryStatus: existing.recovery_status || "normaali",
+          source: existing.source || "workout_view",
+          createdAt: existing.created_at,
+        });
+      } else {
+        logsToUpsert.push({
+          id: wLog.id,
+          performed_date: wLog.performedDate,
+          category: wLog.category,
+          title: wLog.title,
+          cycle_number: null,
+          workout_number: null,
+          program_id: null,
+          duration_minutes: wLog.durationMinutes,
+          rpe: wLog.rpe,
+          exercises: [],
+          feelings: wLog.feelings,
+          oxygen_score: wLog.oxygenScore,
+          energy_score: wLog.energyScore,
+          recovery_status: wLog.recoveryStatus,
+          source: wLog.source,
+          created_at: wLog.createdAt,
+        });
+        returnedLogs.push(wLog);
+      }
+    }
+
+    if (logsToUpsert.length > 0) {
       const { error: upsertErr } = await supabase
         .from("treenimaster_logs")
-        .upsert(rows);
+        .upsert(logsToUpsert);
 
       if (upsertErr) {
         return NextResponse.json(
@@ -143,8 +193,8 @@ export async function POST(request: Request) {
       .eq("provider", "withings");
 
     return NextResponse.json({
-      syncedCount: mappedLogs.length,
-      logs: mappedLogs,
+      syncedCount: returnedLogs.length,
+      logs: returnedLogs,
       lastSyncedAt: syncedAt,
     });
   } catch (err) {
