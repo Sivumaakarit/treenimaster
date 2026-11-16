@@ -97,6 +97,43 @@ export default function TreenimasterPage() {
         currentISO
       );
       setSelectedWorkoutId(updatedRec.nextWorkout.id);
+
+      // Automaattinen taustasynkronointi Withingsistä (korkeintaan 5 min välein),
+      // jotta jälkikäteen synkronoidut syke- ja kestotiedot liitetään treeneihin automaattisesti
+      void fetch("/api/withings/status")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((st) => {
+          if (!st?.connected) return;
+          const lastMs = st.lastSyncedAt
+            ? new Date(st.lastSyncedAt).getTime()
+            : 0;
+          if (Date.now() - lastMs < 5 * 60 * 1000) return;
+          return fetch("/api/withings/sync", { method: "POST" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+                setLogs((prev) => {
+                  const map = new Map(prev.map((l) => [l.id, l]));
+                  for (const wl of data.logs as WorkoutLog[]) {
+                    map.set(wl.id, wl);
+                  }
+                  const merged = Array.from(map.values()).sort((a, b) =>
+                    b.performedDate.localeCompare(a.performedDate)
+                  );
+                  if (typeof window !== "undefined") {
+                    window.localStorage.setItem(
+                      "treenimaster_logs_v3",
+                      JSON.stringify(merged)
+                    );
+                  }
+                  return merged;
+                });
+              }
+            });
+        })
+        .catch(() => {
+          // Hiljainen taustasynkronointi ei häiritse käyttöä
+        });
     });
 
     // Tarkista Withings OAuth-paluu URL-parametreista
@@ -208,6 +245,35 @@ export default function TreenimasterPage() {
     setInstantFeedback(fb);
 
     showToast(`Tallennettu: ${newLog.title} (${newLog.performedDate})`);
+
+    // Kun salitreeni tai lenkki kuitataan tehdyksi, tarkistetaan taustalla Withingsistä syke- ja kestotiedot
+    if (newLog.category === "strength" || newLog.category === "run") {
+      setTimeout(() => {
+        void fetch("/api/withings/sync", { method: "POST" })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data?.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+              setLogs((prev) => {
+                const map = new Map(prev.map((l) => [l.id, l]));
+                for (const wl of data.logs as WorkoutLog[]) {
+                  map.set(wl.id, wl);
+                }
+                const merged = Array.from(map.values()).sort((a, b) =>
+                  b.performedDate.localeCompare(a.performedDate)
+                );
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(
+                    "treenimaster_logs_v3",
+                    JSON.stringify(merged)
+                  );
+                }
+                return merged;
+              });
+            }
+          })
+          .catch(() => {});
+      }, 1500);
+    }
 
     // Kirjataan automaattinen tausta-analyysi myös valmentajakeskusteluun, jotta historia pysyy ajan tasalla
     if (!askCoachAfter) {

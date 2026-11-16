@@ -128,6 +128,7 @@ export async function POST(request: Request) {
 
         const enrichedRow = {
           ...existing,
+          duration_minutes: wLog.durationMinutes || existing.duration_minutes,
           feelings: enrichedFeelings,
           rpe: existing.rpe ?? wLog.rpe,
         };
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
           cycleNumber: existing.cycle_number,
           workoutNumber: existing.workout_number,
           programId: existing.program_id,
-          durationMinutes: existing.duration_minutes,
+          durationMinutes: enrichedRow.duration_minutes,
           rpe: enrichedRow.rpe ? Number(enrichedRow.rpe) : null,
           exercises: existing.exercises || [],
           feelings: enrichedFeelings,
@@ -150,6 +151,10 @@ export async function POST(request: Request) {
           source: existing.source || "workout_view",
           createdAt: existing.created_at,
         });
+      } else if (wLog.category === "strength") {
+        // Salitreeniä EI luoda tyhjästä ennen kuin käyttäjä on itse kuitannut sarjat & painot Treenimasterissa!
+        // Kun käyttäjä kuittaa salitreenin, seuraava automaattinen synkronointi rikastaa sen syke- ja kestotiedoilla.
+        continue;
       } else {
         logsToUpsert.push({
           id: wLog.id,
