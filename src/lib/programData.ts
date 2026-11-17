@@ -846,19 +846,19 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           ? [
               {
                 id: `${w2Prefix}-speed-b`,
-                name: "Nopeuspenkki (fiiliksen mukaan)",
+                name: "Nopeuspenkki (kontrastiaalto)",
                 code: "SPEED_B" as const,
                 summary: spec.isDeload
                   ? "n. 4 × 3 × 60 kg (yksi kuittaus)"
-                  : "n. 6–8 × 2–3 × 60–65 kg (yksi kuittaus)",
-                restMinutes: "45–90 s",
-                cue: "Terävä räjähtävä lähtö rinnalta fiiliksen mukaan – yksi kuittaus koko blokille.",
+                  : "8 sarjaa: 3–4×60 kg ↔ 1×70 kg vuorotellen (yksi kuittaus)",
+                restMinutes: "45–60 s",
+                cue: "70 kg ykkönen herättää motoriset yksiköt, jolloin 60 kg kolmonen/nelonen räjähtää ylös.",
                 sets: makeSets(`${w2Prefix}-sb`, [
                   {
                     type: "speed",
                     label: "Nopeuspenkki (koko blokki)",
-                    reps: spec.isDeload ? "4×3" : "6–8×2–3",
-                    weightKg: "62.5",
+                    reps: spec.isDeload ? "4×3" : "8 sarjaa (3–4 / 1)",
+                    weightKg: spec.isDeload ? "60" : "60 / 70",
                     targetRpe: "6.5",
                   },
                 ]),
