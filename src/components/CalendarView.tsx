@@ -407,7 +407,7 @@ export function CalendarView({
                               style={{
                                 background:
                                   cat.id === "strength"
-                                    ? "linear-gradient(135deg, #007AFF 0%, #FF3B30 100%)"
+                                    ? "#BF5AF2"
                                     : cat.hex,
                               }}
                             />
@@ -457,7 +457,7 @@ export function CalendarView({
                       style={{
                         background:
                           cat.id === "strength"
-                            ? "linear-gradient(135deg, #007AFF 0%, #FF3B30 100%)"
+                            ? "#BF5AF2"
                             : cat.hex,
                       }}
                     />

@@ -165,6 +165,27 @@ export default function TreenimasterPage() {
     setLogs(localLogs);
     setMessages(localMsgs);
 
+    if (typeof window !== "undefined") {
+      try {
+        const rawFb = window.localStorage.getItem(
+          "treenimaster_instant_feedback_v1"
+        );
+        if (rawFb) {
+          const parsed = JSON.parse(rawFb) as {
+            date: string;
+            feedback: InstantCoachFeedback;
+          };
+          if (parsed?.date === currentISO && parsed.feedback) {
+            setInstantFeedback(parsed.feedback);
+          } else {
+            window.localStorage.removeItem("treenimaster_instant_feedback_v1");
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const rec = computeNextRecommendedWorkout(localProgs, localLogs, currentISO);
     setSelectedWorkoutId(rec.nextWorkout.id);
 
@@ -311,6 +332,16 @@ export default function TreenimasterPage() {
       deviationReason
     );
     setInstantFeedback(fb);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          "treenimaster_instant_feedback_v1",
+          JSON.stringify({ date: todayISO, feedback: fb })
+        );
+      } catch {
+        // ignore
+      }
+    }
 
     showToast(`Tallennettu: ${newLog.title} (${newLog.performedDate})`);
 
@@ -692,7 +723,14 @@ export default function TreenimasterPage() {
                 programs={programs}
                 activeWorkoutId={activeWorkoutId}
                 instantFeedback={instantFeedback}
-                onDismissFeedback={() => setInstantFeedback(null)}
+                onDismissFeedback={() => {
+                  setInstantFeedback(null);
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem(
+                      "treenimaster_instant_feedback_v1"
+                    );
+                  }
+                }}
                 onSelectWorkoutId={(id) => setSelectedWorkoutId(id)}
                 onSaveStrengthLog={handleSaveWorkoutLog}
                 onDeleteLog={handleDeleteLog}

@@ -34,7 +34,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
 import { WorkoutLogEditor } from "./WorkoutLogEditor";
@@ -128,6 +128,24 @@ export function TodayWorkoutView({
 
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
+  const feedbackSectionRef = useRef<HTMLElement | null>(null);
+  const lastScrolledFeedbackIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      instantFeedback?.id &&
+      instantFeedback.id !== lastScrolledFeedbackIdRef.current
+    ) {
+      lastScrolledFeedbackIdRef.current = instantFeedback.id;
+      const timer = window.setTimeout(() => {
+        feedbackSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 120);
+      return () => window.clearTimeout(timer);
+    }
+  }, [instantFeedback?.id]);
 
   const handleVoiceFeelingsDictation = (rawSpeech: string) => {
     const combinedRaw = feelings ? `${feelings} ${rawSpeech}` : rawSpeech;
@@ -607,8 +625,9 @@ export function TodayWorkoutView({
       {/* VÄLITÖN TSEMPPARI- & FYSIIKKAPALAUTE (Ponnahtaa esiin heti kun lenkki tai voimatreeni on kirjattu!) */}
       {instantFeedback && (
         <section
+          ref={feedbackSectionRef}
           role="status"
-          className={`apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border transition-all ${instantFeedback.tone === "positive"
+          className={`apple-glass scroll-mt-24 min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border transition-all ${instantFeedback.tone === "positive"
             ? "border-[#34C759]/60 bg-gradient-to-br from-[#34C759]/18 via-[#0A84FF]/10 to-transparent shadow-[0_0_25px_rgba(52,199,89,0.18)]"
             : "border-[#FF9F0A]/60 bg-gradient-to-br from-[#FF9F0A]/18 via-[#0A84FF]/10 to-transparent"
             }`}
@@ -649,6 +668,17 @@ export function TodayWorkoutView({
                   <strong className="text-[#30D158]">Seuraava askel:</strong>{" "}
                   {instantFeedback.nextStepHint}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={onDismissFeedback}
+                  className="apple-press inline-flex items-center gap-1.5 rounded-2xl bg-[#30D158] px-4 py-2 text-xs font-bold text-black shadow-sm transition hover:brightness-110"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Kuittaa luetuksi</span>
+                </button>
               </div>
             </div>
 
