@@ -787,6 +787,11 @@ export function TodayWorkoutView({
           const allExDone =
             exercise.sets.length > 0 && exDoneCount === exercise.sets.length;
           const isEditingName = editingExerciseId === exercise.id;
+          const isSpeedExercise =
+            exercise.code === "SPEED_B" || exercise.code === "SPEED_DL";
+          const isSingleCheckExercise =
+            isSpeedExercise || exercise.code === "SKILL";
+          const firstSet = exercise.sets[0];
 
           return (
             <div
@@ -856,14 +861,73 @@ export function TodayWorkoutView({
                 >
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>
-                    {allExDone
+                    {isSingleCheckExercise
+                      ? allExDone
+                        ? "Kuitattu ✓"
+                        : "Kuittaa tehty"
+                      : allExDone
                       ? `Kaikki tehty (${exDoneCount}/${exercise.sets.length})`
                       : "Kuittaa liikkeen sarjat"}
                   </span>
                 </button>
               </div>
 
-              {/* Sarjarivit: valintaruutu + muokattavat toistot & kilot */}
+              {/* Nopeusvoima (1 kuittaus + suurinpiirtein sarjat & paino) tai taito/keskivartalo (pelkkä 1 kuittaus) */}
+              {isSpeedExercise && firstSet ? (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
+                  <span className="text-xs font-medium text-zinc-400">
+                    Halutessasi tarkenna määrä & paino:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <label
+                        htmlFor={`${firstSet.id}-speed-reps`}
+                        className="text-xs text-zinc-400"
+                      >
+                        Sarjat:
+                      </label>
+                      <input
+                        id={`${firstSet.id}-speed-reps`}
+                        type="text"
+                        value={firstSet.actualReps ?? firstSet.reps}
+                        onChange={(e) =>
+                          updateSetField(
+                            exercise.id,
+                            firstSet.id,
+                            "actualReps",
+                            e.target.value
+                          )
+                        }
+                        className="w-24 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                      />
+                    </div>
+                    <span className="text-zinc-500 text-xs font-bold">×</span>
+                    <div className="flex items-center gap-1.5">
+                      <label
+                        htmlFor={`${firstSet.id}-speed-weight`}
+                        className="text-xs text-zinc-400"
+                      >
+                        Kg:
+                      </label>
+                      <input
+                        id={`${firstSet.id}-speed-weight`}
+                        type="text"
+                        value={firstSet.actualWeightKg ?? firstSet.weightKg}
+                        onChange={(e) =>
+                          updateSetField(
+                            exercise.id,
+                            firstSet.id,
+                            "actualWeightKg",
+                            e.target.value
+                          )
+                        }
+                        className="w-20 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : isSingleCheckExercise ? null : (
+              /* Sarjarivit: valintaruutu + muokattavat toistot & kilot */
               <div className="mt-3.5 space-y-2">
                 {exercise.sets.map((set) => {
                   const isTop = set.type === "top";
@@ -991,6 +1055,7 @@ export function TodayWorkoutView({
                   );
                 })}
               </div>
+              )}
             </div>
           );
         })}

@@ -10,7 +10,7 @@ import {
 import { sanitizeWorkoutLogToSelkosuomi } from "./workoutParser";
 
 const STORAGE_KEYS = {
-  PROGRAMS: "treenimaster_programs_v3",
+  PROGRAMS: "treenimaster_programs_v4",
   LOGS: "treenimaster_logs_v3",
   MESSAGES: "treenimaster_messages_v3",
   INITIALIZED: "treenimaster_initialized_v3",
@@ -327,10 +327,10 @@ export async function syncInitialDataWithSupabase(
           title: r.title,
           subtitle:
             r.workout_number === 1
-              ? "Raskas maastaveto, pääpenkki & raskaat lisäpainoleuat"
+              ? "Pääveto, pääpenkki & lisäpainoleuat"
               : r.workout_number === 2
-              ? "Etukyykky & volyymileuanveto"
-              : "Nopeusvoima, kontrastipenkki & kehonhallinta",
+              ? "Etukyykky, volyymileuka & nopeuspenkki"
+              : "Nopeusmaastaveto, käsilläseisonta & keskivartalo",
           structureLabel: r.structure_label,
           restDaysAfterMin: r.rest_days_aftermin ?? r.rest_days_afterMin ?? 2,
           restDaysAfterMax: r.rest_days_aftermax ?? r.rest_days_afterMax ?? 3,
@@ -339,6 +339,28 @@ export async function syncInitialDataWithSupabase(
           exercises: (r.exercises as ExercisePlan[]) || [],
           updatedAt: r.updated_at,
         }));
+
+        // Jos Supabasessa on vielä vanha ohjelmarakenne ilman Treeni 2:n nopeuspenkkiä, päivitetään se kerran
+        const c1w2 = finalPrograms.find((p) => p.id === "cycle-1-workout-2");
+        if (!c1w2?.exercises?.some((e) => e.code === "SPEED_B")) {
+          finalPrograms = INITIAL_PROGRAM_WORKOUTS;
+          const updatedRows = finalPrograms.map((p) => ({
+            id: p.id,
+            cycle_number: p.cycleNumber,
+            workout_number: p.workoutNumber,
+            phase: p.phase,
+            title: p.title,
+            structure_label: p.structureLabel,
+            rest_days_aftermin: p.restDaysAfterMin,
+            rest_days_aftermax: p.restDaysAfterMax,
+            rest_between_sets: p.restBetweenSets,
+            coach_notes: p.coachNotes,
+            exercises: p.exercises,
+            updated_at: new Date().toISOString(),
+          }));
+          void supabase.from("treenimaster_programs").upsert(updatedRows);
+        }
+
         if (typeof window !== "undefined") {
           window.localStorage.setItem(
             STORAGE_KEYS.PROGRAMS,

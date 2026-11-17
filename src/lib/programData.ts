@@ -564,96 +564,79 @@ const CYCLE_SPECS: CycleSpec[] = [
 function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan[] {
   const prefix = `c${cycle}-w3`;
 
-  // Viikko 9: B pikavoima 6x2x65 kg, DL nopeus 4x1x140 kg, Käsilläseisonta & kevyet vatsat
+  // Viikko 9: DL nopeus 4x1x140 kg, Käsilläseisonta & vatsarullaukset, Human Flag (valinnainen)
   if (cycle === 9) {
     return [
-      {
-        id: `${prefix}-speed-b`,
-        name: "Pikavoimapenkki (maksimaalinen räjähtävyys)",
-        code: "SPEED_B",
-        summary: "6 × 2 × 65 kg (maksimaalinen räjähtävyys)",
-        restMinutes: "60–90 s",
-        cue: "Terävä räjähtävä lähtö rinnalta, nolla hyytymistä.",
-        sets: makeSets(`${prefix}-sb`, [
-          { type: "speed", label: "Pikavoimakakkonen 1", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 2", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 3", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 4", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 5", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 6", reps: "2", weightKg: "65", targetRpe: "6.5" },
-        ]),
-      },
       {
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
-        summary: "4 × 1 × 140 kg",
+        summary: "4 × 1 × 140 kg (yksi kuittaus koko blokille)",
         restMinutes: "90–120 s",
         cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusykkönen 1", reps: "1", weightKg: "140", targetRpe: "6.5" },
-          { type: "speed", label: "Nopeusykkönen 2", reps: "1", weightKg: "140", targetRpe: "6.5" },
-          { type: "speed", label: "Nopeusykkönen 3", reps: "1", weightKg: "140", targetRpe: "6.5" },
-          { type: "speed", label: "Nopeusykkönen 4", reps: "1", weightKg: "140", targetRpe: "6.5" },
+          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "4×1", weightKg: "140", targetRpe: "6.5" },
         ]),
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonta & kevyet vatsat",
+        name: "Käsilläseisonta & vatsarullaukset / keskivartalo",
         code: "SKILL",
-        summary: "Käsilläseisonta & keskivartalon pito ilman maitohappoa",
+        summary: "Käsilläseisonta & keskivartalon nostot/rullaukset ilman maitohappoa",
         restMinutes: "2 min",
-        cue: "Kehonhallinta ja korsettipaineet terävinä.",
+        cue: "Kehonhallinta ja korsettipaineet terävinä – pelkkä kuittaus riittää.",
         sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Käsilläseisonta 1", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.5" },
-          { type: "skill", label: "Käsilläseisonta 2", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.5" },
-          { type: "skill", label: "Kevyet vatsat", reps: "8", weightKg: "Kehonpaino", targetRpe: "6.5" },
+          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.5" },
+        ]),
+      },
+      {
+        id: `${prefix}-human-flag`,
+        name: "Human Flag -harjoittelu (valinnainen)",
+        code: "SKILL",
+        summary: "Jos harjoittelit Human Flagia, kuittaa tehdyksi",
+        restMinutes: "2 min",
+        cue: "Kylkipito ja lapatuki – tehdään fiiliksen mukaan.",
+        sets: makeSets(`${prefix}-hf`, [
+          { type: "skill", label: "Human Flag", reps: "Valinnainen", weightKg: "Kehonpaino", targetRpe: "7.0" },
         ]),
       },
     ];
   }
 
-  // Viikko 10: B pikavoima 5x2x65 kg, DL nopeus 3x1x140 kg, Käsilläseisonta
+  // Viikko 10: DL nopeus 3x1x140 kg, Käsilläseisonta & vatsarullaukset, Human Flag (valinnainen)
   if (cycle === 10) {
     return [
-      {
-        id: `${prefix}-speed-b`,
-        name: "Pikavoimapenkki",
-        code: "SPEED_B",
-        summary: "5 × 2 × 65 kg",
-        restMinutes: "60–90 s",
-        cue: "Maksimaalinen kiihtyvyys tangolle.",
-        sets: makeSets(`${prefix}-sb`, [
-          { type: "speed", label: "Pikavoimakakkonen 1", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 2", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 3", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 4", reps: "2", weightKg: "65", targetRpe: "6.5" },
-          { type: "speed", label: "Pikavoimakakkonen 5", reps: "2", weightKg: "65", targetRpe: "6.5" },
-        ]),
-      },
       {
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
-        summary: "3 × 1 × 140 kg",
+        summary: "3 × 1 × 140 kg (yksi kuittaus koko blokille)",
         restMinutes: "90–120 s",
         cue: "Terävä irrotus lattiasta, säästä voimia.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusykkönen 1", reps: "1", weightKg: "140", targetRpe: "6.5" },
-          { type: "speed", label: "Nopeusykkönen 2", reps: "1", weightKg: "140", targetRpe: "6.5" },
-          { type: "speed", label: "Nopeusykkönen 3", reps: "1", weightKg: "140", targetRpe: "6.5" },
+          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "3×1", weightKg: "140", targetRpe: "6.5" },
         ]),
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonta",
+        name: "Käsilläseisonta & vatsarullaukset / keskivartalo",
         code: "SKILL",
-        summary: "2–3 × 20–30 s kevyt käsilläseisonta",
+        summary: "Kevyt käsilläseisonta & keskivartalo",
         restMinutes: "2 min",
         cue: "Pidä tuntuma ja olkapäiden tuki ilman väsymystä.",
         sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Käsilläseisonta 1", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.0" },
-          { type: "skill", label: "Käsilläseisonta 2", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.0" },
+          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.0" },
+        ]),
+      },
+      {
+        id: `${prefix}-human-flag`,
+        name: "Human Flag -harjoittelu (valinnainen)",
+        code: "SKILL",
+        summary: "Jos harjoittelit Human Flagia, kuittaa tehdyksi",
+        restMinutes: "2 min",
+        cue: "Kylkipito ja lapatuki – tehdään fiiliksen mukaan.",
+        sets: makeSets(`${prefix}-hf`, [
+          { type: "skill", label: "Human Flag", reps: "Valinnainen", weightKg: "Kehonpaino", targetRpe: "6.5" },
         ]),
       },
     ];
@@ -679,44 +662,36 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
   if (isDeload) {
     return [
       {
-        id: `${prefix}-skill`,
-        name: "Käsilläseisonnat & keskivartalo (kevennetty)",
-        code: "SKILL",
-        summary: "3 × 20–30 s hallittu pito + korsettipaineet ilman maitohappoa",
-        restMinutes: "2 min",
-        cue: "Pidä lavat aktiivisina ja keskivartalo tiukkana ilman uupumusta.",
-        sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Tasapaino & tuki 1", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.0" },
-          { type: "skill", label: "Tasapaino & tuki 2", reps: "25 s", weightKg: "Kehonpaino", targetRpe: "6.0" },
-          { type: "skill", label: "Keskivartalon pito", reps: "30 s", weightKg: "Kehonpaino", targetRpe: "6.5" },
-        ]),
-      },
-      {
-        id: `${prefix}-speed-b`,
-        name: "Pikavoimapenkki (kevennetty)",
-        code: "SPEED_B",
-        summary: "4 × 3 × 60 kg (palautus 45–60 s)",
-        restMinutes: "45–60 s",
-        cue: "Terävä suunnanmuutos rinnalta, tanko lentää ylös.",
-        sets: makeSets(`${prefix}-sb`, [
-          { type: "speed", label: "Nopeuskolmonen 1", reps: "3", weightKg: "60", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeuskolmonen 2", reps: "3", weightKg: "60", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeuskolmonen 3", reps: "3", weightKg: "60", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeuskolmonen 4", reps: "3", weightKg: "60", targetRpe: "6.0" },
-        ]),
-      },
-      {
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto (kevennetty)",
         code: "SPEED_DL",
-        summary: "4 × 1 × 135 kg (räjähtävä irrotus)",
+        summary: "4 × 1 × 135 kg (räjähtävä irrotus, yksi kuittaus)",
         restMinutes: "90 s",
         cue: "Maksimaalinen kiihtyvyys lattiasta, nolla väsymystä.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusykkönen 1", reps: "1", weightKg: "135", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeusykkönen 2", reps: "1", weightKg: "135", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeusykkönen 3", reps: "1", weightKg: "135", targetRpe: "6.0" },
-          { type: "speed", label: "Nopeusykkönen 4", reps: "1", weightKg: "135", targetRpe: "6.0" },
+          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "4×1", weightKg: "135", targetRpe: "6.0" },
+        ]),
+      },
+      {
+        id: `${prefix}-skill`,
+        name: "Käsilläseisonnat & vatsarullaukset / keskivartalo (kevennetty)",
+        code: "SKILL",
+        summary: "Hallittu pito + keskivartalo ilman maitohappoa",
+        restMinutes: "2 min",
+        cue: "Pidä lavat aktiivisina ja keskivartalo tiukkana ilman uupumusta.",
+        sets: makeSets(`${prefix}-skill`, [
+          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.0" },
+        ]),
+      },
+      {
+        id: `${prefix}-human-flag`,
+        name: "Human Flag -harjoittelu (valinnainen)",
+        code: "SKILL",
+        summary: "Jos harjoittelit Human Flagia, kuittaa tehdyksi",
+        restMinutes: "2 min",
+        cue: "Kylkipito ja lapatuki – tehdään fiiliksen mukaan.",
+        sets: makeSets(`${prefix}-hf`, [
+          { type: "skill", label: "Human Flag", reps: "Valinnainen", weightKg: "Kehonpaino", targetRpe: "6.5" },
         ]),
       },
     ];
@@ -725,51 +700,36 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
   const speedDlWeight = cycle >= 5 ? "140" : "135";
   return [
     {
-      id: `${prefix}-skill`,
-      name: "Käsilläseisonnat & keskivartalo",
-      code: "SKILL",
-      summary: "Kehonhallinta & korsettipaineet ilman maitohappoa (+ halutessa boksihypyt 3×3)",
-      restMinutes: "2 min",
-      cue: "Olkapäiden tuki, lapojen hallinta ja maksimaalinen korsettipaine ilman maitohappoa.",
-      sets: makeSets(`${prefix}-skill`, [
-        { type: "skill", label: "Käsilläseisonta 1", reps: "30 s", weightKg: "Kehonpaino", targetRpe: "7.0" },
-        { type: "skill", label: "Käsilläseisonta 2", reps: "30 s", weightKg: "Kehonpaino", targetRpe: "7.0" },
-        { type: "skill", label: "Keskivartalo (korsettipaine)", reps: "8-10", weightKg: "Kehonpaino", targetRpe: "7.5" },
-        { type: "skill", label: "Boksihypyt (valinnainen kimmotus)", reps: "3x3", weightKg: "Kehonpaino", targetRpe: "6.5" },
-      ]),
-    },
-    {
-      id: `${prefix}-speed-b`,
-      name: "Pikavoimapenkki (kontrastiaalto tai dynaaminen)",
-      code: "SPEED_B",
-      summary: "4 kierrosta kontrastiaallolla (3×60 kg → 1×70 kg) TAI 8×3×60 kg (palautus 45–60 s)",
-      restMinutes: "45–60 s",
-      cue: "70 kg heräteykkönen sytyttää motoriset yksiköt, jolloin 60 kg kolmonen räjähtää ylös.",
-      sets: makeSets(`${prefix}-sb`, [
-        { type: "speed", label: "Aalto 1 – Nopeuskolmonen", reps: "3", weightKg: "60", targetRpe: "6.5" },
-        { type: "top", label: "Aalto 1 – Kontrastiheräte", reps: "1", weightKg: "70", targetRpe: "7.0" },
-        { type: "speed", label: "Aalto 2 – Nopeuskolmonen", reps: "3", weightKg: "60", targetRpe: "6.5" },
-        { type: "top", label: "Aalto 2 – Kontrastiheräte", reps: "1", weightKg: "70", targetRpe: "7.0" },
-        { type: "speed", label: "Aalto 3 – Nopeuskolmonen", reps: "3", weightKg: "60", targetRpe: "6.5" },
-        { type: "top", label: "Aalto 3 – Kontrastiheräte", reps: "1", weightKg: "70", targetRpe: "7.0" },
-        { type: "speed", label: "Aalto 4 – Nopeuskolmonen", reps: "3", weightKg: "60", targetRpe: "6.5" },
-        { type: "top", label: "Aalto 4 – Kontrastiheräte", reps: "1", weightKg: "70", targetRpe: "7.0" },
-      ]),
-    },
-    {
       id: `${prefix}-speed-dl`,
       name: "Nopeusmaastaveto (RFD)",
       code: "SPEED_DL",
-      summary: `5–6 × 1 × ${speedDlWeight} kg (maksimaalinen irrotusnopeus alustasta)`,
+      summary: `5–6 × 1 × ${speedDlWeight} kg (yksi kuittaus koko blokille)`,
       restMinutes: "90–120 s",
       cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
       sets: makeSets(`${prefix}-sdl`, [
-        { type: "speed", label: "Nopeusykkönen 1", reps: "1", weightKg: speedDlWeight, targetRpe: "6.5" },
-        { type: "speed", label: "Nopeusykkönen 2", reps: "1", weightKg: speedDlWeight, targetRpe: "6.5" },
-        { type: "speed", label: "Nopeusykkönen 3", reps: "1", weightKg: speedDlWeight, targetRpe: "6.5" },
-        { type: "speed", label: "Nopeusykkönen 4", reps: "1", weightKg: speedDlWeight, targetRpe: "6.5" },
-        { type: "speed", label: "Nopeusykkönen 5", reps: "1", weightKg: speedDlWeight, targetRpe: "7.0" },
-        { type: "speed", label: "Nopeusykkönen 6", reps: "1", weightKg: speedDlWeight, targetRpe: "7.0" },
+        { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "5–6×1", weightKg: speedDlWeight, targetRpe: "6.5" },
+      ]),
+    },
+    {
+      id: `${prefix}-skill`,
+      name: "Käsilläseisonnat & vatsarullaukset / keskivartalo",
+      code: "SKILL",
+      summary: "Kehonhallinta, keskivartalon nostot & vatsarullaukset",
+      restMinutes: "2 min",
+      cue: "Olkapäiden tuki, lapojen hallinta ja maksimaalinen korsettipaine – pelkkä kuittaus riittää.",
+      sets: makeSets(`${prefix}-skill`, [
+        { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "7.0" },
+      ]),
+    },
+    {
+      id: `${prefix}-human-flag`,
+      name: "Human Flag -harjoittelu (valinnainen)",
+      code: "SKILL",
+      summary: "Jos harjoittelit Human Flagia, kuittaa tehdyksi",
+      restMinutes: "2 min",
+      cue: "Kylkipito ja lapatuki – tehdään fiiliksen mukaan.",
+      sets: makeSets(`${prefix}-hf`, [
+        { type: "skill", label: "Human Flag", reps: "Valinnainen", weightKg: "Kehonpaino", targetRpe: "7.0" },
       ]),
     },
   ];
@@ -842,13 +802,16 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           : c >= 9
           ? `Viikko ${c} · Treeni 2 (B-päivä)`
           : `Kierto ${c} · Treeni 2 (B-päivä)`,
-      subtitle: "Etukyykky & rajoille viety volyymileuka",
+      subtitle:
+        c <= 10
+          ? "Etukyykky, volyymileuka & nopeuspenkki"
+          : "Etukyykky & rajoille viety volyymileuka",
       structureLabel: spec.structure,
       restDaysAfterMin: 1,
       restDaysAfterMax: 2,
       restBetweenSets: "3–4 min",
       coachNotes:
-        "Etukyykyssä jätetään 1–1,5 toistoa varaa. Volyymileuanvedossa 1 kova sarja rajoille asti (+15 kg n. 12–15 toistoa tai +20–22,5 kg n. 9–12 toistoa), paitsi kevennys- ja piikkauskierroilla 2–3 toistoa varaa!",
+        "Etukyykyssä jätetään 1–1,5 toistoa varaa. Volyymileuanvedossa 1 kova sarja rajoille asti (+15 kg n. 12–15 toistoa tai +20–22,5 kg n. 9–12 toistoa), paitsi kevennys- ja piikkauskierroilla 2–3 toistoa varaa! Nopeuspenkki tehdään fiiliksen mukaan ja kuitataan yhdellä kuittauksella.",
       exercises: [
         {
           id: `${w2Prefix}-s`,
@@ -879,6 +842,29 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
             },
           ]),
         },
+        ...(c <= 10
+          ? [
+              {
+                id: `${w2Prefix}-speed-b`,
+                name: "Nopeuspenkki (fiiliksen mukaan)",
+                code: "SPEED_B" as const,
+                summary: spec.isDeload
+                  ? "n. 4 × 3 × 60 kg (yksi kuittaus)"
+                  : "n. 6–8 × 2–3 × 60–65 kg (yksi kuittaus)",
+                restMinutes: "45–90 s",
+                cue: "Terävä räjähtävä lähtö rinnalta fiiliksen mukaan – yksi kuittaus koko blokille.",
+                sets: makeSets(`${w2Prefix}-sb`, [
+                  {
+                    type: "speed",
+                    label: "Nopeuspenkki (koko blokki)",
+                    reps: spec.isDeload ? "4×3" : "6–8×2–3",
+                    weightKg: "62.5",
+                    targetRpe: "6.5",
+                  },
+                ]),
+              },
+            ]
+          : []),
       ],
     };
 
@@ -895,20 +881,20 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           : c >= 9
           ? `Viikko ${c} · Treeni 3 (C-päivä)`
           : `Kierto ${c} · Treeni 3 (C-päivä / Extrapäivä)`,
-      subtitle: "Pikavoima & keskivartalo",
+      subtitle: "Nopeusmaastaveto, käsilläseisonta & keskivartalo",
       structureLabel:
         c === 11 || c === 12
           ? "Täysi lepo ennen testiviikkoa"
           : spec.isDeload
-          ? "Huoltava pikavoima & keskivartalo"
-          : "Pikavoimapenkki, nopeusmaastaveto & käsilläseisonnat",
+          ? "Huoltava nopeusmaastaveto & keskivartalo"
+          : "Nopeusmaastaveto, käsilläseisonta, vatsat & Human Flag",
       restDaysAfterMin: 1,
       restDaysAfterMax: 2,
-      restBetweenSets: "45–120 s",
+      restBetweenSets: "60–120 s",
       coachNotes:
         c === 11
           ? "Treeni 3 jätetään kokonaan väliin. Täysi lepo ennen ennätysviikkoa."
-          : "Käsilläseisonnat & keskivartalo ilman maitohappoa, pikavoimapenkki (4 kierrosta 3×60→1×70 kg tai 8×3×60 kg) ja nopeusmaastaveto (5–6×1×135–140 kg). Lepo 1–2 päivää ennen uuden kierron alkua.",
+          : "Nopeusmaastaveto (yksi kuittaus koko blokille), käsilläseisonta & vatsarullaukset/keskivartalon nostot sekä valinnainen Human Flag. Lepo 1–2 päivää ennen uuden kierron alkua.",
       exercises: buildSpeedDayExercises(c, spec.isDeload),
     };
 
