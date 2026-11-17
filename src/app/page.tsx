@@ -180,19 +180,25 @@ export default function TreenimasterPage() {
       );
       setSelectedWorkoutId(updatedRec.nextWorkout.id);
 
-      // Automaattinen taustasynkronointi Withingsistä (korkeintaan 90 s välein)
-      void runWithingsBackgroundSync(90 * 1000);
+      // Automaattinen taustasynkronointi Withingsistä heti sivun latauksessa
+      void runWithingsBackgroundSync(0);
     });
 
-    // Tarkista Withings OAuth-paluu URL-parametreista
+    // Tarkista Withings OAuth-paluu URL-parametreista ja pidä 1 min taustasynkronointi päällä
     if (typeof window !== "undefined") {
       const handleAppForeground = () => {
         if (document.visibilityState === "visible") {
-          void runWithingsBackgroundSync(90 * 1000);
+          void runWithingsBackgroundSync(30 * 1000);
         }
       };
       document.addEventListener("visibilitychange", handleAppForeground);
       window.addEventListener("focus", handleAppForeground);
+
+      const syncInterval = window.setInterval(() => {
+        if (document.visibilityState === "visible") {
+          void runWithingsBackgroundSync(55 * 1000);
+        }
+      }, 60 * 1000);
 
       const params = new URLSearchParams(window.location.search);
       const wStatus = params.get("withings");
@@ -235,6 +241,7 @@ export default function TreenimasterPage() {
       return () => {
         document.removeEventListener("visibilitychange", handleAppForeground);
         window.removeEventListener("focus", handleAppForeground);
+        window.clearInterval(syncInterval);
       };
     }
   }, []);
