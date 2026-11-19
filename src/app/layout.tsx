@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "Treenimaster – Älykäs voima- ja fysiologiavalmentaja",
   description:
     "Henkilökohtainen tekoälyvalmennussovellus 8 viikon perusvoimaohjelman, 4 viikon piikkauksen, kokonaiskuormituksen ja palautumisen seurantaan Gemini API:n, NotebookLM-tietopohjan ja Supabasen avulla.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Treenimaster",
+  },
 };
 
 export default function RootLayout({
