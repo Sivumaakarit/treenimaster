@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     "Henkilökohtainen tekoälyvalmennussovellus 8 viikon perusvoimaohjelman, 4 viikon piikkauksen, kokonaiskuormituksen ja palautumisen seurantaan Gemini API:n, NotebookLM-tietopohjan ja Supabasen avulla.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
     title: "Treenimaster",
   },
 };

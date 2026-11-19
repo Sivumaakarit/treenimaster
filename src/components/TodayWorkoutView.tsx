@@ -939,17 +939,17 @@ export function TodayWorkoutView({
 
               {/* Nopeusvoima (sarjat & paino) tai kehonhallinta-kierrokset (valittava kierrosmäärä) */}
               {isSpeedExercise && firstSet ? (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
                   <span className="text-xs font-medium text-zinc-400">
                     Halutessasi tarkenna määrä & paino:
                   </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:min-w-[260px]">
+                    <div className="flex flex-col gap-1">
                       <label
                         htmlFor={`${firstSet.id}-speed-reps`}
-                        className="text-xs text-zinc-400"
+                        className="text-[11px] font-medium text-zinc-400"
                       >
-                        Sarjat:
+                        Sarjat
                       </label>
                       <input
                         id={`${firstSet.id}-speed-reps`}
@@ -963,16 +963,15 @@ export function TodayWorkoutView({
                             e.target.value
                           )
                         }
-                        className="w-28 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                        className="w-full rounded-xl border border-white/15 bg-black/50 px-2.5 py-1.5 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                       />
                     </div>
-                    <span className="text-zinc-500 text-xs font-bold">×</span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <label
                         htmlFor={`${firstSet.id}-speed-weight`}
-                        className="text-xs text-zinc-400"
+                        className="text-[11px] font-medium text-zinc-400"
                       >
-                        Kg:
+                        Paino (kg)
                       </label>
                       <input
                         id={`${firstSet.id}-speed-weight`}
@@ -986,7 +985,7 @@ export function TodayWorkoutView({
                             e.target.value
                           )
                         }
-                        className="w-20 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                        className="w-full rounded-xl border border-white/15 bg-black/50 px-2.5 py-1.5 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                       />
                     </div>
                   </div>

@@ -272,9 +272,9 @@ export function QuickOtherWorkoutModal({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {...({ closedby: "any" } as any)}
       aria-labelledby={titleId}
-      className="rounded-3xl outline-none"
+      className="rounded-3xl outline-none mt-[max(0.75rem,env(safe-area-inset-top))]"
     >
-      <div className="apple-glass-heavy rounded-3xl p-4 sm:p-6 text-[#F5F5F7] border border-white/15 max-h-[90dvh] overflow-y-auto">
+      <div className="apple-glass-heavy rounded-3xl p-4 sm:p-6 text-[#F5F5F7] border border-white/15 max-h-[84dvh] overflow-y-auto">
         <div className="flex items-start justify-between gap-3 pb-3.5 border-b border-white/10">
           <div>
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#30D158]">
