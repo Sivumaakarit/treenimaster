@@ -128,6 +128,7 @@ export function TodayWorkoutView({
 
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
+  const [showWorkoutDetails, setShowWorkoutDetails] = useState<boolean>(false);
   const feedbackSectionRef = useRef<HTMLElement | null>(null);
   const lastScrolledFeedbackIdRef = useRef<string | null>(null);
 
@@ -694,7 +695,7 @@ export function TodayWorkoutView({
         </section>
       )}
 
-      {/* KORTTI 2: SEURAAVA VOIMATREENI OHJELMASSA (Oma selkeä otsikkokortti erillään päivän tilasta) */}
+      {/* KORTTI 2: SEURAAVA VOIMATREENI OHJELMASSA (Kompakti otsikko + haitari lisätiedoille) */}
       <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
@@ -706,78 +707,94 @@ export function TodayWorkoutView({
             <h1 className="apple-display text-white mt-0.5">
               {baseWorkout.title}
             </h1>
-            <p className="text-sm text-zinc-300 mt-0.5">
-              {baseWorkout.subtitle} · {baseWorkout.structureLabel}
-            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onNavigateToProgram}
-            className="apple-press self-start sm:self-center shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-sm font-medium text-zinc-200"
-          >
-            <span>Koko 8 vk ohjelma</span>
-            <ChevronRight className="w-4 h-4 shrink-0" />
-          </button>
-        </div>
-
-        {/* Valmentajan ydinohje kyseiselle treenille */}
-        <div className="mt-3.5 rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/25 p-3.5 flex items-start gap-2.5">
-          <Zap className="w-4 h-4 text-[#64D2FF] shrink-0 mt-0.5" />
-          <div className="text-sm text-zinc-200 leading-relaxed">
-            {baseWorkout.coachNotes}
-          </div>
-        </div>
-
-        {/* Harjoitusvalitsin + Kuittaa kaikki sarjat */}
-        <div className="mt-3.5 pt-3.5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
-          <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto flex-1">
-            <label
-              htmlFor="workout-selector"
-              className="text-sm font-medium text-zinc-400 shrink-0"
-            >
-              Vaihda:
-            </label>
-            <select
-              id="workout-selector"
-              value={baseWorkout.id}
-              onChange={(e) => onSelectWorkoutId(e.target.value)}
-              className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-2 text-sm font-medium text-white focus:border-[#0A84FF] focus:outline-none"
-            >
-              {programs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title} ({p.structureLabel})
-                  {p.id === recommendation.nextWorkout.id
-                    ? " (Vuorossa nyt)"
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={markEntireWorkoutDone}
-              className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-sm font-semibold text-[#64D2FF]"
+              onClick={() => setShowWorkoutDetails((v) => !v)}
+              aria-expanded={showWorkoutDetails}
+              className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
             >
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>
-                {completedSetsCount === totalSetsCount && totalSetsCount > 0
-                  ? "Poista kuittaukset"
-                  : "Kuittaa kaikki sarjat"}
-              </span>
+              <span>{showWorkoutDetails ? "Piilota tiedot" : "Ohjeet & vaihda"}</span>
+              <ChevronRight
+                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                  showWorkoutDetails ? "rotate-90" : ""
+                }`}
+              />
             </button>
             <button
               type="button"
-              onClick={resetToPlanned}
-              title="Palauta oletuspainot ja -toistot"
-              className="apple-press p-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
+              onClick={onNavigateToProgram}
+              className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
             >
-              <RotateCcw className="w-4 h-4" />
+              <span>8 vk ohjelma</span>
+              <ChevronRight className="w-4 h-4 shrink-0" />
             </button>
           </div>
         </div>
+
+        {showWorkoutDetails && (
+          <div className="mt-3.5 space-y-3.5 pt-3.5 border-t border-white/10">
+            {/* Valmentajan ydinohje kyseiselle treenille */}
+            <div className="rounded-2xl bg-[#007AFF]/10 border border-[#007AFF]/25 p-3.5 flex items-start gap-2.5">
+              <Zap className="w-4 h-4 text-[#64D2FF] shrink-0 mt-0.5" />
+              <div className="text-sm text-zinc-200 leading-relaxed">
+                {baseWorkout.coachNotes}
+              </div>
+            </div>
+
+            {/* Harjoitusvalitsin + Kuittaa kaikki sarjat */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto flex-1">
+                <label
+                  htmlFor="workout-selector"
+                  className="text-sm font-medium text-zinc-400 shrink-0"
+                >
+                  Vaihda:
+                </label>
+                <select
+                  id="workout-selector"
+                  value={baseWorkout.id}
+                  onChange={(e) => onSelectWorkoutId(e.target.value)}
+                  className="w-full sm:w-auto max-w-full min-w-0 truncate rounded-xl bg-black/60 border border-white/15 px-3 py-2 text-sm font-medium text-white focus:border-[#0A84FF] focus:outline-none"
+                >
+                  {programs.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title} ({p.structureLabel})
+                      {p.id === recommendation.nextWorkout.id
+                        ? " (Vuorossa nyt)"
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={markEntireWorkoutDone}
+                  className="apple-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/40 text-sm font-semibold text-[#64D2FF]"
+                >
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>
+                    {completedSetsCount === totalSetsCount && totalSetsCount > 0
+                      ? "Poista kuittaukset"
+                      : "Kuittaa kaikki sarjat"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={resetToPlanned}
+                  title="Palauta oletuspainot ja -toistot"
+                  className="apple-press p-2 rounded-xl bg-white/6 hover:bg-white/12 border border-white/10 text-zinc-300 shrink-0"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Liikkeet ja sarjat: Selkeästi erottuva Toteutettavat liikkeet -osio */}
@@ -815,21 +832,13 @@ export function TodayWorkoutView({
           return (
             <div
               key={exercise.id}
-              className={`relative overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl border transition-all duration-300 ${allExDone
-                ? "border-[#30D158]/80 bg-gradient-to-br from-[#30D158]/20 via-[#30D158]/8 to-[#0B1117]/80 shadow-[0_0_30px_rgba(48,209,88,0.22),inset_0_1px_0_rgba(48,209,88,0.3)]"
-                : "border-[#64D2FF]/35 bg-gradient-to-br from-[#0A84FF]/[0.12] via-[#131B2E]/90 to-[#5E5CE6]/[0.08] shadow-[0_12px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
+              className={`relative overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl border-2 transition-all duration-300 ${allExDone
+                ? "border-[#30D158]/85 bg-gradient-to-br from-[#30D158]/24 via-[#0F2418]/90 to-[#0B1117]/90 shadow-[0_0_36px_rgba(48,209,88,0.28),inset_0_1px_0_rgba(48,209,88,0.35)]"
+                : "border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)] hover:border-[#64D2FF]/75"
                 }`}
             >
-              {/* Vasen korostuspalkki */}
-              <span
-                aria-hidden="true"
-                className={`absolute inset-y-4 left-0 w-1 rounded-r-full transition-colors ${allExDone
-                  ? "bg-[#30D158] shadow-[0_0_12px_#30D158]"
-                  : "bg-gradient-to-b from-[#64D2FF] to-[#0A84FF] shadow-[0_0_10px_rgba(100,210,255,0.55)]"
-                  }`}
-              />
               {/* Liikkeen otsikko & pikakuittaus */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/12 pl-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/12">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span
