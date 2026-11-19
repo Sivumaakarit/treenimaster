@@ -793,7 +793,7 @@ export function computeNextRecommendedWorkout(
       restDaysRequiredMin: restMin,
       restDaysRequiredMax: restMax,
       readinessState: "completed_today",
-      readinessHeadline: `Päivän voimatreeni suoritettu (${lastStrengthLog.title})`,
+      readinessHeadline: `Päivän voimatreeni suoritettu · ${lastStrengthLog.title.split(" (")[0]}`,
       readinessDetail: `Seuraavana vuorossa on ${nextWorkout.title}. Pidä nyt ${restMin}–${restMax} täyttä lepopäivää ennen seuraavaa voimatreeniä, jotta keskushermosto ja jänteet palautuvat.`,
       recentAerobicCount7d,
       recentLogsBetween,

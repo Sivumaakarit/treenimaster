@@ -408,6 +408,8 @@ export function cleanSpokenToSelkosuomi(rawSpeech: string): string {
     .replace(/\b(aamulenkin)\b/gi, "aamulenkki")
     .replace(/\b(iltalenkin)\b/gi, "iltalenkki")
     .replace(/\bhf\b/gi, "Human Flag")
+    .replace(/\bkumminauha\s+pitoja/gi, "kuminauhapitoja")
+    .replace(/\bkuminauha\s+pitoja/gi, "kuminauhapitoja")
     .replace(/\bkumminauha/gi, "kuminauha")
     .replace(/\b(mawe|mave)\b/gi, "maastaveto")
     .replace(/\bpena\b/gi, "penkkipunnerrus")

@@ -436,7 +436,7 @@ export function TodayWorkoutView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm sm:text-base font-bold border whitespace-normal leading-snug ${recommendation.readinessState === "ready"
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm sm:text-base font-bold border whitespace-normal leading-snug max-w-full ${recommendation.readinessState === "ready"
                 ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
                 : recommendation.readinessState === "completed_today"
                   ? "bg-[#0A84FF]/15 text-[#64D2FF] border-[#0A84FF]/35"
