@@ -894,7 +894,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
       coachNotes:
         c === 11
           ? "Treeni 3 jätetään kokonaan väliin. Täysi lepo ennen ennätysviikkoa."
-          : "Nopeusmaastaveto, käsilläseisonta & vatsarullaukset/keskivartalon nostot sekä valinnainen Human Flag. Lepo 1–2 päivää ennen uuden kierron alkua.",
+          : "Nopeusmaastaveto, boksihypyt, käsilläseisonta ja vatsarullaukset/keskivartalon nostot sekä valinnainen Human Flag. Lepo 1–2 päivää ennen uuden kierron alkua.",
       exercises: buildSpeedDayExercises(c, spec.isDeload),
     };
 

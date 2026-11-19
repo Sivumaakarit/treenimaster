@@ -353,6 +353,7 @@ export async function syncInitialDataWithSupabase(
           !speedBench.summary?.includes("8–10") ||
           !c1w3SpeedDl?.summary?.includes("140") ||
           c1w3SpeedDl?.restMinutes !== "1 min" ||
+          !c1w3?.coachNotes?.includes("boksihypyt") ||
           !hasUpdatedSkill
         ) {
           finalPrograms = INITIAL_PROGRAM_WORKOUTS;
