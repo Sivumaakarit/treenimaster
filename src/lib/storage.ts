@@ -291,12 +291,26 @@ export async function syncInitialDataWithSupabase(
   const localMessages = getLocalMessages(todayISO);
 
   try {
-    // 1. Hae ohjelma Supabasesta
-    const { data: remotePrograms, error: progErr } = await supabase
-      .from("treenimaster_programs")
-      .select("*")
-      .order("cycle_number", { ascending: true })
-      .order("workout_number", { ascending: true });
+    // Haetaan ohjelma, lokit ja keskustelut rinnakkain (3× nopeampi käynnistys)
+    const [
+      { data: remotePrograms, error: progErr },
+      { data: remoteLogs, error: logsErr },
+      { data: remoteMsgs, error: msgsErr },
+    ] = await Promise.all([
+      supabase
+        .from("treenimaster_programs")
+        .select("*")
+        .order("cycle_number", { ascending: true })
+        .order("workout_number", { ascending: true }),
+      supabase
+        .from("treenimaster_logs")
+        .select("*")
+        .order("performed_date", { ascending: false }),
+      supabase
+        .from("treenimaster_messages")
+        .select("*")
+        .order("created_at", { ascending: true }),
+    ]);
 
     let finalPrograms = localPrograms;
 
@@ -383,12 +397,7 @@ export async function syncInitialDataWithSupabase(
       }
     }
 
-    // 2. Hae treenilokit Supabasesta
-    const { data: remoteLogs, error: logsErr } = await supabase
-      .from("treenimaster_logs")
-      .select("*")
-      .order("performed_date", { ascending: false });
-
+    // 2. Käsittele treenilokit
     let finalLogs = localLogs;
     if (!logsErr && remoteLogs) {
       if (remoteLogs.length === 0) {
@@ -414,12 +423,7 @@ export async function syncInitialDataWithSupabase(
       }
     }
 
-    // 3. Hae keskustelut Supabasesta
-    const { data: remoteMsgs, error: msgsErr } = await supabase
-      .from("treenimaster_messages")
-      .select("*")
-      .order("created_at", { ascending: true });
-
+    // 3. Käsittele keskustelut
     let finalMessages = localMessages;
     if (!msgsErr && remoteMsgs && remoteMsgs.length > 0) {
       finalMessages = remoteMsgs.map((m) => ({
