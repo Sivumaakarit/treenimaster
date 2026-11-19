@@ -356,10 +356,10 @@ export function TodayWorkoutView({
         oxygenScore === 5
           ? "erinomaisesti"
           : oxygenScore === 4
-          ? "hyvin"
-          : oxygenScore === 3
-          ? "kohtalaisesti"
-          : "raskaammin";
+            ? "hyvin"
+            : oxygenScore === 3
+              ? "kohtalaisesti"
+              : "raskaammin";
       scoreParts.push(`Happi kulki ${oxAdj} (${oxygenScore}/5)`);
     }
     if (energyScore !== null) {
@@ -367,10 +367,10 @@ export function TodayWorkoutView({
         energyScore === 5
           ? "terävät"
           : energyScore === 4
-          ? "hyvät"
-          : energyScore === 3
-          ? "normaalit"
-          : "raskaat";
+            ? "hyvät"
+            : energyScore === 3
+              ? "normaalit"
+              : "raskaat";
       scoreParts.push(`voimat ja tangon nopeus olivat ${enAdj} (${energyScore}/5)`);
     }
     const scoreSentence =
