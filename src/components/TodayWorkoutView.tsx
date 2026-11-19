@@ -203,7 +203,7 @@ export function TodayWorkoutView({
       })),
     }));
     setSessionExercises(cloned);
-    setDurationMinutes(baseWorkout.workoutNumber === 1 ? "70" : "55");
+    setDurationMinutes("");
   }, [baseWorkout]);
 
   const totalSetsCount = sessionExercises.reduce(
@@ -1356,11 +1356,11 @@ export function TodayWorkoutView({
         <div className="pt-1">
           <button
             type="button"
-            onClick={() => handleCompleteWorkout(true)}
+            onClick={() => handleCompleteWorkout(false)}
             className="apple-press w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:brightness-105 text-sm sm:text-base font-extrabold text-black shadow-[0_0_24px_rgba(48,209,88,0.35)] transition"
           >
-            <Bot className="w-5 h-5" />
-            <span>Tallenna & pyydä valmentajan syväanalyysi</span>
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Tallenna treeni</span>
           </button>
         </div>
       </section>

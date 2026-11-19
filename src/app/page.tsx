@@ -571,7 +571,7 @@ export default function TreenimasterPage() {
       <header className="apple-nav-glass sticky top-0 z-30 border-b border-white/10">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-2 px-3.5 py-2.5 sm:px-6 sm:py-3">
           {/* Vasen: Pelkistetty Treenimaster-logo & tekstilogo */}
-          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0A84FF] via-[#0066CC] to-[#34C759] shadow-[0_4px_16px_rgba(10,132,255,0.35)] ring-1 ring-white/20 sm:h-10 sm:w-10">
               <svg
                 viewBox="0 0 28 28"
@@ -601,7 +601,7 @@ export default function TreenimasterPage() {
               </svg>
             </div>
             <div className="flex min-w-0 items-center gap-2.5">
-              <h1 className="truncate text-[23px] leading-none font-extrabold tracking-tight sm:text-[26px]">
+              <h1 className="truncate text-[24.5px] leading-none font-black tracking-tight sm:text-[28px]">
                 <span className="text-white">Treeni</span>
                 <span className="bg-gradient-to-r from-[#64D2FF] to-[#30D158] bg-clip-text text-transparent">
                   master
