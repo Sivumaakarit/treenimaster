@@ -112,8 +112,8 @@ export function TodayWorkoutView({
   const [deviationReason, setDeviationReason] = useState<string>(
     "Suunnitelman mukaan ✓"
   );
-  const [oxygenScore, setOxygenScore] = useState<number>(4);
-  const [energyScore, setEnergyScore] = useState<number>(4);
+  const [oxygenScore, setOxygenScore] = useState<number | null>(null);
+  const [energyScore, setEnergyScore] = useState<number | null>(null);
   const [recoveryStatus, setRecoveryStatus] =
     useState<RecoveryStatus>("normaali");
   const [durationMinutes, setDurationMinutes] = useState<string>("65");
@@ -335,8 +335,8 @@ export function TodayWorkoutView({
       rpe: baseWorkout.cycleNumber === 4 || baseWorkout.cycleNumber === 8 ? 6.0 : 8.5,
       exercises: normalizedExercises,
       feelings: finalFeelings,
-      oxygenScore,
-      energyScore,
+      oxygenScore: oxygenScore ?? 4,
+      energyScore: energyScore ?? 4,
       recoveryStatus,
       source: "workout_view",
       createdAt: new Date().toISOString(),
@@ -347,6 +347,8 @@ export function TodayWorkoutView({
       `${baseWorkout.title} tallennettu Supabaseen ja kalenteriin!`
     );
     setFeelings("");
+    setOxygenScore(null);
+    setEnergyScore(null);
     setDeviationReason("Suunnitelman mukaan ✓");
     setTimeout(() => setJustSavedToast(null), 5000);
   };
@@ -1162,45 +1164,43 @@ export function TodayWorkoutView({
         })}
       </section>
 
-      {/* Treenin jälkeiset tuntemukset, puhesyöttö (fi-FI) ja tallennus */}
-      <section className="apple-glass rounded-3xl p-5 sm:p-6 space-y-4 border border-white/12">
+      {/* KORTTI: Treenin kuittaus & tuntemukset */}
+      <section className="relative overflow-hidden rounded-3xl p-4 sm:p-5 space-y-4 backdrop-blur-2xl border-2 border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="apple-title text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#0A84FF]" />
+              <Activity className="w-5 h-5 text-[#64D2FF]" />
               <span>
                 Treenin kuittaus & tuntemukset ({completedSetsCount}/
-                {totalSetsCount} sarjaa valittu, {progressPercent} %)
+                {totalSetsCount} sarjaa, {progressPercent} %)
               </span>
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-              Kerro tai sanele mikrofonilla, miten rauta liikkui ja miten happi
-              sekä voimat riittivät. Tallennus ei muuta alkuperäistä 8 viikon
-              pohjaohjelmaa.
+            <p className="text-xs sm:text-sm text-zinc-300 mt-0.5">
+              Valitse numerot ja halutessasi sanele tuntemukset.
             </p>
           </div>
 
           <VoiceInputButton
             onTranscript={handleVoiceFeelingsDictation}
-            label="Sanele vastaus (muuntaa selkosuomeksi)"
+            label="Sanele vastaus"
           />
         </div>
 
         {/* Pikamittarit: Happi, Voimat, Hermosto & Kesto */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
-            <span className="block text-xs font-medium text-zinc-300 mb-1.5">
+            <span className="block text-xs font-medium text-zinc-200 mb-1.5">
               Miten happi kulki? (1–5)
             </span>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setOxygenScore(n)}
-                  className={`apple-press flex-1 py-1.5 rounded-lg text-xs font-bold border ${oxygenScore === n
-                    ? "bg-[#34C759]/25 border-[#34C759] text-[#30D158]"
-                    : "bg-white/[0.04] border-white/10 text-zinc-400"
+                  className={`apple-press flex-1 py-2 rounded-xl text-xs font-bold border transition ${oxygenScore === n
+                    ? "bg-[#34C759]/30 border-[#30D158] text-[#30D158] shadow-[0_0_12px_rgba(48,209,88,0.3)]"
+                    : "bg-black/40 border-white/15 text-zinc-300 hover:bg-white/10"
                     }`}
                 >
                   {n}
@@ -1210,18 +1210,18 @@ export function TodayWorkoutView({
           </div>
 
           <div>
-            <span className="block text-xs font-medium text-zinc-300 mb-1.5">
+            <span className="block text-xs font-medium text-zinc-200 mb-1.5">
               Tangon nopeus & voimat (1–5)
             </span>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setEnergyScore(n)}
-                  className={`apple-press flex-1 py-1.5 rounded-lg text-xs font-bold border ${energyScore === n
-                    ? "bg-[#0A84FF]/25 border-[#0A84FF] text-[#409CFF]"
-                    : "bg-white/[0.04] border-white/10 text-zinc-400"
+                  className={`apple-press flex-1 py-2 rounded-xl text-xs font-bold border transition ${energyScore === n
+                    ? "bg-[#0A84FF]/30 border-[#64D2FF] text-[#64D2FF] shadow-[0_0_12px_rgba(100,210,255,0.3)]"
+                    : "bg-black/40 border-white/15 text-zinc-300 hover:bg-white/10"
                     }`}
                 >
                   {n}
@@ -1233,7 +1233,7 @@ export function TodayWorkoutView({
           <div>
             <label
               htmlFor="workout-recovery-select"
-              className="block text-xs font-medium text-zinc-300 mb-1.5"
+              className="block text-xs font-medium text-zinc-200 mb-1.5"
             >
               Alaselän & hermoston tila
             </label>
@@ -1243,7 +1243,7 @@ export function TodayWorkoutView({
               onChange={(e) =>
                 setRecoveryStatus(e.target.value as RecoveryStatus)
               }
-              className="w-full rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
+              className="w-full rounded-xl bg-black/50 border border-white/15 px-2.5 py-2 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
             >
               <option value="erinomainen">Erinomainen / terävä</option>
               <option value="normaali">Normaali</option>
@@ -1255,7 +1255,7 @@ export function TodayWorkoutView({
           <div>
             <label
               htmlFor="workout-duration-input"
-              className="block text-xs font-medium text-zinc-300 mb-1.5"
+              className="block text-xs font-medium text-zinc-200 mb-1.5"
             >
               Treenin kesto (min)
             </label>
@@ -1266,62 +1266,18 @@ export function TodayWorkoutView({
               max={240}
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
-              className="w-full rounded-lg bg-black/50 border border-white/15 px-3 py-1.5 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
+              className="w-full rounded-xl bg-black/50 border border-white/15 px-3 py-2 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
             />
-          </div>
-        </div>
-
-        {/* Poikkeaman syy / treenin toteutuma (jos treeni ei mennyt 100 % suunnitelman mukaan, valmentaja ottaa syyn huomioon) */}
-        <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-3.5 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-white">
-              Menikö treeni suunnitelman mukaan vai poikkesiko jokin?
-            </span>
-            <span className="text-[11px] text-zinc-400">
-              Tausta-äly huomioi syyn palautumis- ja trendianalyysissä
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {STRENGTH_DEVIATION_CHIPS.map((chip) => {
-              const active = deviationReason === chip;
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setDeviationReason(chip)}
-                  className={`apple-press px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${active
-                    ? chip === "Suunnitelman mukaan ✓"
-                      ? "bg-[#34C759]/25 border-[#34C759] text-[#30D158]"
-                      : "bg-[#FF9F0A]/25 border-[#FF9F0A] text-[#FFD60A]"
-                    : "bg-black/40 border-white/12 text-zinc-300 hover:bg-white/[0.08]"
-                    }`}
-                >
-                  {chip}
-                </button>
-              );
-            })}
           </div>
         </div>
 
         <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <label
-                htmlFor="workout-feelings-textarea"
-                className="block text-xs sm:text-sm font-semibold text-white"
-              >
-                Miten treeni meni, miten happi ja voimat riittivät (tai miksi muokkasit)?
-              </label>
-              <span className="text-[11px] text-zinc-400">
-                Paina mikrofoninappia ja puhu vapaasti – sovellus muotoilee sanelun automaattisesti selkosuomeksi Supabaseen ja poimii hapen & voimat.
-              </span>
-            </div>
-
-            <VoiceInputButton
-              onTranscript={handleVoiceFeelingsDictation}
-              label="Sanele vastaus"
-            />
-          </div>
+          <label
+            htmlFor="workout-feelings-textarea"
+            className="block text-xs sm:text-sm font-semibold text-white"
+          >
+            Miten treeni meni, miten happi ja voimat riittivät (tai miksi muokkasit)?
+          </label>
 
           {(selkosuomiPolishing || selkosuomiBadge) && (
             <div className="inline-flex items-center gap-1.5 rounded-full bg-[#34C759]/15 border border-[#34C759]/35 px-3 py-1 text-[11px] font-semibold text-[#30D158]">
@@ -1343,8 +1299,41 @@ export function TodayWorkoutView({
               setSelkosuomiBadge(null);
             }}
             placeholder="Esim. 170 kg kolmonen tuli terävästi, happi kulki hyvin ja voimat riittivät loppuun asti..."
-            className="w-full rounded-2xl bg-black/40 border border-white/15 p-3.5 text-sm text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
+            className="w-full rounded-2xl bg-black/45 border border-white/15 p-3.5 text-sm text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
           />
+        </div>
+      </section>
+
+      {/* ERILLINEN KORTTI: Menikö treeni suunnitelman mukaan? */}
+      <section className="relative overflow-hidden rounded-3xl p-4 sm:p-5 space-y-3 backdrop-blur-2xl border-2 border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm sm:text-base font-bold text-white">
+            Menikö treeni suunnitelman mukaan?
+          </h3>
+          <span className="text-[11px] text-zinc-300">
+            Tausta-äly huomioi syyn palautumis- ja trendianalyysissä
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {STRENGTH_DEVIATION_CHIPS.map((chip) => {
+            const active = deviationReason === chip;
+            return (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => setDeviationReason(chip)}
+                className={`apple-press px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${active
+                  ? chip === "Suunnitelman mukaan ✓"
+                    ? "bg-[#34C759]/25 border-[#30D158] text-[#30D158]"
+                    : "bg-[#FF9F0A]/25 border-[#FF9F0A] text-[#FFD60A]"
+                  : "bg-black/45 border-white/12 text-zinc-300 hover:bg-white/[0.08]"
+                  }`}
+              >
+                {chip}
+              </button>
+            );
+          })}
         </div>
 
         {justSavedToast && (
@@ -1357,23 +1346,14 @@ export function TodayWorkoutView({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
+        <div className="pt-1">
           <button
             type="button"
             onClick={() => handleCompleteWorkout(true)}
-            className="apple-press inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border border-[#0A84FF]/45 text-xs sm:text-sm font-semibold text-[#64D2FF]"
+            className="apple-press w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:brightness-105 text-sm sm:text-base font-extrabold text-black shadow-[0_0_24px_rgba(48,209,88,0.35)] transition"
           >
-            <Bot className="w-4 h-4" />
+            <Bot className="w-5 h-5" />
             <span>Tallenna & pyydä valmentajan syväanalyysi</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleCompleteWorkout(false)}
-            className="apple-press inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:opacity-95 text-xs sm:text-sm font-bold text-black shadow-lg shadow-[#34C759]/25"
-          >
-            <Dumbbell className="w-4 h-4" />
-            <span>Kuittaa päivän voimatreeni tehdyksi</span>
           </button>
         </div>
       </section>

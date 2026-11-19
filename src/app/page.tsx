@@ -601,7 +601,7 @@ export default function TreenimasterPage() {
               </svg>
             </div>
             <div className="flex min-w-0 items-center gap-2.5">
-              <h1 className="truncate text-xl font-extrabold tracking-tight sm:text-2xl">
+              <h1 className="truncate text-[26px] leading-none font-black tracking-tight sm:text-3xl">
                 <span className="text-white">Treeni</span>
                 <span className="bg-gradient-to-r from-[#64D2FF] to-[#30D158] bg-clip-text text-transparent">
                   master
