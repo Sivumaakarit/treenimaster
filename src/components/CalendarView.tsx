@@ -371,7 +371,7 @@ export function CalendarView({
                   key={cell.iso}
                   type="button"
                   onClick={() => handleSelectCalendarDay(cell.iso)}
-                  className={`apple-press group relative flex flex-col items-start justify-between rounded-xl sm:rounded-2xl border p-1.5 sm:p-2 text-left transition ${
+                  className={`apple-press group relative flex flex-col items-start justify-between rounded-xl sm:rounded-2xl border p-1 sm:p-2 text-left transition ${
                     viewMode === "week"
                       ? "min-h-[110px] sm:min-h-[130px]"
                       : "min-h-[68px] sm:min-h-[96px]"
@@ -383,11 +383,11 @@ export function CalendarView({
                       : "border-white/5 bg-black/20 opacity-40"
                   }`}
                 >
-                  <div className="flex w-full items-center justify-between">
+                  <div className="flex w-full items-center justify-between gap-1">
                     <span
-                      className={`inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[11px] sm:text-xs font-bold ${
+                      className={`inline-flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full text-[11px] sm:text-xs font-bold ${
                         isToday
-                          ? "bg-[#007AFF] text-white"
+                          ? "bg-white/15 text-white ring-1 ring-[#64D2FF]"
                           : isSelected
                           ? "text-[#64D2FF]"
                           : "text-zinc-200"
@@ -397,13 +397,13 @@ export function CalendarView({
                     </span>
 
                     {dayLogs.length > 0 && (
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         {dayLogs.slice(0, 3).map((l) => {
                           const cat = SPORT_CATEGORIES[l.category];
                           return (
                             <span
                               key={l.id}
-                              className="h-2 w-2 rounded-full"
+                              className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full"
                               style={{
                                 background: cat.hex,
                               }}
