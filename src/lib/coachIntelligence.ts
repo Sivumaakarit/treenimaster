@@ -478,9 +478,11 @@ export interface CycleCompletionSummary {
 }
 
 function formatShortFiDate(isoDate: string): string {
-  const [, m, d] = isoDate.split("-").map(Number);
-  if (!m || !d) return isoDate;
-  return `${d}.${m}.`;
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  const dt = new Date(y, m - 1, d);
+  const weekdays = ["su", "ma", "ti", "ke", "to", "pe", "la"];
+  return `${weekdays[dt.getDay()]} ${d}.${m}.`;
 }
 
 /**
@@ -540,12 +542,19 @@ export function computeLatestCycleCompletionSummary(
     (sum, l) => sum + (l.durationMinutes || 0),
     0
   );
-  const totalRunKm =
+  const runKm =
     Math.round(
       cycleLogs
-        .filter((l) => l.category === "run" || l.category === "ski")
+        .filter((l) => l.category === "run")
         .reduce((sum, l) => sum + parseKmFromLog(l), 0) * 10
     ) / 10;
+  const skiKm =
+    Math.round(
+      cycleLogs
+        .filter((l) => l.category === "ski")
+        .reduce((sum, l) => sum + parseKmFromLog(l), 0) * 10
+    ) / 10;
+  const totalRunKm = Math.round((runKm + skiKm) * 10) / 10;
 
   const uniqueDates = Array.from(
     new Set(cycleLogs.map((l) => l.performedDate))
@@ -553,7 +562,11 @@ export function computeLatestCycleCompletionSummary(
   const trainingDaysFormatted = uniqueDates.map(formatShortFiDate);
 
   const totalSessions = strengthCount + enduranceCount;
-  const kmText = totalRunKm > 0 ? ` ja juoksua/hiihtoa ${totalRunKm} km` : "";
+  const fmtKm = (km: number) => String(km).replace(".", ",");
+  const kmParts: string[] = [];
+  if (runKm > 0) kmParts.push(`juoksua ${fmtKm(runKm)} km`);
+  if (skiKm > 0) kmParts.push(`hiihtoa ${fmtKm(skiKm)} km`);
+  const kmText = kmParts.length > 0 ? ` ja ${kmParts.join(" sekä ")}` : "";
 
   return {
     cycleNumber,
