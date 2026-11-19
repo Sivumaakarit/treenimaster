@@ -864,8 +864,8 @@ export function TodayWorkoutView({
                 <Clock className="w-3 h-3 text-[#64D2FF]" />
                 <span>
                   {baseWorkout.restDaysAfterMin === baseWorkout.restDaysAfterMax
-                    ? `${baseWorkout.restDaysAfterMin} välipäivää jälkeen`
-                    : `${baseWorkout.restDaysAfterMin}–${baseWorkout.restDaysAfterMax} välipäivää jälkeen`}
+                    ? `${baseWorkout.restDaysAfterMin} välipäivän jälkeen`
+                    : `${baseWorkout.restDaysAfterMin}–${baseWorkout.restDaysAfterMax} välipäivän jälkeen`}
                 </span>
               </span>
             </div>
