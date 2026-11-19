@@ -74,6 +74,15 @@ export function FullProgramView({
   const [expandedCycle, setExpandedCycle] = useState<number | null>(
     currentCycleNum
   );
+
+  const openAndScrollToCycle = (cycleNum: number) => {
+    setExpandedCycle(cycleNum);
+    window.setTimeout(() => {
+      document
+        .getElementById(`program-cycle-${cycleNum}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
   const [draftWorkout, setDraftWorkout] = useState<ProgramWorkout | null>(null);
 
@@ -287,7 +296,7 @@ export function FullProgramView({
                 <button
                   key={cycleNum}
                   type="button"
-                  onClick={() => setExpandedCycle(cycleNum)}
+                  onClick={() => openAndScrollToCycle(cycleNum)}
                   className={`apple-press rounded-2xl p-3 text-left border transition-all ${
                     isAllDone
                       ? "bg-[#34C759]/20 border-[#34C759]/60 text-white shadow-[0_0_15px_rgba(52,199,89,0.2)]"
@@ -444,11 +453,7 @@ export function FullProgramView({
               return (
                 <tr
                   key={cycleNum}
-                  onClick={() =>
-                    setExpandedCycle(
-                      expandedCycle === cycleNum ? null : cycleNum
-                    )
-                  }
+                  onClick={() => openAndScrollToCycle(cycleNum)}
                   className={`cursor-pointer transition-colors ${
                     allCycleDone
                       ? "bg-[#34C759]/15 hover:bg-[#34C759]/22"
@@ -544,7 +549,8 @@ export function FullProgramView({
           return (
             <div
               key={cycleNum}
-              className={`apple-glass rounded-3xl overflow-hidden border transition-all ${
+              id={`program-cycle-${cycleNum}`}
+              className={`apple-glass scroll-mt-24 rounded-3xl overflow-hidden border transition-all ${
                 allCycleDone
                   ? "border-[#34C759]/50"
                   : isCurrentCycle
