@@ -197,14 +197,14 @@ export default function TreenimasterPage() {
       if (splashClosed) return;
       splashClosed = true;
       const elapsed = Date.now() - splashStart;
-      const remainingMin = Math.max(0, 650 - elapsed);
+      const remainingMin = Math.max(0, 1300 - elapsed);
       window.setTimeout(() => {
         setSplashFading(true);
-        window.setTimeout(() => setSplashVisible(false), 320);
+        window.setTimeout(() => setSplashVisible(false), 350);
       }, remainingMin);
     };
 
-    const maxSplashTimer = window.setTimeout(closeSplash, 1700);
+    const maxSplashTimer = window.setTimeout(closeSplash, 2400);
 
     void syncInitialDataWithSupabase(currentISO)
       .then((res) => {
