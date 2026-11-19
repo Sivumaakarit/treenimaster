@@ -391,7 +391,7 @@ export function TodayWorkoutView({
       id: `log-strength-${Date.now()}`,
       performedDate: todayISO,
       category: "strength",
-      title: `${baseWorkout.title} ${baseWorkout.structureLabel}`,
+      title: `${baseWorkout.title} (${baseWorkout.structureLabel})`,
       cycleNumber: baseWorkout.cycleNumber,
       workoutNumber: baseWorkout.workoutNumber,
       programId: baseWorkout.id,
@@ -854,11 +854,21 @@ export function TodayWorkoutView({
       <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#64D2FF]">
-              {isRecommendedWorkout
-                ? "Seuraavana vuorossa oleva voimatreeni"
-                : "Valittu voimatreeni"}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#64D2FF]">
+                {isRecommendedWorkout
+                  ? "Seuraavana vuorossa oleva voimatreeni"
+                  : "Valittu voimatreeni"}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2 py-0.5 text-[11px] font-medium text-zinc-300">
+                <Clock className="w-3 h-3 text-[#64D2FF]" />
+                <span>
+                  {baseWorkout.restDaysAfterMin === baseWorkout.restDaysAfterMax
+                    ? `${baseWorkout.restDaysAfterMin} välipäivää jälkeen`
+                    : `${baseWorkout.restDaysAfterMin}–${baseWorkout.restDaysAfterMax} välipäivää jälkeen`}
+                </span>
+              </span>
+            </div>
             <h1 className="apple-display text-white mt-0.5">
               {baseWorkout.title}
             </h1>
@@ -915,7 +925,7 @@ export function TodayWorkoutView({
                 >
                   {programs.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.title} · {p.structureLabel}
+                      {p.title} ({p.structureLabel})
                       {p.id === recommendation.nextWorkout.id
                         ? " (Vuorossa nyt)"
                         : ""}
