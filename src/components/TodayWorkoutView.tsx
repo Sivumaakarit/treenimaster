@@ -116,7 +116,7 @@ export function TodayWorkoutView({
   const [energyScore, setEnergyScore] = useState<number | null>(null);
   const [recoveryStatus, setRecoveryStatus] =
     useState<RecoveryStatus>("normaali");
-  const [durationMinutes, setDurationMinutes] = useState<string>("65");
+  const [durationMinutes, setDurationMinutes] = useState<string>("");
   const [justSavedToast, setJustSavedToast] = useState<string | null>(null);
   const [showSkipReasonBox, setShowSkipReasonBox] = useState<boolean>(false);
   const [skipReasonText, setSkipReasonText] = useState<string>(
@@ -313,15 +313,14 @@ export function TodayWorkoutView({
     const dur = parseInt(durationMinutes, 10);
     const hasReasonNote =
       deviationReason && deviationReason !== "Suunnitelman mukaan ✓";
-    const cleanedFeelings = cleanSpokenToSelkosuomi(feelings);
-    const baseFeelingsText =
-      cleanedFeelings ||
-      (hasReasonNote
-        ? `Voimatreeni suoritettu mukautetusti (${deviationReason}).`
-        : "Voimatreeni suoritettu suunnitelman mukaisesti. Hyvä tangon nopeus ja tekninen reservi.");
-    const finalFeelings = hasReasonNote
-      ? `[Huomio: ${deviationReason}] ${baseFeelingsText}`
-      : baseFeelingsText;
+    const cleanedFeelings = cleanSpokenToSelkosuomi(feelings).trim();
+    const finalFeelings = cleanedFeelings
+      ? hasReasonNote
+        ? `[Huomio: ${deviationReason}] ${cleanedFeelings}`
+        : cleanedFeelings
+      : hasReasonNote
+      ? `[Huomio: ${deviationReason}]`
+      : "";
 
     const newLog: WorkoutLog = {
       id: `log-strength-${Date.now()}`,
@@ -331,7 +330,7 @@ export function TodayWorkoutView({
       cycleNumber: baseWorkout.cycleNumber,
       workoutNumber: baseWorkout.workoutNumber,
       programId: baseWorkout.id,
-      durationMinutes: Number.isNaN(dur) ? 65 : dur,
+      durationMinutes: Number.isNaN(dur) ? 0 : dur,
       rpe: baseWorkout.cycleNumber === 4 || baseWorkout.cycleNumber === 8 ? 6.0 : 8.5,
       exercises: normalizedExercises,
       feelings: finalFeelings,
@@ -1262,22 +1261,30 @@ export function TodayWorkoutView({
             <input
               id="workout-duration-input"
               type="number"
-              min={10}
+              min={1}
               max={240}
+              placeholder="Auto (Withings)"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
-              className="w-full rounded-xl bg-black/50 border border-white/15 px-3 py-2 text-xs text-white focus:border-[#0A84FF] focus:outline-none"
+              className="w-full rounded-xl bg-black/50 border border-white/15 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-[#0A84FF] focus:outline-none"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label
-            htmlFor="workout-feelings-textarea"
-            className="block text-xs sm:text-sm font-semibold text-white"
-          >
-            Miten treeni meni, miten happi ja voimat riittivät (tai miksi muokkasit)?
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label
+              htmlFor="workout-feelings-textarea"
+              className="block text-xs sm:text-sm font-semibold text-white"
+            >
+              Miten treeni meni, miten happi ja voimat riittivät (valinnainen)?
+            </label>
+            <VoiceInputButton
+              onTranscript={handleVoiceFeelingsDictation}
+              label="Sanele"
+              compact
+            />
+          </div>
 
           {(selkosuomiPolishing || selkosuomiBadge) && (
             <div className="inline-flex items-center gap-1.5 rounded-full bg-[#34C759]/15 border border-[#34C759]/35 px-3 py-1 text-[11px] font-semibold text-[#30D158]">
