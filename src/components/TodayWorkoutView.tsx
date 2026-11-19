@@ -780,8 +780,23 @@ export function TodayWorkoutView({
         </div>
       </section>
 
-      {/* Liikkeet ja sarjat: Yhden painalluksen kuittaus + lennosta muokkaus */}
+      {/* Liikkeet ja sarjat: Selkeästi erottuva Toteutettavat liikkeet -osio */}
       <section className="space-y-4">
+        <div className="flex items-center justify-between px-1 pt-1">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#409CFF] shadow-[0_0_10px_#409CFF]" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64D2FF]">
+              Toteutettavat liikkeet
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-zinc-400">
+            {sessionExercises.filter(
+              (ex) => ex.sets.length > 0 && ex.sets.every((s) => s.done)
+            ).length}
+            /{sessionExercises.length} liikettä kuitattu
+          </span>
+        </div>
+
         {sessionExercises.map((exercise, exIndex) => {
           const exDoneCount = exercise.sets.filter((s) => s.done).length;
           const allExDone =
@@ -800,23 +815,31 @@ export function TodayWorkoutView({
           return (
             <div
               key={exercise.id}
-              className={`apple-glass rounded-3xl p-4 sm:p-5 transition-all ${allExDone
-                ? "border-[#30D158]/70 bg-gradient-to-br from-[#30D158]/16 via-[#30D158]/6 to-transparent shadow-[0_0_24px_rgba(48,209,88,0.16)]"
-                : "border-white/10"
+              className={`relative overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl border transition-all duration-300 ${allExDone
+                ? "border-[#30D158]/80 bg-gradient-to-br from-[#30D158]/20 via-[#30D158]/8 to-[#0B1117]/80 shadow-[0_0_30px_rgba(48,209,88,0.22),inset_0_1px_0_rgba(48,209,88,0.3)]"
+                : "border-[#64D2FF]/35 bg-gradient-to-br from-[#0A84FF]/[0.12] via-[#131B2E]/90 to-[#5E5CE6]/[0.08] shadow-[0_12px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.14)]"
                 }`}
             >
+              {/* Vasen korostuspalkki */}
+              <span
+                aria-hidden="true"
+                className={`absolute inset-y-4 left-0 w-1 rounded-r-full transition-colors ${allExDone
+                  ? "bg-[#30D158] shadow-[0_0_12px_#30D158]"
+                  : "bg-gradient-to-b from-[#64D2FF] to-[#0A84FF] shadow-[0_0_10px_rgba(100,210,255,0.55)]"
+                  }`}
+              />
               {/* Liikkeen otsikko & pikakuittaus */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/12 pl-1.5">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2.5 flex-wrap">
                     <span
-                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-colors ${allExDone
-                        ? "bg-[#30D158] text-black"
-                        : "bg-[#007AFF]/25 text-[#64D2FF]"
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-extrabold transition-all ${allExDone
+                        ? "bg-[#30D158] text-black shadow-[0_0_14px_rgba(48,209,88,0.6)]"
+                        : "bg-gradient-to-br from-[#64D2FF] to-[#0A84FF] text-black shadow-[0_0_14px_rgba(10,132,255,0.5)]"
                         }`}
                     >
                       {allExDone ? (
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <Check className="w-4 h-4 stroke-[3]" />
                       ) : (
                         exIndex + 1
                       )}
@@ -872,9 +895,9 @@ export function TodayWorkoutView({
                 <button
                   type="button"
                   onClick={() => toggleAllExerciseSets(exercise.id)}
-                  className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold border shrink-0 ${allExDone
-                    ? "bg-[#34C759] text-black border-[#34C759]"
-                    : "bg-white/8 hover:bg-white/14 text-white border-white/15"
+                  className={`apple-press inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border shrink-0 transition-all ${allExDone
+                    ? "bg-[#30D158] text-black border-[#30D158] shadow-[0_0_20px_rgba(48,209,88,0.48)]"
+                    : "bg-gradient-to-r from-[#0A84FF]/28 to-[#64D2FF]/18 hover:from-[#0A84FF]/40 hover:to-[#64D2FF]/28 text-white border-[#64D2FF]/60 shadow-[0_0_18px_rgba(10,132,255,0.3),inset_0_1px_0_rgba(255,255,255,0.22)]"
                     }`}
                 >
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
