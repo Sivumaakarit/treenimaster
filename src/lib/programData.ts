@@ -571,22 +571,22 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
-        summary: "4 × 1 × 140 kg (yksi kuittaus koko blokille)",
+        summary: "4 × 1 × 140 kg",
         restMinutes: "90–120 s",
         cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "4×1", weightKg: "140", targetRpe: "6.5" },
+          { type: "speed", label: "Nopeusmaastaveto", reps: "4×1", weightKg: "140", targetRpe: "6.5" },
         ]),
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonta & vatsarullaukset / keskivartalo",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
         code: "SKILL",
-        summary: "Käsilläseisonta & keskivartalon nostot/rullaukset ilman maitohappoa",
+        summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt & putkirullaukset",
         restMinutes: "2 min",
-        cue: "Kehonhallinta ja korsettipaineet terävinä – pelkkä kuittaus riittää.",
+        cue: "Kehonhallinta, korsettipaineet ja kimmoisuus terävinä ilman maitohappoa.",
         sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.5" },
+          { type: "skill", label: "Kierrokset", reps: "3", weightKg: "Kehonpaino", targetRpe: "6.5" },
         ]),
       },
       {
@@ -610,22 +610,22 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
-        summary: "3 × 1 × 140 kg (yksi kuittaus koko blokille)",
+        summary: "3 × 1 × 140 kg",
         restMinutes: "90–120 s",
         cue: "Terävä irrotus lattiasta, säästä voimia.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "3×1", weightKg: "140", targetRpe: "6.5" },
+          { type: "speed", label: "Nopeusmaastaveto", reps: "3×1", weightKg: "140", targetRpe: "6.5" },
         ]),
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonta & vatsarullaukset / keskivartalo",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
         code: "SKILL",
-        summary: "Kevyt käsilläseisonta & keskivartalo",
+        summary: "Kevyt kehonhallinta, keskivartalo, boksihypyt & putkirullaukset",
         restMinutes: "2 min",
         cue: "Pidä tuntuma ja olkapäiden tuki ilman väsymystä.",
         sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.0" },
+          { type: "skill", label: "Kierrokset", reps: "3", weightKg: "Kehonpaino", targetRpe: "6.0" },
         ]),
       },
       {
@@ -665,22 +665,22 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         id: `${prefix}-speed-dl`,
         name: "Nopeusmaastaveto (kevennetty)",
         code: "SPEED_DL",
-        summary: "4 × 1 × 135 kg (räjähtävä irrotus, yksi kuittaus)",
+        summary: "4 × 1 × 135 kg",
         restMinutes: "90 s",
         cue: "Maksimaalinen kiihtyvyys lattiasta, nolla väsymystä.",
         sets: makeSets(`${prefix}-sdl`, [
-          { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "4×1", weightKg: "135", targetRpe: "6.0" },
+          { type: "speed", label: "Nopeusmaastaveto", reps: "4×1", weightKg: "135", targetRpe: "6.0" },
         ]),
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonnat & vatsarullaukset / keskivartalo (kevennetty)",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset (kevennetty)",
         code: "SKILL",
-        summary: "Hallittu pito + keskivartalo ilman maitohappoa",
+        summary: "Hallittu kehonhallinta, keskivartalo, boksihypyt & putkirullaukset",
         restMinutes: "2 min",
         cue: "Pidä lavat aktiivisina ja keskivartalo tiukkana ilman uupumusta.",
         sets: makeSets(`${prefix}-skill`, [
-          { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "6.0" },
+          { type: "skill", label: "Kierrokset", reps: "3", weightKg: "Kehonpaino", targetRpe: "6.0" },
         ]),
       },
       {
@@ -703,22 +703,22 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
       id: `${prefix}-speed-dl`,
       name: "Nopeusmaastaveto (RFD)",
       code: "SPEED_DL",
-      summary: `5–6 × 1 × ${speedDlWeight} kg (yksi kuittaus koko blokille)`,
+      summary: `8–10 × 1 × ${speedDlWeight} kg`,
       restMinutes: "90–120 s",
       cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
       sets: makeSets(`${prefix}-sdl`, [
-        { type: "speed", label: "Nopeusmaastaveto (koko blokki)", reps: "5–6×1", weightKg: speedDlWeight, targetRpe: "6.5" },
+        { type: "speed", label: "Nopeusmaastaveto", reps: "8–10×1", weightKg: speedDlWeight, targetRpe: "6.5" },
       ]),
     },
     {
       id: `${prefix}-skill`,
-      name: "Käsilläseisonnat & vatsarullaukset / keskivartalo",
+      name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
       code: "SKILL",
-      summary: "Kehonhallinta, keskivartalon nostot & vatsarullaukset",
+      summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt & putkirullaukset",
       restMinutes: "2 min",
-      cue: "Olkapäiden tuki, lapojen hallinta ja maksimaalinen korsettipaine – pelkkä kuittaus riittää.",
+      cue: "Olkapäiden tuki, lapojen hallinta, maksimaalinen korsettipaine ja kimmoisuus.",
       sets: makeSets(`${prefix}-skill`, [
-        { type: "skill", label: "Käsilläseisonta & keskivartalo", reps: "Tehty", weightKg: "Kehonpaino", targetRpe: "7.0" },
+        { type: "skill", label: "Kierrokset", reps: "3", weightKg: "Kehonpaino", targetRpe: "7.0" },
       ]),
     },
     {
@@ -811,7 +811,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
       restDaysAfterMax: 2,
       restBetweenSets: "3–4 min",
       coachNotes:
-        "Etukyykyssä jätetään 1–1,5 toistoa varaa. Volyymileuanvedossa 1 kova sarja rajoille asti (+15 kg n. 12–15 toistoa tai +20–22,5 kg n. 9–12 toistoa), paitsi kevennys- ja piikkauskierroilla 2–3 toistoa varaa! Nopeuspenkki tehdään fiiliksen mukaan ja kuitataan yhdellä kuittauksella.",
+        "Etukyykyssä jätetään 1–1,5 toistoa varaa. Volyymileuanvedossa 1 kova sarja rajoille asti (+15 kg n. 12–15 toistoa tai +20–22,5 kg n. 9–12 toistoa), paitsi kevennys- ja piikkauskierroilla 2–3 toistoa varaa! Nopeuspenkki tehdään fiiliksen mukaan.",
       exercises: [
         {
           id: `${w2Prefix}-s`,
@@ -849,15 +849,15 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
                 name: "Nopeuspenkki (kontrastiaalto)",
                 code: "SPEED_B" as const,
                 summary: spec.isDeload
-                  ? "n. 4 × 3 × 60 kg (yksi kuittaus)"
-                  : "8 sarjaa: 3–4×60 kg ↔ 1×70 kg vuorotellen (yksi kuittaus)",
+                  ? "n. 4 × 3 × 60 kg"
+                  : "8–10 sarjaa: 3–4×60 kg ↔ 1×70 kg vuorotellen",
                 restMinutes: "45–60 s",
                 cue: "70 kg ykkönen herättää motoriset yksiköt, jolloin 60 kg kolmonen/nelonen räjähtää ylös.",
                 sets: makeSets(`${w2Prefix}-sb`, [
                   {
                     type: "speed",
-                    label: "Nopeuspenkki (koko blokki)",
-                    reps: spec.isDeload ? "4×3" : "8 sarjaa (3–4 / 1)",
+                    label: "Nopeuspenkki",
+                    reps: spec.isDeload ? "4×3" : "8–10 sarjaa (3–4 / 1)",
                     weightKg: spec.isDeload ? "60" : "60 / 70",
                     targetRpe: "6.5",
                   },
@@ -894,7 +894,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
       coachNotes:
         c === 11
           ? "Treeni 3 jätetään kokonaan väliin. Täysi lepo ennen ennätysviikkoa."
-          : "Nopeusmaastaveto (yksi kuittaus koko blokille), käsilläseisonta & vatsarullaukset/keskivartalon nostot sekä valinnainen Human Flag. Lepo 1–2 päivää ennen uuden kierron alkua.",
+          : "Nopeusmaastaveto, käsilläseisonta & vatsarullaukset/keskivartalon nostot sekä valinnainen Human Flag. Lepo 1–2 päivää ennen uuden kierron alkua.",
       exercises: buildSpeedDayExercises(c, spec.isDeload),
     };
 

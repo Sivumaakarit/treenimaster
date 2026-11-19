@@ -789,6 +789,10 @@ export function TodayWorkoutView({
           const isEditingName = editingExerciseId === exercise.id;
           const isSpeedExercise =
             exercise.code === "SPEED_B" || exercise.code === "SPEED_DL";
+          const isSkillCircuit =
+            exercise.code === "SKILL" &&
+            !exercise.id.includes("human-flag") &&
+            !exercise.id.includes("rest");
           const isSingleCheckExercise =
             isSpeedExercise || exercise.code === "SKILL";
           const firstSet = exercise.sets[0];
@@ -797,7 +801,7 @@ export function TodayWorkoutView({
             <div
               key={exercise.id}
               className={`apple-glass rounded-3xl p-4 sm:p-5 transition-all ${allExDone
-                ? "border-[#34C759]/45 bg-[#34C759]/[0.04]"
+                ? "border-[#30D158]/70 bg-gradient-to-br from-[#30D158]/16 via-[#30D158]/6 to-transparent shadow-[0_0_24px_rgba(48,209,88,0.16)]"
                 : "border-white/10"
                 }`}
             >
@@ -805,8 +809,17 @@ export function TodayWorkoutView({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/10">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#007AFF]/25 text-[#64D2FF] text-xs font-bold">
-                      {exIndex + 1}
+                    <span
+                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-colors ${allExDone
+                        ? "bg-[#30D158] text-black"
+                        : "bg-[#007AFF]/25 text-[#64D2FF]"
+                        }`}
+                    >
+                      {allExDone ? (
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      ) : (
+                        exIndex + 1
+                      )}
                     </span>
 
                     {isEditingName ? (
@@ -837,7 +850,12 @@ export function TodayWorkoutView({
                       </h2>
                     )}
 
-                    <span className="px-2.5 py-0.5 rounded-full text-sm font-semibold bg-white/8 text-zinc-200 border border-white/10">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-sm font-semibold border transition-colors ${allExDone
+                        ? "bg-[#30D158]/20 text-[#30D158] border-[#30D158]/50"
+                        : "bg-white/8 text-zinc-200 border-white/10"
+                        }`}
+                    >
                       Suunnitelma: {exercise.summary}
                     </span>
                   </div>
@@ -864,7 +882,7 @@ export function TodayWorkoutView({
                     {isSingleCheckExercise
                       ? allExDone
                         ? "Kuitattu ✓"
-                        : "Kuittaa tehty"
+                        : "Kuittaa tehdyksi"
                       : allExDone
                       ? `Kaikki tehty (${exDoneCount}/${exercise.sets.length})`
                       : "Kuittaa liikkeen sarjat"}
@@ -872,7 +890,7 @@ export function TodayWorkoutView({
                 </button>
               </div>
 
-              {/* Nopeusvoima (1 kuittaus + suurinpiirtein sarjat & paino) tai taito/keskivartalo (pelkkä 1 kuittaus) */}
+              {/* Nopeusvoima (sarjat & paino) tai kehonhallinta-kierrokset (valittava kierrosmäärä) */}
               {isSpeedExercise && firstSet ? (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
                   <span className="text-xs font-medium text-zinc-400">
@@ -898,7 +916,7 @@ export function TodayWorkoutView({
                             e.target.value
                           )
                         }
-                        className="w-24 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                        className="w-28 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                       />
                     </div>
                     <span className="text-zinc-500 text-xs font-bold">×</span>
@@ -924,6 +942,57 @@ export function TodayWorkoutView({
                         className="w-20 rounded-xl border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+              ) : isSkillCircuit && firstSet ? (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5">
+                  <span className="text-xs font-medium text-zinc-300">
+                    Tehtyjen kierrosten määrä (oletus 3):
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {["2", "3", "4"].map((count) => {
+                      const currentVal = (
+                        firstSet.actualReps ??
+                        firstSet.reps ??
+                        "3"
+                      ).trim();
+                      const active = currentVal === count;
+                      return (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() =>
+                            updateSetField(
+                              exercise.id,
+                              firstSet.id,
+                              "actualReps",
+                              count
+                            )
+                          }
+                          className={`apple-press rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
+                            active
+                              ? "bg-[#30D158]/25 border-[#30D158]/60 text-[#30D158]"
+                              : "bg-black/40 border-white/12 text-zinc-300 hover:bg-white/10"
+                          }`}
+                        >
+                          {count} krs
+                        </button>
+                      );
+                    })}
+                    <input
+                      aria-label="Kierrosten määrä"
+                      type="text"
+                      value={firstSet.actualReps ?? firstSet.reps}
+                      onChange={(e) =>
+                        updateSetField(
+                          exercise.id,
+                          firstSet.id,
+                          "actualReps",
+                          e.target.value
+                        )
+                      }
+                      className="w-12 rounded-lg border border-white/15 bg-black/50 px-2 py-1 text-center text-xs font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                    />
                   </div>
                 </div>
               ) : isSingleCheckExercise ? null : (

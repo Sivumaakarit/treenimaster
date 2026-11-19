@@ -340,10 +340,18 @@ export async function syncInitialDataWithSupabase(
           updatedAt: r.updated_at,
         }));
 
-        // Jos Supabasessa on vielä vanha ohjelmarakenne ilman Treeni 2:n kontrastinopeuspenkkiä, päivitetään se kerran
+        // Jos Supabasessa on vielä vanha ohjelmarakenne ilman päivitettyjä Treeni 2/3-tietoja, päivitetään se kerran
         const c1w2 = finalPrograms.find((p) => p.id === "cycle-1-workout-2");
+        const c1w3 = finalPrograms.find((p) => p.id === "cycle-1-workout-3");
         const speedBench = c1w2?.exercises?.find((e) => e.code === "SPEED_B");
-        if (!speedBench || !speedBench.summary?.includes("vuorotellen")) {
+        const hasUpdatedSkill = c1w3?.exercises?.some((e) =>
+          e.name.includes("putkirullaukset")
+        );
+        if (
+          !speedBench ||
+          !speedBench.summary?.includes("8–10") ||
+          !hasUpdatedSkill
+        ) {
           finalPrograms = INITIAL_PROGRAM_WORKOUTS;
           const updatedRows = finalPrograms.map((p) => ({
             id: p.id,
@@ -782,7 +790,7 @@ export function computeNextRecommendedWorkout(
     restDaysRequiredMin: restMin,
     restDaysRequiredMax: restMax,
     readinessState: "ready",
-    readinessHeadline: `Optimaalinen palautumisikkuna (${fullRestDaysBetween} välipäivää takana)`,
+    readinessHeadline: `Optimaalinen palautumisikkuna (${fullRestDaysBetween} välipäivää takana). Voit treenata tänään!`,
     readinessDetail: `Olet pitänyt ${fullRestDaysBetween} täyttä välipäivää edellisen voimatreenin (${lastStrengthLog.title}) jälkeen. Keskushermosto ja alaselkä ovat valmiit harjoitukseen ${nextWorkout.title}.`,
     recentAerobicCount7d,
     recentLogsBetween,
