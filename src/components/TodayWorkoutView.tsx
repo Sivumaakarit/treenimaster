@@ -809,9 +809,22 @@ export function TodayWorkoutView({
           </p>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-xl border border-[#30D158]/40 bg-[#30D158]/15 px-2.5 py-1 font-semibold text-[#30D158]">
-              Treenipäivät: {cycleSummary.trainingDaysFormatted.join(", ")}
-            </span>
+            {cycleSummary.trainingDayItems.map((item, idx) => {
+              const cat = SPORT_CATEGORIES[item.category];
+              return (
+                <span
+                  key={`${item.date}-${item.category}-${idx}`}
+                  className="inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 font-semibold"
+                  style={cat.badgeStyle}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ background: cat.hex }}
+                  />
+                  <span>{item.label}</span>
+                </span>
+              );
+            })}
             {cycleSummary.totalMinutes > 0 && (
               <span className="rounded-xl border border-white/12 bg-black/35 px-2.5 py-1 font-semibold text-zinc-200">
                 Yhteensä {cycleSummary.totalMinutes} min

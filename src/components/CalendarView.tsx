@@ -405,10 +405,7 @@ export function CalendarView({
                               key={l.id}
                               className="h-2 w-2 rounded-full"
                               style={{
-                                background:
-                                  cat.id === "strength"
-                                    ? "#BF5AF2"
-                                    : cat.hex,
+                                background: cat.hex,
                               }}
                             />
                           );
@@ -455,10 +452,7 @@ export function CalendarView({
                     <span
                       className="h-2.5 w-2.5 rounded-full shrink-0"
                       style={{
-                        background:
-                          cat.id === "strength"
-                            ? "#BF5AF2"
-                            : cat.hex,
+                        background: cat.hex,
                       }}
                     />
                     <span>{cat.shortLabel}</span>

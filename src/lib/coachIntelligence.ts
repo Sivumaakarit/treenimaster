@@ -1,6 +1,6 @@
 import { BASE_1RM } from "./programData";
 import { NextWorkoutRecommendation } from "./storage";
-import { ProgramWorkout, WorkoutLog } from "./types";
+import { ProgramWorkout, SportCategory, WorkoutLog } from "./types";
 import { parseSpokenWorkout } from "./workoutParser";
 
 export interface InstantCoachFeedback {
@@ -470,6 +470,11 @@ export interface CycleCompletionSummary {
   cycleNumber: number;
   title: string;
   trainingDaysFormatted: string[];
+  trainingDayItems: Array<{
+    date: string;
+    label: string;
+    category: SportCategory;
+  }>;
   strengthCount: number;
   enduranceCount: number;
   totalMinutes: number;
@@ -561,6 +566,15 @@ export function computeLatestCycleCompletionSummary(
   ).sort();
   const trainingDaysFormatted = uniqueDates.map(formatShortFiDate);
 
+  const sortedCycleLogs = [...cycleLogs].sort((a, b) =>
+    a.performedDate.localeCompare(b.performedDate)
+  );
+  const trainingDayItems = sortedCycleLogs.map((l) => ({
+    date: l.performedDate,
+    label: formatShortFiDate(l.performedDate),
+    category: l.category,
+  }));
+
   const totalSessions = strengthCount + enduranceCount;
   const fmtKm = (km: number) => String(km).replace(".", ",");
   const kmParts: string[] = [];
@@ -572,6 +586,7 @@ export function computeLatestCycleCompletionSummary(
     cycleNumber,
     title: `Kierto ${cycleNumber} paketissa – hieno treeniviikko!`,
     trainingDaysFormatted,
+    trainingDayItems,
     strengthCount,
     enduranceCount,
     totalMinutes,
