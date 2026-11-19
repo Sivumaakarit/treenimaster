@@ -1,6 +1,9 @@
 "use client";
 
-import { InstantCoachFeedback } from "@/lib/coachIntelligence";
+import {
+  computeLatestCycleCompletionSummary,
+  InstantCoachFeedback,
+} from "@/lib/coachIntelligence";
 import { NextWorkoutRecommendation } from "@/lib/storage";
 import { SPORT_CATEGORIES } from "@/lib/programData";
 import {
@@ -34,7 +37,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
 import { WorkoutLogEditor } from "./WorkoutLogEditor";
@@ -127,6 +130,39 @@ export function TodayWorkoutView({
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
   const [showWorkoutDetails, setShowWorkoutDetails] = useState<boolean>(false);
+  const [dismissedCycles, setDismissedCycles] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(
+        "treenimaster_dismissed_cycle_summaries_v1"
+      );
+      return raw ? (JSON.parse(raw) as number[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const cycleSummary = useMemo(
+    () => computeLatestCycleCompletionSummary(logs),
+    [logs]
+  );
+
+  const dismissCycleSummary = (cycleNumber: number) => {
+    setDismissedCycles((prev) => {
+      const next = prev.includes(cycleNumber) ? prev : [...prev, cycleNumber];
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(
+            "treenimaster_dismissed_cycle_summaries_v1",
+            JSON.stringify(next)
+          );
+        } catch {
+          // ignore
+        }
+      }
+      return next;
+    });
+  };
   const feedbackSectionRef = useRef<HTMLElement | null>(null);
   const lastScrolledFeedbackIdRef = useRef<string | null>(null);
 
@@ -312,10 +348,41 @@ export function TodayWorkoutView({
     const hasReasonNote =
       deviationReason && deviationReason !== "Suunnitelman mukaan ✓";
     const cleanedFeelings = cleanSpokenToSelkosuomi(feelings).trim();
-    const finalFeelings = cleanedFeelings
+
+    // Muotoillaan valitut happi- ja voima-arvosanat siistiksi sanalliseksi lauseeksi keksimättä mitään ylimääräistä
+    const scoreParts: string[] = [];
+    if (oxygenScore !== null) {
+      const oxAdj =
+        oxygenScore === 5
+          ? "erinomaisesti"
+          : oxygenScore === 4
+          ? "hyvin"
+          : oxygenScore === 3
+          ? "kohtalaisesti"
+          : "raskaammin";
+      scoreParts.push(`Happi kulki ${oxAdj} (${oxygenScore}/5)`);
+    }
+    if (energyScore !== null) {
+      const enAdj =
+        energyScore === 5
+          ? "terävät"
+          : energyScore === 4
+          ? "hyvät"
+          : energyScore === 3
+          ? "normaalit"
+          : "raskaat";
+      scoreParts.push(`voimat ja tangon nopeus olivat ${enAdj} (${energyScore}/5)`);
+    }
+    const scoreSentence =
+      scoreParts.length > 0
+        ? `${scoreParts.join(" ja ").replace(/^voimat/, "Voimat")}.`
+        : "";
+
+    const bodyText = [cleanedFeelings, scoreSentence].filter(Boolean).join(" ");
+    const finalFeelings = bodyText
       ? hasReasonNote
-        ? `[Huomio: ${deviationReason}] ${cleanedFeelings}`
-        : cleanedFeelings
+        ? `[Huomio: ${deviationReason}] ${bodyText}`
+        : bodyText
       : hasReasonNote
         ? `[Huomio: ${deviationReason}]`
         : "";
@@ -706,6 +773,65 @@ export function TodayWorkoutView({
               className="apple-press p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 shrink-0"
             >
               <X className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* VIHERÄ VIIKKO- / KIERTOPALAUTE (Näkyy etusivulla aina kun kierron 3. treeni on tehty, kunnes käyttäjä sulkee sen) */}
+      {cycleSummary && !dismissedCycles.includes(cycleSummary.cycleNumber) && (
+        <section
+          role="status"
+          className="relative overflow-hidden rounded-3xl p-4 sm:p-5 border-2 border-[#30D158]/75 bg-gradient-to-br from-[#30D158]/22 via-[#0F2418]/92 to-[#0B1117]/90 shadow-[0_0_32px_rgba(48,209,88,0.24)] space-y-3"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#30D158] px-3 py-0.5 text-xs font-extrabold text-black">
+                <Award className="h-3.5 w-3.5" />
+                <span>Viikkokooste · Kierto {cycleSummary.cycleNumber}</span>
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-white">
+                {cycleSummary.title}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => dismissCycleSummary(cycleSummary.cycleNumber)}
+              aria-label="Sulje viikkopalaute"
+              className="apple-press p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-200 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <p className="text-xs sm:text-sm text-zinc-100 leading-relaxed">
+            {cycleSummary.summaryText}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-xl border border-[#30D158]/40 bg-[#30D158]/15 px-2.5 py-1 font-semibold text-[#30D158]">
+              Treenipäivät: {cycleSummary.trainingDaysFormatted.join(", ")}
+            </span>
+            {cycleSummary.totalMinutes > 0 && (
+              <span className="rounded-xl border border-white/12 bg-black/35 px-2.5 py-1 font-semibold text-zinc-200">
+                Yhteensä {cycleSummary.totalMinutes} min
+              </span>
+            )}
+            {cycleSummary.totalRunKm > 0 && (
+              <span className="rounded-xl border border-white/12 bg-black/35 px-2.5 py-1 font-semibold text-zinc-200">
+                {cycleSummary.totalRunKm} km
+              </span>
+            )}
+          </div>
+
+          <div className="flex justify-end pt-0.5">
+            <button
+              type="button"
+              onClick={() => dismissCycleSummary(cycleSummary.cycleNumber)}
+              className="apple-press inline-flex items-center gap-1.5 rounded-2xl bg-[#30D158] px-4 py-2 text-xs font-bold text-black shadow-sm transition hover:brightness-110"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>Kuittaa & sulje</span>
             </button>
           </div>
         </section>

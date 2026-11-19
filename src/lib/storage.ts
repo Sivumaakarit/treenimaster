@@ -365,7 +365,9 @@ export async function syncInitialDataWithSupabase(
         if (
           !speedBench ||
           !speedBench.summary?.includes("8–10") ||
+          speedBench.sets?.[0]?.reps !== "8 sarjaa" ||
           !c1w3SpeedDl?.summary?.includes("140") ||
+          c1w3SpeedDl?.sets?.[0]?.reps !== "8×1" ||
           c1w3SpeedDl?.restMinutes !== "1 min" ||
           !c1w3?.coachNotes?.includes("boksihypyt") ||
           !hasUpdatedSkill

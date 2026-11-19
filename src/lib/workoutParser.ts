@@ -407,6 +407,11 @@ export function cleanSpokenToSelkosuomi(rawSpeech: string): string {
     .replace(/\b(kiloo|kilon)\b/gi, "kg")
     .replace(/\b(aamulenkin)\b/gi, "aamulenkki")
     .replace(/\b(iltalenkin)\b/gi, "iltalenkki")
+    .replace(/\bhf\b/gi, "Human Flag")
+    .replace(/\bkumminauha/gi, "kuminauha")
+    .replace(/\b(mawe|mave)\b/gi, "maastaveto")
+    .replace(/\bpena\b/gi, "penkkipunnerrus")
+    .replace(/\betari\b/gi, "etukyykky")
     .replace(/\s+/g, " ")
     .replace(/\s+,/g, ",")
     .trim();

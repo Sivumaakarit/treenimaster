@@ -97,8 +97,13 @@ export function VoiceInputButton({
       recognition.onerror = (event: any) => {
         setIsListening(false);
         setInterimText("");
-        if (event.error === "not-allowed") {
-          setErrorMsg("Salli mikrofonin käyttö selaimen osoiteriviltä.");
+        if (
+          event.error === "not-allowed" ||
+          event.error === "service-not-allowed"
+        ) {
+          setErrorMsg(
+            "Sanelu estetty selaimessa – käytä iPhonen näppäimistön mikrofoninappia tai salli mikrofoni Safarista."
+          );
         } else if (event.error !== "aborted" && event.error !== "no-speech") {
           setErrorMsg(`Puheentunnistusvirhe: ${event.error}`);
         }

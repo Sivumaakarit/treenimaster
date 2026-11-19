@@ -120,26 +120,34 @@ export function generateInstantWorkoutFeedback(
       };
     }
 
+    const doneExerciseNames = log.exercises
+      .filter((ex) => ex.sets.some((s) => s.done !== false))
+      .map((ex) => ex.name.split(" (")[0]);
+    const doneSummaryText =
+      doneExerciseNames.length > 0
+        ? doneExerciseNames.join(", ")
+        : "kaikki suunnitellut liikkeet";
+
     return {
       id: `fb-${log.id}`,
       workoutTitle: log.title,
       category: "strength",
-      badgeText: "Täysosuma · Tavoitteessa kiinni ✓",
+      badgeText: "Täysosuma · Treeni paketissa ✓",
       tone: "positive",
-      headline: `Mahtavaa työtä! Kierto ${cycle} · Treeni ${wNum} suoritettu suunnitelman mukaan!`,
+      headline: `Huikea suoritus! Kierto ${cycle} · Treeni ${wNum} hoidettu kunnialla kotiin!`,
       encouragement:
         wNum === 1
-          ? `Raskas maastaveto, pääpenkki ja lisäpainoleuat kuljettavat sinua suoraan kohti 12 viikon tavoitteita (DL ${BASE_1RM.targetDeadlift}, penkki ${BASE_1RM.targetBench}, leuat ${BASE_1RM.targetWeightedPullup}).`
+          ? `Mahtavaa tekemistä! ${doneSummaryText} kuitattu (${totalDoneSets}/${totalPlannedSets} sarjaa) – juuri nämä kovat pääliikkeet vievät sinua suoraan kohti ${BASE_1RM.targetDeadlift} maastavetoa ja ${BASE_1RM.targetBench} penkkiä!`
           : wNum === 2
-          ? `Etukyykky ja volyymileuat vahvistavat keskivartalon pitoa ja vetovoimaa kohti ${BASE_1RM.targetFrontSquat} etukyykkytavoitetta!`
-          : "Nopeuspenkki ja tukiliikkeet herättivät nopeat motoriset yksiköt ja viimeistelivät kierron puhtaasti!",
-      physiologicalNote: `Toteutuma: ${totalDoneSets}/${totalPlannedSets} sarjaa (Happi ${log.oxygenScore}/5, Tangon nopeus ${log.energyScore}/5). Kun pääsarjoissa säilyy 1–1,5 toiston tekninen reservi, hermostollinen superkompensaatio etenee optimaalisesti.`,
+          ? `Todella vahva treeni! ${doneSummaryText} tehty (${totalDoneSets}/${totalPlannedSets} sarjaa) – etukyykky, volyymileuka ja räjähtävä nopeuspenkki rakentavat sekä huippuvoimaa että rautaista keskivartaloa.`
+          : `Kova viimeistely! ${doneSummaryText} tehty ja koko Kierto ${cycle} on nyt paketissa! Terävät nopeusvedot, kehonhallinta ja keskivartalo pitävät hermoston huippuvireessä.`,
+      physiologicalNote: `Toteutuma: ${totalDoneSets}/${totalPlannedSets} sarjaa (Happi ${log.oxygenScore}/5, Voimat ${log.energyScore}/5). Hyvä tekemisen taso ja puhdas kuorma viety eteenpäin.`,
       nextStepHint:
         wNum === 1
-          ? "Nyt on pakollinen 2–3 välipäivän palautumisikkuna ennen Treeni 2:ta (Etukyykky). Huomenna sopii erinomaisesti lepo tai kevyt 20–30 min PK-lenkki."
+          ? "Nyt lepoa ja palautumista 1–2 päivää ennen Treeni 2:ta (tai kevyt kävely/PK-lenkki väliin)."
           : wNum === 2
-          ? "Pidä 1–2 välipäivää ennen kierron päättävää Treeni 3:a (Nopeuspenkki & pystypunnerrus)."
-          : `Kierto ${cycle} on nyt paketissa! Pidä 2 välipäivää ennen kuin aloitat Kierron ${cycle + 1}.`,
+          ? "Seuraavana vuorossa on kierron päättävä Treeni 3 (nopeusmaastaveto & kehonhallinta) 1–2 välipäivän jälkeen."
+          : `Kierto ${cycle} on nyt valmis! Pidä 1–2 päivää palauttavaa ja sitten kohti Kiertoa ${cycle + 1}.`,
     };
   }
 
@@ -455,5 +463,106 @@ export function computeContinuousCoachingIntelligence(
     recentDeviations,
     liftMetrics,
     coachInsights,
+  };
+}
+
+export interface CycleCompletionSummary {
+  cycleNumber: number;
+  title: string;
+  trainingDaysFormatted: string[];
+  strengthCount: number;
+  enduranceCount: number;
+  totalMinutes: number;
+  totalRunKm: number;
+  summaryText: string;
+}
+
+function formatShortFiDate(isoDate: string): string {
+  const [, m, d] = isoDate.split("-").map(Number);
+  if (!m || !d) return isoDate;
+  return `${d}.${m}.`;
+}
+
+/**
+ * Muodostaa kierron / "viikon" päätösyhteenvedon heti kun kierron 3. treeni on suoritettu.
+ */
+export function computeLatestCycleCompletionSummary(
+  logs: WorkoutLog[]
+): CycleCompletionSummary | null {
+  const completedW3 = logs
+    .filter(
+      (l) =>
+        l.category === "strength" &&
+        typeof l.cycleNumber === "number" &&
+        l.workoutNumber === 3
+    )
+    .sort((a, b) => b.performedDate.localeCompare(a.performedDate));
+
+  const latestW3 = completedW3[0];
+  if (!latestW3 || !latestW3.cycleNumber) return null;
+
+  const cycleNumber = latestW3.cycleNumber;
+  const endDate = latestW3.performedDate;
+
+  // Kierron alkupäivä: edellisen kierron Treeni 3:n jälkeinen päivä tai tämän kierron ensimmäinen voimatreeni
+  const prevCycleW3 = logs
+    .filter(
+      (l) =>
+        l.category === "strength" &&
+        typeof l.cycleNumber === "number" &&
+        l.cycleNumber < cycleNumber &&
+        l.workoutNumber === 3
+    )
+    .sort((a, b) => b.performedDate.localeCompare(a.performedDate))[0];
+
+  const thisCycleStrength = logs
+    .filter(
+      (l) => l.category === "strength" && l.cycleNumber === cycleNumber
+    )
+    .sort((a, b) => a.performedDate.localeCompare(b.performedDate));
+
+  const startDate =
+    thisCycleStrength[0]?.performedDate ||
+    prevCycleW3?.performedDate ||
+    endDate;
+
+  const cycleLogs = logs.filter((l) => {
+    if (l.category === "rest") return false;
+    if (prevCycleW3 && l.performedDate <= prevCycleW3.performedDate) {
+      return false;
+    }
+    return l.performedDate >= startDate && l.performedDate <= endDate;
+  });
+
+  const strengthCount = cycleLogs.filter((l) => l.category === "strength").length;
+  const enduranceCount = cycleLogs.filter((l) => l.category !== "strength").length;
+  const totalMinutes = cycleLogs.reduce(
+    (sum, l) => sum + (l.durationMinutes || 0),
+    0
+  );
+  const totalRunKm =
+    Math.round(
+      cycleLogs
+        .filter((l) => l.category === "run" || l.category === "ski")
+        .reduce((sum, l) => sum + parseKmFromLog(l), 0) * 10
+    ) / 10;
+
+  const uniqueDates = Array.from(
+    new Set(cycleLogs.map((l) => l.performedDate))
+  ).sort();
+  const trainingDaysFormatted = uniqueDates.map(formatShortFiDate);
+
+  const totalSessions = strengthCount + enduranceCount;
+  const kmText = totalRunKm > 0 ? ` ja juoksua/hiihtoa ${totalRunKm} km` : "";
+
+  return {
+    cycleNumber,
+    title: `Kierto ${cycleNumber} paketissa – hieno treeniviikko!`,
+    trainingDaysFormatted,
+    strengthCount,
+    enduranceCount,
+    totalMinutes,
+    totalRunKm,
+    summaryText: `Kierto ${cycleNumber} meni upeasti maaliin! Teit yhteensä ${totalSessions} treeniä (${strengthCount} voima, ${enduranceCount} kestävyys${kmText}${totalMinutes > 0 ? `, ${totalMinutes} min` : ""}). Voimatreenit kulkevat vahvasti eteenpäin kohti tavoitteita!`,
   };
 }
