@@ -572,7 +572,7 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
         summary: "4 × 1 × 140 kg",
-        restMinutes: "90–120 s",
+        restMinutes: "1 min",
         cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
         sets: makeSets(`${prefix}-sdl`, [
           { type: "speed", label: "Nopeusmaastaveto", reps: "4×1", weightKg: "140", targetRpe: "6.5" },
@@ -611,7 +611,7 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         name: "Nopeusmaastaveto",
         code: "SPEED_DL",
         summary: "3 × 1 × 140 kg",
-        restMinutes: "90–120 s",
+        restMinutes: "1 min",
         cue: "Terävä irrotus lattiasta, säästä voimia.",
         sets: makeSets(`${prefix}-sdl`, [
           { type: "speed", label: "Nopeusmaastaveto", reps: "3×1", weightKg: "140", targetRpe: "6.5" },
@@ -666,7 +666,7 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
         name: "Nopeusmaastaveto (kevennetty)",
         code: "SPEED_DL",
         summary: "4 × 1 × 135 kg",
-        restMinutes: "90 s",
+        restMinutes: "1 min",
         cue: "Maksimaalinen kiihtyvyys lattiasta, nolla väsymystä.",
         sets: makeSets(`${prefix}-sdl`, [
           { type: "speed", label: "Nopeusmaastaveto", reps: "4×1", weightKg: "135", targetRpe: "6.0" },
@@ -704,7 +704,7 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
       name: "Nopeusmaastaveto (RFD)",
       code: "SPEED_DL",
       summary: `8–10 × 1 × ${speedDlWeight} kg`,
-      restMinutes: "90–120 s",
+      restMinutes: "1 min",
       cue: "Maksimaalinen irrotusnopeus alustasta ilman uupumusta.",
       sets: makeSets(`${prefix}-sdl`, [
         { type: "speed", label: "Nopeusmaastaveto", reps: "8–10×1", weightKg: speedDlWeight, targetRpe: "6.5" },
@@ -851,7 +851,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
                 summary: spec.isDeload
                   ? "n. 4 × 3 × 60 kg"
                   : "8–10 sarjaa: 3–4×60 kg ↔ 1×70 kg vuorotellen",
-                restMinutes: "45–60 s",
+                restMinutes: "1 min",
                 cue: "70 kg ykkönen herättää motoriset yksiköt, jolloin 60 kg kolmonen/nelonen räjähtää ylös.",
                 sets: makeSets(`${w2Prefix}-sb`, [
                   {
@@ -890,7 +890,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           : "Nopeusmaastaveto, käsilläseisonta, vatsat & Human Flag",
       restDaysAfterMin: 1,
       restDaysAfterMax: 2,
-      restBetweenSets: "60–120 s",
+      restBetweenSets: "1–2 min",
       coachNotes:
         c === 11
           ? "Treeni 3 jätetään kokonaan väliin. Täysi lepo ennen ennätysviikkoa."

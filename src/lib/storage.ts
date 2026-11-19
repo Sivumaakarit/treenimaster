@@ -352,6 +352,7 @@ export async function syncInitialDataWithSupabase(
           !speedBench ||
           !speedBench.summary?.includes("8–10") ||
           !c1w3SpeedDl?.summary?.includes("140") ||
+          c1w3SpeedDl?.restMinutes !== "1 min" ||
           !hasUpdatedSkill
         ) {
           finalPrograms = INITIAL_PROGRAM_WORKOUTS;
