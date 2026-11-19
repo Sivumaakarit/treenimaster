@@ -642,7 +642,7 @@ export default function TreenimasterPage() {
       )}
 
       {/* Apple HIG Translucent Top Header (huomioi iPhonen safe-area-inset-top PWA-tilassa) */}
-      <header className="apple-nav-glass sticky top-0 z-30 border-b border-white/10 pt-[env(safe-area-inset-top)]">
+      <header className="apple-nav-glass sticky top-0 z-30 border-b border-white/10 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-2 px-3.5 py-2.5 sm:px-6 sm:py-3">
           {/* Vasen: Pelkistetty Treenimaster-logo & tekstilogo */}
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
