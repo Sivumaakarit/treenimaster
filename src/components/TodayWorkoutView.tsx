@@ -319,8 +319,8 @@ export function TodayWorkoutView({
         ? `[Huomio: ${deviationReason}] ${cleanedFeelings}`
         : cleanedFeelings
       : hasReasonNote
-      ? `[Huomio: ${deviationReason}]`
-      : "";
+        ? `[Huomio: ${deviationReason}]`
+        : "";
 
     const newLog: WorkoutLog = {
       id: `log-strength-${Date.now()}`,
@@ -341,14 +341,18 @@ export function TodayWorkoutView({
       createdAt: new Date().toISOString(),
     };
 
-    onSaveStrengthLog(newLog, askCoachAfter, deviationReason);
+    onSaveStrengthLog(
+      newLog,
+      askCoachAfter,
+      deviationReason || "Suunnitelman mukaan ✓"
+    );
     setJustSavedToast(
       `${baseWorkout.title} tallennettu Supabaseen ja kalenteriin!`
     );
     setFeelings("");
     setOxygenScore(null);
     setEnergyScore(null);
-    setDeviationReason("Suunnitelman mukaan ✓");
+    setDeviationReason("");
     setTimeout(() => setJustSavedToast(null), 5000);
   };
 
@@ -621,9 +625,9 @@ export function TodayWorkoutView({
                           onDelete={
                             onDeleteLog
                               ? (id) => {
-                                  onDeleteLog(id);
-                                  setEditingLoggedId(null);
-                                }
+                                onDeleteLog(id);
+                                setEditingLoggedId(null);
+                              }
                               : undefined
                           }
                         />
@@ -732,9 +736,8 @@ export function TodayWorkoutView({
             >
               <span>{showWorkoutDetails ? "Piilota tiedot" : "Ohjeet & vaihda"}</span>
               <ChevronRight
-                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                  showWorkoutDetails ? "rotate-90" : ""
-                }`}
+                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${showWorkoutDetails ? "rotate-90" : ""
+                  }`}
               />
             </button>
             <button
@@ -930,8 +933,8 @@ export function TodayWorkoutView({
                         ? "Kuitattu ✓"
                         : "Kuittaa tehdyksi"
                       : allExDone
-                      ? `Kaikki tehty (${exDoneCount}/${exercise.sets.length})`
-                      : "Kuittaa liikkeen sarjat"}
+                        ? `Kaikki tehty (${exDoneCount}/${exercise.sets.length})`
+                        : "Kuittaa liikkeen sarjat"}
                   </span>
                 </button>
               </div>
@@ -1015,11 +1018,10 @@ export function TodayWorkoutView({
                               count
                             )
                           }
-                          className={`apple-press rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
-                            active
-                              ? "bg-[#30D158]/25 border-[#30D158]/60 text-[#30D158]"
-                              : "bg-black/40 border-white/12 text-zinc-300 hover:bg-white/10"
-                          }`}
+                          className={`apple-press rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${active
+                            ? "bg-[#30D158]/25 border-[#30D158]/60 text-[#30D158]"
+                            : "bg-black/40 border-white/12 text-zinc-300 hover:bg-white/10"
+                            }`}
                         >
                           {count} krs
                         </button>
@@ -1042,134 +1044,134 @@ export function TodayWorkoutView({
                   </div>
                 </div>
               ) : isSingleCheckExercise ? null : (
-              /* Sarjarivit: valintaruutu + muokattavat toistot & kilot */
-              <div className="mt-3.5 space-y-2">
-                {exercise.sets.map((set) => {
-                  const isTop = set.type === "top";
-                  const modified =
-                    (set.actualReps && set.actualReps !== set.reps) ||
-                    (set.actualWeightKg && set.actualWeightKg !== set.weightKg);
+                /* Sarjarivit: valintaruutu + muokattavat toistot & kilot */
+                <div className="mt-3.5 space-y-2">
+                  {exercise.sets.map((set) => {
+                    const isTop = set.type === "top";
+                    const modified =
+                      (set.actualReps && set.actualReps !== set.reps) ||
+                      (set.actualWeightKg && set.actualWeightKg !== set.weightKg);
 
-                  return (
-                    <div
-                      key={set.id}
-                      className={`rounded-2xl p-3 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${set.done
-                        ? "bg-[#34C759]/12 border-[#34C759]/40"
-                        : isTop
-                          ? "bg-gradient-to-r from-[#FF3B30]/12 via-white/[0.03] to-transparent border-[#FF3B30]/30"
-                          : "bg-white/[0.03] border-white/8"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          role="checkbox"
-                          aria-checked={Boolean(set.done)}
-                          aria-label={`Merkitse ${exercise.name} sarja ${set.setNumber} tehdyksi`}
-                          onClick={() => toggleSetDone(exercise.id, set.id)}
-                          className={`apple-press w-7 h-7 rounded-xl flex items-center justify-center border transition-all shrink-0 ${set.done
-                            ? "bg-[#34C759] border-[#34C759] text-black shadow-[0_0_12px_rgba(52,199,89,0.45)]"
-                            : "bg-black/40 border-white/25 text-transparent hover:border-white/50"
-                            }`}
-                        >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </button>
+                    return (
+                      <div
+                        key={set.id}
+                        className={`rounded-2xl p-3 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${set.done
+                          ? "bg-[#34C759]/12 border-[#34C759]/40"
+                          : isTop
+                            ? "bg-gradient-to-r from-[#FF3B30]/12 via-white/[0.03] to-transparent border-[#FF3B30]/30"
+                            : "bg-white/[0.03] border-white/8"
+                          }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={Boolean(set.done)}
+                            aria-label={`Merkitse ${exercise.name} sarja ${set.setNumber} tehdyksi`}
+                            onClick={() => toggleSetDone(exercise.id, set.id)}
+                            className={`apple-press w-7 h-7 rounded-xl flex items-center justify-center border transition-all shrink-0 ${set.done
+                              ? "bg-[#34C759] border-[#34C759] text-black shadow-[0_0_12px_rgba(52,199,89,0.45)]"
+                              : "bg-black/40 border-white/25 text-transparent hover:border-white/50"
+                              }`}
+                          >
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          </button>
 
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">
-                              Sarja {set.setNumber}
-                            </span>
-                            <span
-                              className={`text-xs sm:text-sm font-semibold px-2 py-0.5 rounded-md ${isTop
-                                ? "bg-[#FF3B30]/20 text-[#FF6961] border border-[#FF3B30]/35"
-                                : "bg-white/8 text-zinc-300"
-                                }`}
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">
+                                Sarja {set.setNumber}
+                              </span>
+                              <span
+                                className={`text-xs sm:text-sm font-semibold px-2 py-0.5 rounded-md ${isTop
+                                  ? "bg-[#FF3B30]/20 text-[#FF6961] border border-[#FF3B30]/35"
+                                  : "bg-white/8 text-zinc-300"
+                                  }`}
+                              >
+                                {set.label}
+                              </span>
+                              {set.targetRpe && (
+                                <span className="text-xs text-zinc-400">
+                                  RPE {set.targetRpe}
+                                </span>
+                              )}
+                              {modified && (
+                                <span className="text-xs font-medium text-[#FFD60A] bg-[#FF9F0A]/15 px-2 py-0.5 rounded-md">
+                                  Muokattu tälle päivälle
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-zinc-400 mt-0.5">
+                              Tavoite: {set.reps} × {set.weightKg} kg
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Muokattavat toistot ja paino (kg) */}
+                        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1.5 sm:pt-0 border-t border-white/5 sm:border-0">
+                          <div className="flex items-center gap-1.5">
+                            <label
+                              htmlFor={`${set.id}-reps`}
+                              className="text-sm text-zinc-400"
                             >
-                              {set.label}
-                            </span>
-                            {set.targetRpe && (
-                              <span className="text-xs text-zinc-400">
-                                RPE {set.targetRpe}
-                              </span>
-                            )}
-                            {modified && (
-                              <span className="text-xs font-medium text-[#FFD60A] bg-[#FF9F0A]/15 px-2 py-0.5 rounded-md">
-                                Muokattu tälle päivälle
-                              </span>
-                            )}
+                              Toistot:
+                            </label>
+                            <input
+                              id={`${set.id}-reps`}
+                              type="text"
+                              value={set.actualReps ?? set.reps}
+                              onChange={(e) =>
+                                updateSetField(
+                                  exercise.id,
+                                  set.id,
+                                  "actualReps",
+                                  e.target.value
+                                )
+                              }
+                              className="w-14 sm:w-16 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                            />
                           </div>
-                          <div className="text-sm text-zinc-400 mt-0.5">
-                            Tavoite: {set.reps} × {set.weightKg} kg
+
+                          <span className="text-zinc-500 font-bold">×</span>
+
+                          <div className="flex items-center gap-1.5">
+                            <label
+                              htmlFor={`${set.id}-weight`}
+                              className="text-sm text-zinc-400"
+                            >
+                              Kg:
+                            </label>
+                            <input
+                              id={`${set.id}-weight`}
+                              type="text"
+                              value={set.actualWeightKg ?? set.weightKg}
+                              onChange={(e) =>
+                                updateSetField(
+                                  exercise.id,
+                                  set.id,
+                                  "actualWeightKg",
+                                  e.target.value
+                                )
+                              }
+                              className="w-16 sm:w-20 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
+                            />
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleSetDone(exercise.id, set.id)}
+                            className={`apple-press px-3 py-1.5 rounded-xl text-sm font-semibold border shrink-0 ${set.done
+                              ? "bg-[#34C759]/20 border-[#34C759]/50 text-[#30D158]"
+                              : "bg-white/6 hover:bg-white/12 border-white/10 text-zinc-300"
+                              }`}
+                          >
+                            {set.done ? "Tehty ✓" : "Tehty"}
+                          </button>
                         </div>
                       </div>
-
-                      {/* Muokattavat toistot ja paino (kg) */}
-                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-1.5 sm:pt-0 border-t border-white/5 sm:border-0">
-                        <div className="flex items-center gap-1.5">
-                          <label
-                            htmlFor={`${set.id}-reps`}
-                            className="text-sm text-zinc-400"
-                          >
-                            Toistot:
-                          </label>
-                          <input
-                            id={`${set.id}-reps`}
-                            type="text"
-                            value={set.actualReps ?? set.reps}
-                            onChange={(e) =>
-                              updateSetField(
-                                exercise.id,
-                                set.id,
-                                "actualReps",
-                                e.target.value
-                              )
-                            }
-                            className="w-14 sm:w-16 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
-                          />
-                        </div>
-
-                        <span className="text-zinc-500 font-bold">×</span>
-
-                        <div className="flex items-center gap-1.5">
-                          <label
-                            htmlFor={`${set.id}-weight`}
-                            className="text-sm text-zinc-400"
-                          >
-                            Kg:
-                          </label>
-                          <input
-                            id={`${set.id}-weight`}
-                            type="text"
-                            value={set.actualWeightKg ?? set.weightKg}
-                            onChange={(e) =>
-                              updateSetField(
-                                exercise.id,
-                                set.id,
-                                "actualWeightKg",
-                                e.target.value
-                              )
-                            }
-                            className="w-16 sm:w-20 rounded-xl bg-black/50 border border-white/15 px-2 py-1.5 text-center text-sm font-semibold text-white focus:border-[#0A84FF] focus:outline-none"
-                          />
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleSetDone(exercise.id, set.id)}
-                          className={`apple-press px-3 py-1.5 rounded-xl text-sm font-semibold border shrink-0 ${set.done
-                            ? "bg-[#34C759]/20 border-[#34C759]/50 text-[#30D158]"
-                            : "bg-white/6 hover:bg-white/12 border-white/10 text-zinc-300"
-                            }`}
-                        >
-                          {set.done ? "Tehty ✓" : "Tehty"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           );
