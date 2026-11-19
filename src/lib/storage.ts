@@ -344,12 +344,14 @@ export async function syncInitialDataWithSupabase(
         const c1w2 = finalPrograms.find((p) => p.id === "cycle-1-workout-2");
         const c1w3 = finalPrograms.find((p) => p.id === "cycle-1-workout-3");
         const speedBench = c1w2?.exercises?.find((e) => e.code === "SPEED_B");
+        const c1w3SpeedDl = c1w3?.exercises?.find((e) => e.code === "SPEED_DL");
         const hasUpdatedSkill = c1w3?.exercises?.some((e) =>
           e.name.includes("putkirullaukset")
         );
         if (
           !speedBench ||
           !speedBench.summary?.includes("8–10") ||
+          !c1w3SpeedDl?.summary?.includes("140") ||
           !hasUpdatedSkill
         ) {
           finalPrograms = INITIAL_PROGRAM_WORKOUTS;

@@ -697,7 +697,7 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
     ];
   }
 
-  const speedDlWeight = cycle >= 5 ? "140" : "135";
+  const speedDlWeight = "140";
   return [
     {
       id: `${prefix}-speed-dl`,

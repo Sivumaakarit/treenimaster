@@ -851,7 +851,7 @@ export function TodayWorkoutView({
                     )}
 
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-sm font-semibold border transition-colors ${allExDone
+                      className={`inline-block max-w-full break-words px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold leading-snug border transition-colors ${allExDone
                         ? "bg-[#30D158]/20 text-[#30D158] border-[#30D158]/50"
                         : "bg-white/8 text-zinc-200 border-white/10"
                         }`}
