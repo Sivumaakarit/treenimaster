@@ -670,6 +670,8 @@ export interface NextWorkoutRecommendation {
   readinessDetail: string;
   recentAerobicCount7d: number;
   recentLogsBetween: WorkoutLog[];
+  suggestDeloadAfterBreak?: boolean;
+  deloadWorkoutId?: string;
 }
 
 export function computeNextRecommendedWorkout(
@@ -697,14 +699,35 @@ export function computeNextRecommendedWorkout(
   let nextWorkoutNum: 1 | 2 | 3 = 1;
 
   if (lastStrengthLog && lastStrengthLog.cycleNumber && lastStrengthLog.workoutNumber) {
+    const curCycle = lastStrengthLog.cycleNumber;
+    const doneInCycle = new Set(
+      sortedStrengthLogs
+        .filter((l) => l.cycleNumber === curCycle)
+        .map((l) => l.workoutNumber)
+    );
+
     if (lastStrengthLog.workoutNumber === 1) {
-      nextCycle = lastStrengthLog.cycleNumber;
-      nextWorkoutNum = 2;
+      if (!doneInCycle.has(2)) {
+        nextCycle = curCycle;
+        nextWorkoutNum = 2;
+      } else if (!doneInCycle.has(3)) {
+        nextCycle = curCycle;
+        nextWorkoutNum = 3;
+      } else {
+        nextCycle = Math.min(12, curCycle + 1);
+        nextWorkoutNum = 1;
+      }
     } else if (lastStrengthLog.workoutNumber === 2) {
-      nextCycle = lastStrengthLog.cycleNumber;
-      nextWorkoutNum = 3;
+      if (!doneInCycle.has(3)) {
+        nextCycle = curCycle;
+        nextWorkoutNum = 3;
+      } else {
+        nextCycle = Math.min(12, curCycle + 1);
+        nextWorkoutNum = 1;
+      }
     } else {
-      nextCycle = Math.min(12, lastStrengthLog.cycleNumber + 1);
+      // Treeni 3 tehty -> siirrytään aina seuraavaan kiertoon (vaikka 1 tai 2 olisi jäänyt välistä)
+      nextCycle = Math.min(12, curCycle + 1);
       nextWorkoutNum = 1;
     }
   }
@@ -784,6 +807,32 @@ export function computeNextRecommendedWorkout(
       readinessDetail: `Edellisestä voimatreenistä (${lastStrengthLog.title}) on ${fullRestDaysBetween} täyttä välipäivää. Suositus on ${restMin}–${restMax} välipäivää (vielä ${remaining} pv), mutta voit tarvittaessa tehdä kevyen lenkin tai suorittaa ${nextWorkout.title} jo tänään.`,
       recentAerobicCount7d,
       recentLogsBetween,
+    };
+  }
+
+  const recentIllness = logs.some(
+    (l) =>
+      l.performedDate >= sevenDaysAgo &&
+      l.recoveryStatus === "flunssainen"
+  );
+
+  if (fullRestDaysBetween >= 5 || recentIllness) {
+    return {
+      nextWorkout,
+      lastStrengthLog,
+      daysSinceLastStrength: fullRestDaysBetween,
+      restDaysRequiredMin: restMin,
+      restDaysRequiredMax: restMax,
+      readinessState: "ready",
+      readinessHeadline: recentIllness
+        ? "Toipuminen flunssasta – suositus: kevennetty herättely ensin"
+        : `Pidempi tauko (${fullRestDaysBetween} välipäivää) – kevennetty herättely suositeltava`,
+      readinessDetail:
+        "Lähdemateriaalin (Encarnação ym., 2022) mukaan 5+ päivän tauko tai lievä flunssa ei laske maksimivoimaa lainkaan, mutta ensimmäinen treeni kannattaa tehdä Kierron 4 kevennysmallilla (2×3 / 2×2 kevyemmin, 2–3 toistoa varaa) ennen paluuta täysiin PAP-rautoihin.",
+      recentAerobicCount7d,
+      recentLogsBetween,
+      suggestDeloadAfterBreak: true,
+      deloadWorkoutId: `cycle-4-workout-${nextWorkoutNum}`,
     };
   }
 
