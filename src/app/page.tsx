@@ -66,6 +66,8 @@ export default function TreenimasterPage() {
     useState<InstantCoachFeedback | null>(null);
   const [pendingWithingsPromptLog, setPendingWithingsPromptLog] =
     useState<WorkoutLog | null>(null);
+  const [splashVisible, setSplashVisible] = useState<boolean>(true);
+  const [splashFading, setSplashFading] = useState<boolean>(false);
   const withingsSyncInFlightRef = useRef<boolean>(false);
 
   const getPromptedWithingsIds = (): Set<string> => {
@@ -189,21 +191,41 @@ export default function TreenimasterPage() {
     const rec = computeNextRecommendedWorkout(localProgs, localLogs, currentISO);
     setSelectedWorkoutId(rec.nextWorkout.id);
 
-    void syncInitialDataWithSupabase(currentISO).then((res) => {
-      setPrograms(res.programs);
-      setLogs(res.logs);
-      setMessages(res.messages);
-      setCloudConnected(res.cloudConnected);
-      const updatedRec = computeNextRecommendedWorkout(
-        res.programs,
-        res.logs,
-        currentISO
-      );
-      setSelectedWorkoutId(updatedRec.nextWorkout.id);
+    const splashStart = Date.now();
+    let splashClosed = false;
+    const closeSplash = () => {
+      if (splashClosed) return;
+      splashClosed = true;
+      const elapsed = Date.now() - splashStart;
+      const remainingMin = Math.max(0, 650 - elapsed);
+      window.setTimeout(() => {
+        setSplashFading(true);
+        window.setTimeout(() => setSplashVisible(false), 320);
+      }, remainingMin);
+    };
 
-      // Automaattinen taustasynkronointi Withingsistä heti sivun latauksessa
-      void runWithingsBackgroundSync(0);
-    });
+    const maxSplashTimer = window.setTimeout(closeSplash, 1700);
+
+    void syncInitialDataWithSupabase(currentISO)
+      .then((res) => {
+        setPrograms(res.programs);
+        setLogs(res.logs);
+        setMessages(res.messages);
+        setCloudConnected(res.cloudConnected);
+        const updatedRec = computeNextRecommendedWorkout(
+          res.programs,
+          res.logs,
+          currentISO
+        );
+        setSelectedWorkoutId(updatedRec.nextWorkout.id);
+
+        // Automaattinen taustasynkronointi Withingsistä heti sivun latauksessa
+        void runWithingsBackgroundSync(0);
+      })
+      .finally(() => {
+        window.clearTimeout(maxSplashTimer);
+        closeSplash();
+      });
 
     // Tarkista Withings OAuth-paluu URL-parametreista ja pidä 1 min taustasynkronointi päällä
     if (typeof window !== "undefined") {
@@ -567,6 +589,58 @@ export default function TreenimasterPage() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden pb-24 lg:pb-16">
+      {/* Nativen oloinen latausikkuna (Splash Screen) käynnistyksessä */}
+      {splashVisible && (
+        <div
+          aria-live="polite"
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#090a0f] px-6 transition-opacity duration-300 ${
+            splashFading ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(10,132,255,0.22),rgba(52,199,89,0.08)_38%,transparent_70%)]" />
+          <div className="relative flex flex-col items-center gap-4 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-[#0A84FF] via-[#0066CC] to-[#34C759] shadow-[0_12px_40px_rgba(10,132,255,0.45)] ring-1 ring-white/25">
+              <svg
+                viewBox="0 0 28 28"
+                className="h-11 w-11"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 7.5H23"
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M14 7.5V21.5"
+                  stroke="white"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M7.5 18.5L11.5 14.5L14.5 16.5L20.5 10.5"
+                  stroke="#9BF6B5"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="text-4xl font-black tracking-tight sm:text-5xl">
+              <span className="text-white">Treeni</span>
+              <span className="bg-gradient-to-r from-[#409CFF] via-[#64D2FF] to-[#30D158] bg-clip-text text-transparent">
+                master
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-medium text-zinc-400">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#30D158]" />
+              <span>Ladataan treenejä...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Apple HIG Translucent Top Header (huomioi iPhonen safe-area-inset-top PWA-tilassa) */}
       <header className="apple-nav-glass sticky top-0 z-30 border-b border-white/10 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-2 px-3.5 py-2.5 sm:px-6 sm:py-3">
