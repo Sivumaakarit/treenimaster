@@ -580,9 +580,9 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt ja putkirullaukset",
         code: "SKILL",
-        summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt & putkirullaukset",
+        summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt ja putkirullaukset",
         restMinutes: "2 min",
         cue: "Kehonhallinta, korsettipaineet ja kimmoisuus terävinä ilman maitohappoa.",
         sets: makeSets(`${prefix}-skill`, [
@@ -619,9 +619,9 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt ja putkirullaukset",
         code: "SKILL",
-        summary: "Kevyt kehonhallinta, keskivartalo, boksihypyt & putkirullaukset",
+        summary: "Kevyt kehonhallinta, keskivartalo, boksihypyt ja putkirullaukset",
         restMinutes: "2 min",
         cue: "Pidä tuntuma ja olkapäiden tuki ilman väsymystä.",
         sets: makeSets(`${prefix}-skill`, [
@@ -674,9 +674,9 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
       },
       {
         id: `${prefix}-skill`,
-        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset (kevennetty)",
+        name: "Käsilläseisonnat, vatsarullaukset, boksihypyt ja putkirullaukset (kevennetty)",
         code: "SKILL",
-        summary: "Hallittu kehonhallinta, keskivartalo, boksihypyt & putkirullaukset",
+        summary: "Hallittu kehonhallinta, keskivartalo, boksihypyt ja putkirullaukset",
         restMinutes: "2 min",
         cue: "Pidä lavat aktiivisina ja keskivartalo tiukkana ilman uupumusta.",
         sets: makeSets(`${prefix}-skill`, [
@@ -712,9 +712,9 @@ function buildSpeedDayExercises(cycle: number, isDeload?: boolean): ExercisePlan
     },
     {
       id: `${prefix}-skill`,
-      name: "Käsilläseisonnat, vatsarullaukset, boksihypyt & putkirullaukset",
+      name: "Käsilläseisonnat, vatsarullaukset, boksihypyt ja putkirullaukset",
       code: "SKILL",
-      summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt & putkirullaukset",
+      summary: "Kehonhallinta, keskivartalon nostot, vatsarullaukset, boksihypyt ja putkirullaukset",
       restMinutes: "2 min",
       cue: "Olkapäiden tuki, lapojen hallinta, maksimaalinen korsettipaine ja kimmoisuus.",
       sets: makeSets(`${prefix}-skill`, [
@@ -752,7 +752,7 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           : c >= 9
           ? `Viikko ${c} · Treeni 1 (A-päivä)`
           : `Kierto ${c} · Treeni 1 (A-päivä)`,
-      subtitle: "Pääveto, pääpenkki & lisäpainoleuat",
+      subtitle: "Pääveto, pääpenkki ja lisäpainoleuat",
       structureLabel: spec.structure,
       restDaysAfterMin: 2,
       restDaysAfterMax: 2,
@@ -804,8 +804,8 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
           : `Kierto ${c} · Treeni 2 (B-päivä)`,
       subtitle:
         c <= 10
-          ? "Etukyykky, volyymileuka & nopeuspenkki"
-          : "Etukyykky & rajoille viety volyymileuka",
+          ? "Etukyykky, volyymileuka ja nopeuspenkki"
+          : "Etukyykky ja rajoille viety volyymileuka",
       structureLabel: spec.structure,
       restDaysAfterMin: 1,
       restDaysAfterMax: 2,
@@ -877,17 +877,17 @@ export const INITIAL_PROGRAM_WORKOUTS: ProgramWorkout[] = CYCLE_SPECS.flatMap(
         c === 11
           ? "Viikko 11 · Treeni 3 (Jätetään väliin – täysi lepo)"
           : c === 12
-          ? "Viikko 12 · Palautuminen & kehonhuolto"
+          ? "Viikko 12 · Palautuminen ja kehonhuolto"
           : c >= 9
           ? `Viikko ${c} · Treeni 3 (C-päivä)`
-          : `Kierto ${c} · Treeni 3 (C-päivä / Extrapäivä)`,
-      subtitle: "Nopeusmaastaveto, käsilläseisonta & keskivartalo",
+          : `Kierto ${c} · Treeni 3 (C-päivä)`,
+      subtitle: "Nopeusmaastaveto, käsilläseisonta ja keskivartalo",
       structureLabel:
         c === 11 || c === 12
           ? "Täysi lepo ennen testiviikkoa"
           : spec.isDeload
-          ? "Huoltava nopeusmaastaveto & keskivartalo"
-          : "Nopeusmaastaveto, käsilläseisonta, vatsat & Human Flag",
+          ? "Huoltava nopeusmaastaveto ja keskivartalo"
+          : "Nopeusmaastaveto, käsilläseisonta, vatsat ja Human Flag",
       restDaysAfterMin: 1,
       restDaysAfterMax: 2,
       restBetweenSets: "1–2 min",

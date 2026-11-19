@@ -391,7 +391,7 @@ export function TodayWorkoutView({
       id: `log-strength-${Date.now()}`,
       performedDate: todayISO,
       category: "strength",
-      title: `${baseWorkout.title} (${baseWorkout.structureLabel})`,
+      title: `${baseWorkout.title} ${baseWorkout.structureLabel}`,
       cycleNumber: baseWorkout.cycleNumber,
       workoutNumber: baseWorkout.workoutNumber,
       programId: baseWorkout.id,
@@ -915,7 +915,7 @@ export function TodayWorkoutView({
                 >
                   {programs.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.title} ({p.structureLabel})
+                      {p.title} · {p.structureLabel}
                       {p.id === recommendation.nextWorkout.id
                         ? " (Vuorossa nyt)"
                         : ""}

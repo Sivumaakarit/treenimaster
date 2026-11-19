@@ -341,10 +341,10 @@ export async function syncInitialDataWithSupabase(
           title: r.title,
           subtitle:
             r.workout_number === 1
-              ? "Pääveto, pääpenkki & lisäpainoleuat"
+              ? "Pääveto, pääpenkki ja lisäpainoleuat"
               : r.workout_number === 2
-              ? "Etukyykky, volyymileuka & nopeuspenkki"
-              : "Nopeusmaastaveto, käsilläseisonta & keskivartalo",
+              ? "Etukyykky, volyymileuka ja nopeuspenkki"
+              : "Nopeusmaastaveto, käsilläseisonta ja keskivartalo",
           structureLabel: r.structure_label,
           restDaysAfterMin: r.rest_days_aftermin ?? r.rest_days_afterMin ?? 2,
           restDaysAfterMax: r.rest_days_aftermax ?? r.rest_days_afterMax ?? 3,
@@ -370,6 +370,8 @@ export async function syncInitialDataWithSupabase(
           c1w3SpeedDl?.sets?.[0]?.reps !== "8×1" ||
           c1w3SpeedDl?.restMinutes !== "1 min" ||
           !c1w3?.coachNotes?.includes("boksihypyt") ||
+          c1w3?.title?.includes("Extrapäivä") ||
+          c1w3?.structureLabel?.includes("&") ||
           !hasUpdatedSkill
         ) {
           finalPrograms = INITIAL_PROGRAM_WORKOUTS;
