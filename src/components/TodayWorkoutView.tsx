@@ -774,6 +774,22 @@ export function TodayWorkoutView({
     completedSetsCount > 0 ||
     feelings.trim().length > 0;
 
+  const toggleUpcomingWorkout = () => {
+    const next = !showUpcomingWorkout;
+    if (next) {
+      setShowUpcomingWorkout(true);
+      window.setTimeout(() => {
+        upcomingCardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 80);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setShowUpcomingWorkout(false);
+    }
+  };
+
   return (
     <div className="min-w-0 space-y-4">
       {/* Päivän selkeä otsikko kortin yläpuolella */}
@@ -1218,22 +1234,7 @@ export function TodayWorkoutView({
             ? "border-2 border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]"
             : "apple-glass border border-white/15 hover:border-[#64D2FF]/50 cursor-pointer"
         }`}
-        onClick={
-          !isStrengthWorkoutDay
-            ? () => {
-                const next = !showUpcomingWorkout;
-                setShowUpcomingWorkout(next);
-                if (next) {
-                  window.setTimeout(() => {
-                    upcomingCardRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 80);
-                }
-              }
-            : undefined
-        }
+        onClick={!isStrengthWorkoutDay ? toggleUpcomingWorkout : undefined}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
@@ -1297,18 +1298,7 @@ export function TodayWorkoutView({
             {!isStrengthWorkoutDay && (
               <button
                 type="button"
-                onClick={() => {
-                  const next = !showUpcomingWorkout;
-                  setShowUpcomingWorkout(next);
-                  if (next) {
-                    window.setTimeout(() => {
-                      upcomingCardRef.current?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    }, 80);
-                  }
-                }}
+                onClick={toggleUpcomingWorkout}
                 aria-expanded={isWorkoutExpanded}
                 className={`apple-press col-start-2 row-start-1 row-span-2 h-full w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl border text-sm sm:text-base font-bold whitespace-nowrap transition ${
                   isWorkoutExpanded
@@ -1402,9 +1392,15 @@ export function TodayWorkoutView({
         )}
       </section>
 
-      {/* Liikkeet ja sarjat: Näytetään heti treenipäivänä, tai välipäivänä napauttamalla korttia */}
-      {isWorkoutExpanded && (
-        <>
+      {/* Liikkeet ja sarjat: Näytetään heti treenipäivänä, tai välipäivänä pehmeästi liukuen napauttamalla korttia */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+          isWorkoutExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="overflow-hidden space-y-4">
           <section
             ref={exercisesSectionRef}
             className="space-y-4 scroll-mt-24"
@@ -2053,8 +2049,8 @@ export function TodayWorkoutView({
           )}
         </div>
       </section>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
