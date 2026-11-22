@@ -17,3 +17,8 @@ Päivitetty: 2026-11-22
 
 ## 3. Globaali skilli muihin projekteihin
 - Tallennettu globaaliksi Antigravity-skilliksi: `/Users/eskomaki/.gemini/config/skills/voice_dictation_gemini/SKILL.md`.
+
+## 4. Käynnistysnäkymä, keskeneräisen treenin välimuisti ja nollaus
+- **Käynnistys aina yläosasta:** `TodayWorkoutView` alustaa `lastScrolledFeedbackIdRef`-muuttujan nykyisellä `instantFeedback?.id`-arvolla, jotta kuittaamaton palaute ei vieritä sivua alas sovellusta avattaessa.
+- **Keskeneräisen treenin automaattitallennus (`localStorage`):** `treenimaster_today_draft_v1` säilyttää päivän ja valitun treenin keskeneräiset vihreät ruksit, sarjamuokkaukset, pistearviot ja sanelut, vaikka selain tai PWA suljettaisiin vahingossa kesken treenin.
+- **Turvallinen nollaus:** Tekstikentän vieressä on `Tyhjennä`-nappi tekstille ja tallennusnapin alla kaksivaiheinen `Nollaa valinnat ja ruksit` -nappi koko luonnoksen tyhjentämiseen.

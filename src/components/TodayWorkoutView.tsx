@@ -42,6 +42,20 @@ import { SportCharacterAvatar } from "./SportCharacterAvatar";
 import { VoiceInputButton } from "./VoiceInputButton";
 import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
+const TODAY_DRAFT_STORAGE_KEY = "treenimaster_today_draft_v1";
+
+interface TodayWorkoutDraft {
+  dateISO: string;
+  workoutId: string;
+  sessionExercises: ExercisePlan[];
+  feelings: string;
+  oxygenScore: number | null;
+  energyScore: number | null;
+  recoveryStatus: RecoveryStatus;
+  durationMinutes: string;
+  deviationReason: string;
+}
+
 const STRENGTH_DEVIATION_CHIPS = [
   "Suunnitelman mukaan ✓",
   "Painoi / hieman tukkoinen",
@@ -129,6 +143,8 @@ export function TodayWorkoutView({
   const [selkosuomiPolishing, setSelkosuomiPolishing] =
     useState<boolean>(false);
   const [selkosuomiBadge, setSelkosuomiBadge] = useState<string | null>(null);
+  const [confirmResetDraft, setConfirmResetDraft] = useState<boolean>(false);
+  const draftHydratedForRef = useRef<string | null>(null);
 
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
@@ -167,7 +183,10 @@ export function TodayWorkoutView({
     });
   };
   const feedbackSectionRef = useRef<HTMLElement | null>(null);
-  const lastScrolledFeedbackIdRef = useRef<string | null>(null);
+  // Alustetaan nykyisellä ID:llä, jotta sovelluksen avaus alkaa aina sivun yläosasta
+  const lastScrolledFeedbackIdRef = useRef<string | null>(
+    instantFeedback?.id ?? null
+  );
 
   useEffect(() => {
     if (
@@ -237,8 +256,41 @@ export function TodayWorkoutView({
     setSkipReasonText(localParsed.selkosuomiText);
   };
 
-  // Alusta päivän muokattava kopio aina kun valittu pohjatreeni vaihtuu
+  // Alusta päivän muokattava kopio (tai palauta keskeneräinen luonnos selaimen välimuistista)
   useEffect(() => {
+    const draftKey = `${todayISO}::${baseWorkout.id}`;
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(TODAY_DRAFT_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as TodayWorkoutDraft;
+          if (
+            parsed.dateISO === todayISO &&
+            parsed.workoutId === baseWorkout.id &&
+            Array.isArray(parsed.sessionExercises) &&
+            parsed.sessionExercises.length > 0
+          ) {
+            setSessionExercises(parsed.sessionExercises);
+            setFeelings(parsed.feelings || "");
+            feelingsRef.current = parsed.feelings || "";
+            setOxygenScore(
+              typeof parsed.oxygenScore === "number" ? parsed.oxygenScore : null
+            );
+            setEnergyScore(
+              typeof parsed.energyScore === "number" ? parsed.energyScore : null
+            );
+            setRecoveryStatus(parsed.recoveryStatus || "normaali");
+            setDurationMinutes(parsed.durationMinutes || "");
+            setDeviationReason(parsed.deviationReason || "");
+            draftHydratedForRef.current = draftKey;
+            return;
+          }
+        }
+      } catch {
+        // ignore invalid draft
+      }
+    }
+
     const cloned: ExercisePlan[] = baseWorkout.exercises.map((ex) => ({
       ...ex,
       sets: ex.sets.map((s) => ({
@@ -250,7 +302,49 @@ export function TodayWorkoutView({
     }));
     setSessionExercises(cloned);
     setDurationMinutes("");
-  }, [baseWorkout]);
+    draftHydratedForRef.current = draftKey;
+  }, [baseWorkout, todayISO]);
+
+  // Tallenna keskeneräiset ruksit, painot ja tuntemukset automaattisesti selaimen välimuistiin
+  useEffect(() => {
+    const draftKey = `${todayISO}::${baseWorkout.id}`;
+    if (
+      typeof window === "undefined" ||
+      draftHydratedForRef.current !== draftKey ||
+      sessionExercises.length === 0
+    ) {
+      return;
+    }
+    try {
+      const draft: TodayWorkoutDraft = {
+        dateISO: todayISO,
+        workoutId: baseWorkout.id,
+        sessionExercises,
+        feelings,
+        oxygenScore,
+        energyScore,
+        recoveryStatus,
+        durationMinutes,
+        deviationReason,
+      };
+      window.localStorage.setItem(
+        TODAY_DRAFT_STORAGE_KEY,
+        JSON.stringify(draft)
+      );
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [
+    todayISO,
+    baseWorkout.id,
+    sessionExercises,
+    feelings,
+    oxygenScore,
+    energyScore,
+    recoveryStatus,
+    durationMinutes,
+    deviationReason,
+  ]);
 
   const totalSetsCount = sessionExercises.reduce(
     (acc, ex) => acc + ex.sets.length,
@@ -342,6 +436,26 @@ export function TodayWorkoutView({
       })),
     }));
     setSessionExercises(cloned);
+  };
+
+  const resetAllDraftFields = () => {
+    resetToPlanned();
+    setFeelings("");
+    feelingsRef.current = "";
+    setOxygenScore(null);
+    setEnergyScore(null);
+    setRecoveryStatus("normaali");
+    setDurationMinutes("");
+    setDeviationReason("");
+    setSelkosuomiBadge(null);
+    setConfirmResetDraft(false);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(TODAY_DRAFT_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const handleCompleteWorkout = async (askCoachAfter: boolean) => {
@@ -458,6 +572,17 @@ export function TodayWorkoutView({
     setOxygenScore(null);
     setEnergyScore(null);
     setDeviationReason("");
+    setDurationMinutes("");
+    setRecoveryStatus("normaali");
+    setSelkosuomiBadge(null);
+    setConfirmResetDraft(false);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(TODAY_DRAFT_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+    }
     setTimeout(() => setJustSavedToast(null), 5000);
     } finally {
       setSavingWorkout(false);
@@ -1483,11 +1608,28 @@ export function TodayWorkoutView({
             >
               Miten treeni meni, miten happi ja voimat riittivät (valinnainen)?
             </label>
-            <VoiceInputButton
-              onTranscript={handleVoiceFeelingsDictation}
-              label="Sanele"
-              compact
-            />
+            <div className="flex items-center gap-2">
+              <VoiceInputButton
+                onTranscript={handleVoiceFeelingsDictation}
+                label="Sanele"
+                compact
+              />
+              {feelings.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFeelings("");
+                    feelingsRef.current = "";
+                    setSelkosuomiBadge(null);
+                  }}
+                  title="Tyhjennä sanelu- ja tekstikenttä"
+                  className="apple-press inline-flex items-center gap-1 rounded-full bg-white/8 hover:bg-white/14 border border-white/12 px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Tyhjennä</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {(selkosuomiPolishing || selkosuomiBadge) && (
@@ -1557,7 +1699,7 @@ export function TodayWorkoutView({
           </div>
         )}
 
-        <div className="pt-1">
+        <div className="pt-1 space-y-2">
           <button
             type="button"
             disabled={savingWorkout}
@@ -1567,6 +1709,40 @@ export function TodayWorkoutView({
             <CheckCircle2 className="w-5 h-5" />
             <span>{savingWorkout ? "Tallennetaan..." : "Tallenna treeni"}</span>
           </button>
+
+          {(completedSetsCount > 0 ||
+            feelings.trim().length > 0 ||
+            oxygenScore !== null ||
+            energyScore !== null ||
+            Boolean(deviationReason) ||
+            Boolean(durationMinutes) ||
+            recoveryStatus !== "normaali") && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirmResetDraft) {
+                    setConfirmResetDraft(true);
+                    window.setTimeout(() => setConfirmResetDraft(false), 4000);
+                    return;
+                  }
+                  resetAllDraftFields();
+                }}
+                className={`apple-press inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition ${
+                  confirmResetDraft
+                    ? "bg-[#FF453A]/20 border-[#FF453A]/60 text-[#FF6961]"
+                    : "bg-white/[0.04] hover:bg-white/[0.09] border-white/10 text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>
+                  {confirmResetDraft
+                    ? "Napauta uudelleen nollataksesi kaikki valinnat"
+                    : "Nollaa valinnat ja ruksit"}
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>
