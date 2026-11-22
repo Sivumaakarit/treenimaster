@@ -763,9 +763,9 @@ export default function TreenimasterPage() {
             <button
               type="button"
               onClick={() => setOtherModalOpen(true)}
-              className="apple-press inline-flex items-center gap-1.5 rounded-xl border border-[#34C759]/40 bg-[#34C759]/18 px-3.5 py-2 text-xs sm:text-sm font-semibold text-[#30D158] hover:bg-[#34C759]/25 whitespace-nowrap"
+              className="apple-press inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.08] px-3.5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-white/[0.14] whitespace-nowrap transition"
             >
-              <PlusCircle className="h-4 w-4 shrink-0" />
+              <PlusCircle className="h-4 w-4 shrink-0 text-white/90" />
               <span>Lenkki / muu</span>
             </button>
           </div>

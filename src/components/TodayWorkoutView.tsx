@@ -185,6 +185,7 @@ export function TodayWorkoutView({
     });
   };
   const feedbackSectionRef = useRef<HTMLElement | null>(null);
+  const exercisesSectionRef = useRef<HTMLElement | null>(null);
   // Alustetaan nykyisellä ID:llä, jotta sovelluksen avaus alkaa aina sivun yläosasta
   const lastScrolledFeedbackIdRef = useRef<string | null>(
     instantFeedback?.id ?? null
@@ -631,41 +632,30 @@ export function TodayWorkoutView({
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={onOpenOtherWorkoutModal}
-              className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-semibold text-zinc-200 hover:text-white transition"
-            >
-              <Footprints className="w-3.5 h-3.5 text-[#30D158]" />
-              <span>Lenkki / muu treeni</span>
-            </button>
-
-            {recommendation.readinessState === "ready" && (
-              <>
-                {recommendation.suggestDeloadAfterBreak &&
-                  recommendation.deloadWorkoutId &&
-                  activeWorkoutId !== recommendation.deloadWorkoutId && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onSelectWorkoutId(recommendation.deloadWorkoutId!)
-                      }
-                      className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF9F0A]/20 hover:bg-[#FF9F0A]/30 border border-[#FF9F0A]/45 text-xs font-semibold text-[#FFD60A] transition"
-                    >
-                      <span>Ota kevennetty herättely (Kierto 4)</span>
-                    </button>
-                  )}
-                <button
-                  type="button"
-                  onClick={() => setShowSkipReasonBox((v) => !v)}
-                  className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-zinc-300 hover:text-white transition"
-                >
-                  <span>☕ Passaan tänään</span>
-                </button>
-              </>
-            )}
-          </div>
+          {recommendation.readinessState === "ready" && (
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {recommendation.suggestDeloadAfterBreak &&
+                recommendation.deloadWorkoutId &&
+                activeWorkoutId !== recommendation.deloadWorkoutId && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onSelectWorkoutId(recommendation.deloadWorkoutId!)
+                    }
+                    className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF9F0A]/20 hover:bg-[#FF9F0A]/30 border border-[#FF9F0A]/45 text-xs font-semibold text-[#FFD60A] transition"
+                  >
+                    <span>Ota kevennetty herättely (Kierto 4)</span>
+                  </button>
+                )}
+              <button
+                type="button"
+                onClick={() => setShowSkipReasonBox((v) => !v)}
+                className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-zinc-300 hover:text-white transition"
+              >
+                <span>☕ Passaan tänään</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Pikapaneeli: Miksi en treenannut tänään / miksi siirrän treeniä? */}
@@ -1046,14 +1036,25 @@ export function TodayWorkoutView({
 
       {/* KORTTI 2: VOIMATREENI (Tänään vuorossa oleva tai seuraavaksi vuorossa oleva napautettava kortti) */}
       <section
-        className={`apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border transition-all ${
-          !isStrengthWorkoutDay && !isWorkoutExpanded
-            ? "border-white/15 hover:border-[#64D2FF]/45 cursor-pointer"
-            : "border-white/12"
+        className={`min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl transition-all duration-300 ${
+          isWorkoutExpanded
+            ? "border-2 border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]"
+            : "apple-glass border border-white/15 hover:border-[#64D2FF]/50 cursor-pointer"
         }`}
         onClick={
-          !isStrengthWorkoutDay && !isWorkoutExpanded
-            ? () => setShowUpcomingWorkout(true)
+          !isStrengthWorkoutDay
+            ? () => {
+                const next = !showUpcomingWorkout;
+                setShowUpcomingWorkout(next);
+                if (next) {
+                  window.setTimeout(() => {
+                    exercisesSectionRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 90);
+                }
+              }
             : undefined
         }
       >
@@ -1081,6 +1082,11 @@ export function TodayWorkoutView({
             <h1 className="apple-display text-white mt-0.5">
               {baseWorkout.title}
             </h1>
+            {!isStrengthWorkoutDay && !isWorkoutExpanded && (
+              <p className="mt-1 text-xs font-medium text-[#64D2FF]/90">
+                Napauta korttia avataksesi liikkeet ja sarjat ↓
+              </p>
+            )}
           </div>
 
           <div
@@ -1090,11 +1096,22 @@ export function TodayWorkoutView({
             {!isStrengthWorkoutDay && (
               <button
                 type="button"
-                onClick={() => setShowUpcomingWorkout((v) => !v)}
+                onClick={() => {
+                  const next = !showUpcomingWorkout;
+                  setShowUpcomingWorkout(next);
+                  if (next) {
+                    window.setTimeout(() => {
+                      exercisesSectionRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }, 90);
+                  }
+                }}
                 aria-expanded={isWorkoutExpanded}
                 className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition ${
                   isWorkoutExpanded
-                    ? "bg-white/[0.08] border-white/15 text-zinc-200"
+                    ? "bg-[#0A84FF]/25 border-[#64D2FF]/60 text-white"
                     : "bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border-[#64D2FF]/45 text-[#64D2FF]"
                 }`}
               >
@@ -1197,7 +1214,10 @@ export function TodayWorkoutView({
       {/* Liikkeet ja sarjat: Näytetään heti treenipäivänä, tai välipäivänä napauttamalla korttia */}
       {isWorkoutExpanded && (
         <>
-          <section className="space-y-4">
+          <section
+            ref={exercisesSectionRef}
+            className="space-y-4 scroll-mt-24"
+          >
         <div className="flex items-center justify-between px-1 pt-1">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#409CFF] shadow-[0_0_10px_#409CFF]" />
