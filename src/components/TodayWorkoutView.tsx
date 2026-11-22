@@ -1092,28 +1092,20 @@ export function TodayWorkoutView({
           </div>
 
           <div
-            className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:min-w-[300px] shrink-0"
+            className="grid grid-cols-2 gap-2.5 w-full sm:w-auto sm:min-w-[320px] shrink-0 items-stretch"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setShowWorkoutDetails((v) => !v)}
               aria-expanded={showWorkoutDetails}
-              className="apple-press w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
+              className="apple-press w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200 whitespace-nowrap"
             >
               <span>{showWorkoutDetails ? "Piilota tiedot" : "Ohjeet / vaihda"}</span>
               <ChevronRight
                 className={`w-4 h-4 shrink-0 transition-transform duration-200 ${showWorkoutDetails ? "rotate-90" : ""
                   }`}
               />
-            </button>
-            <button
-              type="button"
-              onClick={onNavigateToProgram}
-              className="apple-press w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
-            >
-              <span>8 vk ohjelma</span>
-              <ChevronRight className="w-4 h-4 shrink-0" />
             </button>
             {!isStrengthWorkoutDay && (
               <button
@@ -1131,7 +1123,7 @@ export function TodayWorkoutView({
                   }
                 }}
                 aria-expanded={isWorkoutExpanded}
-                className={`apple-press col-start-2 w-full mt-0.5 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-sm font-bold transition ${
+                className={`apple-press col-start-2 row-start-1 row-span-2 h-full w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl border text-sm sm:text-base font-bold whitespace-nowrap transition ${
                   isWorkoutExpanded
                     ? "bg-[#0A84FF]/28 border-[#64D2FF]/65 text-white shadow-[0_0_16px_rgba(10,132,255,0.25)]"
                     : "bg-[#0A84FF]/22 hover:bg-[#0A84FF]/32 border-[#64D2FF]/55 text-[#64D2FF] shadow-[0_0_14px_rgba(10,132,255,0.18)]"
@@ -1147,6 +1139,16 @@ export function TodayWorkoutView({
                 />
               </button>
             )}
+            <button
+              type="button"
+              onClick={onNavigateToProgram}
+              className={`apple-press w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200 whitespace-nowrap ${
+                !isStrengthWorkoutDay ? "col-start-1 row-start-2" : ""
+              }`}
+            >
+              <span>8 vk ohjelma</span>
+              <ChevronRight className="w-4 h-4 shrink-0" />
+            </button>
           </div>
         </div>
 
