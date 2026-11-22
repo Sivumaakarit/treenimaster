@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import fs from "fs";
 import { NextResponse } from "next/server";
+import { generateContentWithRetry } from "@/lib/gemini";
 import path from "path";
 import {
   ExercisePlan,
@@ -301,8 +302,7 @@ ${knowledgeBase}`;
       historyText ? `Aiempi keskustelu:\n${historyText}\n\n` : ""
     }Urheilijan uusi viesti: "${message}"`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateContentWithRetry(ai, {
       contents: prompt,
       config: {
         systemInstruction,

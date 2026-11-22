@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextResponse } from "next/server";
 import { parseSpokenFeelingsToSelkosuomi } from "@/lib/workoutParser";
+import { generateContentWithRetry } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   try {
@@ -20,8 +21,7 @@ export async function POST(req: Request) {
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateContentWithRetry(ai, {
       contents: `Korjaa käyttäjän puhekielisen treenisanelun tai pikamuistiinpanon oikeinkirjoitus, yhdyssanat ja välimerkit siistiksi, luontevaksi ja kieliopillisesti puhtaaksi suomen kieleksi (1–3 virkettä) tietokantaan tallennusta varten.
 TÄRKEÄÄ:
 - Laajenna treenilyhenteet oikeiksi nimiksi (esim. HF -> Human Flag, mave/mawe -> maastaveto, pena -> penkkipunnerrus, etari -> etukyykky).

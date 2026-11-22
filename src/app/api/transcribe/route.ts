@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { formatGeminiError, generateContentWithRetry } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   try {
@@ -27,8 +28,7 @@ export async function POST(req: Request) {
     const mimeType = rawMime.split(";")[0].trim() || "audio/mp4";
 
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateContentWithRetry(ai, {
       contents: [
         {
           inlineData: {
@@ -49,8 +49,7 @@ TÄRKEÄÄ:
     const text = (response.text || "").trim();
     return NextResponse.json({ text });
   } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : "Puheen litterointi epäonnistui.";
+    const msg = formatGeminiError(err, "Puheen litterointi epäonnistui.");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
