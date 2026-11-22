@@ -924,8 +924,11 @@ export function TodayWorkoutView({
                   <span>
                     Ei punttisarjoja tänään – välipäivän suositus (välipäivä{" "}
                     {(recommendation.daysSinceLastStrength ?? 0) + 1}/
-                    {recommendation.restDaysRequiredMin}–
-                    {recommendation.restDaysRequiredMax})
+                    {recommendation.restDaysRequiredMin ===
+                    recommendation.restDaysRequiredMax
+                      ? recommendation.restDaysRequiredMin
+                      : `${recommendation.restDaysRequiredMin}–${recommendation.restDaysRequiredMax}`}
+                    )
                   </span>
                 </div>
                 <p className="text-zinc-200 leading-relaxed text-sm">
@@ -1247,9 +1250,21 @@ export function TodayWorkoutView({
               <span className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2 py-0.5 text-[11px] font-medium text-zinc-300">
                 <Clock className="w-3 h-3 text-[#64D2FF]" />
                 <span>
-                  {baseWorkout.restDaysAfterMin === baseWorkout.restDaysAfterMax
-                    ? `${baseWorkout.restDaysAfterMin} välipäivän jälkeen`
-                    : `${baseWorkout.restDaysAfterMin}–${baseWorkout.restDaysAfterMax} välipäivän jälkeen`}
+                  {(() => {
+                    const restBeforeMin = isRecommendedWorkout
+                      ? recommendation.restDaysRequiredMin
+                      : baseWorkout.workoutNumber === 2
+                        ? 2
+                        : 1;
+                    const restBeforeMax = isRecommendedWorkout
+                      ? recommendation.restDaysRequiredMax
+                      : baseWorkout.workoutNumber === 2
+                        ? 2
+                        : 2;
+                    return restBeforeMin === restBeforeMax
+                      ? `${restBeforeMin} välipäivän jälkeen`
+                      : `${restBeforeMin}–${restBeforeMax} välipäivän jälkeen`;
+                  })()}
                 </span>
               </span>
             </div>
