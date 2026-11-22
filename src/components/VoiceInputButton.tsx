@@ -119,6 +119,8 @@ export function VoiceInputButton({
         }
 
         setIsTranscribing(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 22000);
         try {
           const form = new FormData();
           const ext = recordedType.includes("webm") ? "webm" : "m4a";
@@ -127,6 +129,7 @@ export function VoiceInputButton({
           const res = await fetch("/api/transcribe", {
             method: "POST",
             body: form,
+            signal: controller.signal,
           });
           if (!res.ok) {
             const errJson = await res.json().catch(() => null);
@@ -142,9 +145,14 @@ export function VoiceInputButton({
           } else {
             setErrorMsg("Puhetta ei kuulunut – kokeile uudelleen.");
           }
-        } catch {
-          setErrorMsg("Verkkovirhe puheen litteroinnissa.");
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            setErrorMsg("Puheen muunto kesti liian kauan – kokeile uudelleen.");
+          } else {
+            setErrorMsg("Verkkovirhe puheen litteroinnissa.");
+          }
         } finally {
+          clearTimeout(timeoutId);
           setIsTranscribing(false);
         }
       };

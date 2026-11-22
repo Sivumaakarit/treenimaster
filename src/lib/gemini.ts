@@ -1,41 +1,64 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const GEMINI_FLASH_MODEL = "gemini-3.8-flash";
+export const GEMINI_FLASH_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.8-flash",
+] as const;
 
 type GenerateParams = Parameters<GoogleGenAI["models"]["generateContent"]>[0];
 
-function isTransientError(err: unknown): boolean {
+function isRetryableOrSlowError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err ?? "");
   return (
     msg.includes("503") ||
     msg.includes("429") ||
+    msg.includes("404") ||
     msg.includes("UNAVAILABLE") ||
     msg.includes("RESOURCE_EXHAUSTED") ||
-    msg.includes("high demand")
+    msg.includes("NOT_FOUND") ||
+    msg.includes("high demand") ||
+    msg.includes("timeout") ||
+    msg.includes("aborted")
   );
 }
 
 /**
- * Kutsuu Geminiä automaattisella uudelleenyrityksellä tilapäisten ruuhkavirheiden (503/429) varalta.
+ * Kutsuu Geminiä automaattisella aikakatkaisulla ja mallivarajärjestelmällä,
+ * jotta yksittäisen mallin ruuhka tai jumi ei jää pyörimään ikuisesti.
  */
 export async function generateContentWithRetry(
   ai: GoogleGenAI,
   params: Omit<GenerateParams, "model"> & { model?: string },
-  maxAttempts = 3
+  perModelTimeoutMs = 9000
 ) {
-  const model = params.model ?? GEMINI_FLASH_MODEL;
+  const models = params.model
+    ? [params.model, ...GEMINI_FLASH_MODELS.filter((m) => m !== params.model)]
+    : [...GEMINI_FLASH_MODELS];
+
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (const model of models) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), perModelTimeoutMs);
+
     try {
-      return await ai.models.generateContent({ ...params, model });
+      const response = await ai.models.generateContent({
+        ...params,
+        model,
+        config: {
+          ...params.config,
+          abortSignal: controller.signal,
+        },
+      });
+      clearTimeout(timer);
+      return response;
     } catch (err) {
+      clearTimeout(timer);
       lastError = err;
-      if (!isTransientError(err) || attempt === maxAttempts) {
+      if (!isRetryableOrSlowError(err)) {
         throw err;
       }
-      const delayMs = attempt === 1 ? 700 : 1500;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
@@ -43,7 +66,7 @@ export async function generateContentWithRetry(
 }
 
 export function formatGeminiError(err: unknown, fallback: string): string {
-  if (isTransientError(err)) {
+  if (isRetryableOrSlowError(err)) {
     return "Tekoälypalvelu on hetkellisesti ruuhkautunut. Kokeile hetken päästä uudelleen.";
   }
   return err instanceof Error && !err.message.trim().startsWith("{")
