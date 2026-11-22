@@ -149,6 +149,8 @@ export function TodayWorkoutView({
   // Päivän kirjatun suorituksen muokkaustila
   const [editingLoggedId, setEditingLoggedId] = useState<string | null>(null);
   const [showWorkoutDetails, setShowWorkoutDetails] = useState<boolean>(false);
+  const [showUpcomingWorkout, setShowUpcomingWorkout] =
+    useState<boolean>(false);
   const [dismissedCycles, setDismissedCycles] = useState<number[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -591,6 +593,12 @@ export function TodayWorkoutView({
 
   const isRecommendedWorkout =
     baseWorkout.id === recommendation.nextWorkout.id;
+  const isStrengthWorkoutDay = recommendation.readinessState === "ready";
+  const isWorkoutExpanded =
+    isStrengthWorkoutDay ||
+    showUpcomingWorkout ||
+    completedSetsCount > 0 ||
+    feelings.trim().length > 0;
 
   return (
     <div className="min-w-0 space-y-4">
@@ -600,46 +608,64 @@ export function TodayWorkoutView({
       </div>
 
       {/* KORTTI 1: TÄNÄÄN – Päivän tilanne, mahdolliset tänään tehdyt treenit/lenkit & lepopäivän kirjaus */}
-      <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
+      <section
+        className={`min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl border transition-all ${
+          recommendation.readinessState === "completed_today"
+            ? "border-[#30D158]/45 bg-gradient-to-br from-[#30D158]/[0.12] via-[#0F2418]/70 to-[#0B1117]/85 shadow-[0_0_28px_rgba(48,209,88,0.16),inset_0_1px_0_rgba(48,209,88,0.22)]"
+            : "apple-glass border-white/12"
+        }`}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
             <span
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm sm:text-base font-bold border whitespace-normal leading-snug max-w-full ${recommendation.readinessState === "ready"
-                ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
-                : recommendation.readinessState === "completed_today"
-                  ? "bg-[#0A84FF]/15 text-[#64D2FF] border-[#0A84FF]/35"
-                  : "bg-[#FF9F0A]/15 text-[#FFD60A] border-[#FF9F0A]/35"
-                }`}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm sm:text-base font-bold border whitespace-normal leading-snug max-w-full backdrop-blur-xl ${
+                recommendation.readinessState === "ready"
+                  ? "bg-[#34C759]/15 text-[#30D158] border-[#34C759]/35"
+                  : recommendation.readinessState === "completed_today"
+                    ? "bg-gradient-to-r from-[#30D158]/24 to-[#34C759]/14 text-[#30D158] border-[#30D158]/55 shadow-[0_0_20px_rgba(48,209,88,0.22),inset_0_1px_0_rgba(255,255,255,0.18)]"
+                    : "bg-[#FF9F0A]/15 text-[#FFD60A] border-[#FF9F0A]/35"
+              }`}
             >
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>{recommendation.readinessHeadline}</span>
             </span>
           </div>
 
-          {recommendation.readinessState === "ready" && (
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {recommendation.suggestDeloadAfterBreak &&
-                recommendation.deloadWorkoutId &&
-                activeWorkoutId !== recommendation.deloadWorkoutId && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onSelectWorkoutId(recommendation.deloadWorkoutId!)
-                    }
-                    className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF9F0A]/20 hover:bg-[#FF9F0A]/30 border border-[#FF9F0A]/45 text-xs font-semibold text-[#FFD60A] transition"
-                  >
-                    <span>Ota kevennetty herättely (Kierto 4)</span>
-                  </button>
-                )}
-              <button
-                type="button"
-                onClick={() => setShowSkipReasonBox((v) => !v)}
-                className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-zinc-300 hover:text-white transition"
-              >
-                <span>☕ Passaan tänään</span>
-              </button>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenOtherWorkoutModal}
+              className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-semibold text-zinc-200 hover:text-white transition"
+            >
+              <Footprints className="w-3.5 h-3.5 text-[#30D158]" />
+              <span>Lenkki / muu treeni</span>
+            </button>
+
+            {recommendation.readinessState === "ready" && (
+              <>
+                {recommendation.suggestDeloadAfterBreak &&
+                  recommendation.deloadWorkoutId &&
+                  activeWorkoutId !== recommendation.deloadWorkoutId && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onSelectWorkoutId(recommendation.deloadWorkoutId!)
+                      }
+                      className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF9F0A]/20 hover:bg-[#FF9F0A]/30 border border-[#FF9F0A]/45 text-xs font-semibold text-[#FFD60A] transition"
+                    >
+                      <span>Ota kevennetty herättely (Kierto 4)</span>
+                    </button>
+                  )}
+                <button
+                  type="button"
+                  onClick={() => setShowSkipReasonBox((v) => !v)}
+                  className="apple-press inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-medium text-zinc-300 hover:text-white transition"
+                >
+                  <span>☕ Passaan tänään</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Pikapaneeli: Miksi en treenannut tänään / miksi siirrän treeniä? */}
@@ -1018,15 +1044,30 @@ export function TodayWorkoutView({
         </section>
       )}
 
-      {/* KORTTI 2: SEURAAVA VOIMATREENI OHJELMASSA (Kompakti otsikko + haitari lisätiedoille) */}
-      <section className="apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border border-white/12">
+      {/* KORTTI 2: VOIMATREENI (Tänään vuorossa oleva tai seuraavaksi vuorossa oleva napautettava kortti) */}
+      <section
+        className={`apple-glass min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 border transition-all ${
+          !isStrengthWorkoutDay && !isWorkoutExpanded
+            ? "border-white/15 hover:border-[#64D2FF]/45 cursor-pointer"
+            : "border-white/12"
+        }`}
+        onClick={
+          !isStrengthWorkoutDay && !isWorkoutExpanded
+            ? () => setShowUpcomingWorkout(true)
+            : undefined
+        }
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-[#64D2FF]">
-                {isRecommendedWorkout
-                  ? "Seuraavana vuorossa oleva voimatreeni"
-                  : "Valittu voimatreeni"}
+                {isStrengthWorkoutDay
+                  ? isRecommendedWorkout
+                    ? "Tänään vuorossa"
+                    : "Valittu voimatreeni"
+                  : isRecommendedWorkout
+                    ? "Seuraavana vuorossa oleva voimatreeni"
+                    : "Valittu voimatreeni"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2 py-0.5 text-[11px] font-medium text-zinc-300">
                 <Clock className="w-3 h-3 text-[#64D2FF]" />
@@ -1042,7 +1083,31 @@ export function TodayWorkoutView({
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div
+            className="flex flex-wrap items-center gap-2 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {!isStrengthWorkoutDay && (
+              <button
+                type="button"
+                onClick={() => setShowUpcomingWorkout((v) => !v)}
+                aria-expanded={isWorkoutExpanded}
+                className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition ${
+                  isWorkoutExpanded
+                    ? "bg-white/[0.08] border-white/15 text-zinc-200"
+                    : "bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border-[#64D2FF]/45 text-[#64D2FF]"
+                }`}
+              >
+                <span>
+                  {isWorkoutExpanded ? "Piilota treeni" : "Avaa treeni"}
+                </span>
+                <ChevronRight
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                    isWorkoutExpanded ? "rotate-90" : ""
+                  }`}
+                />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowWorkoutDetails((v) => !v)}
@@ -1129,8 +1194,10 @@ export function TodayWorkoutView({
         )}
       </section>
 
-      {/* Liikkeet ja sarjat: Selkeästi erottuva Toteutettavat liikkeet -osio */}
-      <section className="space-y-4">
+      {/* Liikkeet ja sarjat: Näytetään heti treenipäivänä, tai välipäivänä napauttamalla korttia */}
+      {isWorkoutExpanded && (
+        <>
+          <section className="space-y-4">
         <div className="flex items-center justify-between px-1 pt-1">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-[#409CFF] shadow-[0_0_10px_#409CFF]" />
@@ -1745,6 +1812,8 @@ export function TodayWorkoutView({
           )}
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }
