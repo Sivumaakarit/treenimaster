@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, MicOff, Sparkles } from "lucide-react";
+import { Mic, Sparkles, Square } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 interface VoiceInputButtonProps {
@@ -205,13 +205,13 @@ export function VoiceInputButton({
       >
         {isListening ? (
           <>
-            <MicOff className="w-4 h-4 shrink-0" />
-            <span>Nauhoitetaan… (napauta valmis)</span>
+            <Square className="w-3.5 h-3.5 fill-current shrink-0" />
+            <span>Valmis</span>
           </>
         ) : isTranscribing ? (
           <>
             <Sparkles className="w-4 h-4 shrink-0 animate-spin" />
-            <span>Muunnetaan tekstiksi…</span>
+            <span>Muunnetaan…</span>
           </>
         ) : (
           <>
