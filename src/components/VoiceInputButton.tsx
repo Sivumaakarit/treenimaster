@@ -72,68 +72,81 @@ export function VoiceInputButton({
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "fi-FI";
-      recognition.interimResults = true;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
+    const startRecognition = (allowRetry: boolean) => {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "fi-FI";
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        setInterimText("");
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onresult = (event: any) => {
-        let finalChunk = "";
-        let interimChunk = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalChunk += transcript;
-          } else {
-            interimChunk += transcript;
-          }
-        }
-        if (interimChunk) {
-          setInterimText(interimChunk);
-        }
-        if (finalChunk.trim()) {
+        recognition.onstart = () => {
+          setIsListening(true);
           setInterimText("");
-          onTranscriptRef.current(finalChunk.trim());
-        }
-      };
+        };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onerror = (event: any) => {
-        recognitionRef.current = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onresult = (event: any) => {
+          let finalChunk = "";
+          let interimChunk = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalChunk += transcript;
+            } else {
+              interimChunk += transcript;
+            }
+          }
+          if (interimChunk) {
+            setInterimText(interimChunk);
+          }
+          if (finalChunk.trim()) {
+            setInterimText("");
+            onTranscriptRef.current(finalChunk.trim());
+          }
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recognition.onerror = (event: any) => {
+          recognitionRef.current = null;
+          setIsListening(false);
+          setInterimText("");
+          if (event.error === "audio-capture" && allowRetry) {
+            // iOS WebKit vapauttaa mikrofonin pienellä viiveellä edellisen sanelun jälkeen
+            window.setTimeout(() => startRecognition(false), 450);
+            return;
+          }
+          if (
+            event.error === "not-allowed" ||
+            event.error === "service-not-allowed"
+          ) {
+            setErrorMsg(
+              "Sanelu estetty selaimessa – käytä iPhonen näppäimistön mikrofoninappia tai salli mikrofoni Safarista."
+            );
+          } else if (event.error === "audio-capture") {
+            setErrorMsg(
+              "iPhone varasi mikrofonin hetkeksi – napauta uudelleen tai käytä näppäimistön mikrofoninappia."
+            );
+          } else if (event.error !== "aborted" && event.error !== "no-speech") {
+            setErrorMsg(`Puheentunnistusvirhe: ${event.error}`);
+          }
+        };
+
+        recognition.onend = () => {
+          recognitionRef.current = null;
+          setIsListening(false);
+          setInterimText("");
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch {
         setIsListening(false);
-        setInterimText("");
-        if (
-          event.error === "not-allowed" ||
-          event.error === "service-not-allowed"
-        ) {
-          setErrorMsg(
-            "Sanelu estetty selaimessa – käytä iPhonen näppäimistön mikrofoninappia tai salli mikrofoni Safarista."
-          );
-        } else if (event.error !== "aborted" && event.error !== "no-speech") {
-          setErrorMsg(`Puheentunnistusvirhe: ${event.error}`);
-        }
-      };
+        setErrorMsg("Mikrofonin käynnistys epäonnistui.");
+      }
+    };
 
-      recognition.onend = () => {
-        recognitionRef.current = null;
-        setIsListening(false);
-        setInterimText("");
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch {
-      setIsListening(false);
-      setErrorMsg("Mikrofonin käynnistys epäonnistui.");
-    }
+    startRecognition(true);
   };
 
   return (
