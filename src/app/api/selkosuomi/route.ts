@@ -22,10 +22,12 @@ export async function POST(req: Request) {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Muunna käyttäjän puhekielinen treenisanelu siistiksi, ytimekkääksi ja selkeäksi suomen kieleksi (selkosuomeksi, 1–2 virkettä) Supabase-tietokantaan tallennusta varten.
-TÄRKEÄÄ: ÄLÄ KOSKAAN keksi tai lisää väitteitä (kuten "Happi kulki erinomaisesti" tai mitään muutakaan), joita käyttäjä ei sanelussaan oikeasti sanonut! Säilytä vain käyttäjän kertomat faktat (kilot, kilometrit, kesto, intervallit/vedot, tai mainitut tuntemukset) puhtaana selkosuomena.
+      contents: `Korjaa käyttäjän puhekielisen treenisanelun tai pikamuistiinpanon oikeinkirjoitus, yhdyssanat ja välimerkit siistiksi, luontevaksi ja kieliopillisesti puhtaaksi suomen kieleksi (1–3 virkettä) tietokantaan tallennusta varten.
+TÄRKEÄÄ:
+- Laajenna treenilyhenteet oikeiksi nimiksi (esim. HF -> Human Flag, mave/mawe -> maastaveto, pena -> penkkipunnerrus, etari -> etukyykky).
+- ÄLÄ KOSKAAN keksi tai lisää väitteitä (kuten "Happi kulki erinomaisesti" tai mitään muutakaan), joita käyttäjä ei oikeasti sanonut tai kirjoittanut! Säilytä vain käyttäjän kertomat faktat puhtaana selkosuomena.
 
-Sanelu: "${rawText}"
+Teksti: "${rawText}"
 Konteksti: ${mode}`,
       config: {
         responseMimeType: "application/json",
@@ -55,8 +57,8 @@ Konteksti: ${mode}`,
     const parsedJson = JSON.parse(response.text || "{}");
     return NextResponse.json({
       selkosuomiText: parsedJson.selkosuomiText || fallback.selkosuomiText,
-      oxygenScore: parsedJson.oxygenScore || fallback.oxygenScore,
-      energyScore: parsedJson.energyScore || fallback.energyScore,
+      oxygenScore: parsedJson.oxygenScore ?? null,
+      energyScore: parsedJson.energyScore ?? null,
       recoveryStatus: fallback.recoveryStatus,
       suggestedDeviationChip: fallback.suggestedDeviationChip,
     });

@@ -112,6 +112,9 @@ export function TodayWorkoutView({
     null
   );
   const [feelings, setFeelings] = useState("");
+  const feelingsRef = useRef(feelings);
+  feelingsRef.current = feelings;
+  const [savingWorkout, setSavingWorkout] = useState(false);
   const [deviationReason, setDeviationReason] = useState<string>("");
   const [oxygenScore, setOxygenScore] = useState<number | null>(null);
   const [energyScore, setEnergyScore] = useState<number | null>(null);
@@ -183,21 +186,25 @@ export function TodayWorkoutView({
   }, [instantFeedback?.id]);
 
   const handleVoiceFeelingsDictation = (rawSpeech: string) => {
-    const combinedRaw = feelings ? `${feelings} ${rawSpeech}` : rawSpeech;
+    const currentText = feelingsRef.current.trim();
+    const combinedRaw = currentText ? `${currentText} ${rawSpeech}` : rawSpeech;
     const localParsed = parseSpokenFeelingsToSelkosuomi(
       combinedRaw,
       "strength"
     );
 
-    // Päivitetään heti selkosuomeksi + asetetaan Happi, Voimat, Palautuminen ja Poikkeama automaattisesti!
+    // Päivitetään heti selkosuomeksi
+    feelingsRef.current = localParsed.selkosuomiText;
     setFeelings(localParsed.selkosuomiText);
-    setOxygenScore(localParsed.oxygenScore);
-    setEnergyScore(localParsed.energyScore);
-    setRecoveryStatus(localParsed.recoveryStatus);
-    setDeviationReason(localParsed.suggestedDeviationChip);
-    setSelkosuomiBadge("Muotoiltu selkosuomeksi Supabase-tallennukseen ✓");
+    if (localParsed.recoveryStatus !== "normaali") {
+      setRecoveryStatus(localParsed.recoveryStatus);
+    }
+    if (localParsed.suggestedDeviationChip !== "Suunnitelman mukaan ✓") {
+      setDeviationReason(localParsed.suggestedDeviationChip);
+    }
+    setSelkosuomiBadge("Muotoiltu selkosuomeksi ✓");
 
-    // Viimeistellään vielä taustalla tekoälyllä täydelliseksi selkosuomeksi
+    // Viimeistellään vielä taustalla tekoälyllä oikeinkirjoitus & yhdyssanat kuntoon
     setSelkosuomiPolishing(true);
     void fetch("/api/selkosuomi", {
       method: "POST",
@@ -207,9 +214,14 @@ export function TodayWorkoutView({
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.selkosuomiText) {
+          feelingsRef.current = data.selkosuomiText;
           setFeelings(data.selkosuomiText);
-          if (data.oxygenScore) setOxygenScore(data.oxygenScore);
-          if (data.energyScore) setEnergyScore(data.energyScore);
+          if (typeof data.oxygenScore === "number") {
+            setOxygenScore(data.oxygenScore);
+          }
+          if (typeof data.energyScore === "number") {
+            setEnergyScore(data.energyScore);
+          }
         }
       })
       .catch(() => {
@@ -332,22 +344,49 @@ export function TodayWorkoutView({
     setSessionExercises(cloned);
   };
 
-  const handleCompleteWorkout = (askCoachAfter: boolean) => {
-    // Jos käyttäjä painaa tallenna ilman että ruksasi sarjoja, merkitään kaikki suunnitellut sarjat tehdyiksi
-    const normalizedExercises: ExercisePlan[] = sessionExercises.map((ex) => ({
-      ...ex,
-      sets: ex.sets.map((s) => ({
-        ...s,
-        done: completedSetsCount === 0 ? true : Boolean(s.done),
-        actualReps: s.actualReps || s.reps,
-        actualWeightKg: s.actualWeightKg || s.weightKg,
-      })),
-    }));
+  const handleCompleteWorkout = async (askCoachAfter: boolean) => {
+    if (savingWorkout) return;
+    setSavingWorkout(true);
 
-    const dur = parseInt(durationMinutes, 10);
-    const hasReasonNote =
-      deviationReason && deviationReason !== "Suunnitelman mukaan ✓";
-    const cleanedFeelings = cleanSpokenToSelkosuomi(feelings).trim();
+    try {
+      // Jos käyttäjä painaa tallenna ilman että ruksasi sarjoja, merkitään kaikki suunnitellut sarjat tehdyiksi
+      const normalizedExercises: ExercisePlan[] = sessionExercises.map((ex) => ({
+        ...ex,
+        sets: ex.sets.map((s) => ({
+          ...s,
+          done: completedSetsCount === 0 ? true : Boolean(s.done),
+          actualReps: s.actualReps || s.reps,
+          actualWeightKg: s.actualWeightKg || s.weightKg,
+        })),
+      }));
+
+      const dur = parseInt(durationMinutes, 10);
+      const hasReasonNote =
+        deviationReason && deviationReason !== "Suunnitelman mukaan ✓";
+      let cleanedFeelings = cleanSpokenToSelkosuomi(feelings).trim();
+
+      // Viimeistellään kirjoitettu tai iPhonen näppäimistöllä saneltu teksti selkosuomeksi ennen tallennusta
+      if (feelings.trim()) {
+        try {
+          const controller = new AbortController();
+          const timer = window.setTimeout(() => controller.abort(), 2500);
+          const resp = await fetch("/api/selkosuomi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rawText: feelings.trim(), mode: "strength" }),
+            signal: controller.signal,
+          });
+          window.clearTimeout(timer);
+          if (resp.ok) {
+            const polished = await resp.json();
+            if (polished?.selkosuomiText) {
+              cleanedFeelings = String(polished.selkosuomiText).trim();
+            }
+          }
+        } catch {
+          // Pidetään paikallinen siivous
+        }
+      }
 
     // Muotoillaan valitut happi- ja voima-arvosanat siistiksi sanalliseksi lauseeksi keksimättä mitään ylimääräistä
     const scoreParts: string[] = [];
@@ -415,10 +454,14 @@ export function TodayWorkoutView({
       `${baseWorkout.title} tallennettu Supabaseen ja kalenteriin!`
     );
     setFeelings("");
+    feelingsRef.current = "";
     setOxygenScore(null);
     setEnergyScore(null);
     setDeviationReason("");
     setTimeout(() => setJustSavedToast(null), 5000);
+    } finally {
+      setSavingWorkout(false);
+    }
   };
 
   const isRecommendedWorkout =
@@ -1517,11 +1560,12 @@ export function TodayWorkoutView({
         <div className="pt-1">
           <button
             type="button"
-            onClick={() => handleCompleteWorkout(false)}
-            className="apple-press w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:brightness-105 text-sm sm:text-base font-extrabold text-black shadow-[0_0_24px_rgba(48,209,88,0.35)] transition"
+            disabled={savingWorkout}
+            onClick={() => void handleCompleteWorkout(false)}
+            className="apple-press w-full inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#34C759] to-[#30D158] hover:brightness-105 disabled:opacity-70 text-sm sm:text-base font-extrabold text-black shadow-[0_0_24px_rgba(48,209,88,0.35)] transition"
           >
             <CheckCircle2 className="w-5 h-5" />
-            <span>Tallenna treeni</span>
+            <span>{savingWorkout ? "Tallennetaan..." : "Tallenna treeni"}</span>
           </button>
         </div>
       </section>

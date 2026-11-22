@@ -21,6 +21,8 @@ export function VoiceInputButton({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
+  const onTranscriptRef = useRef(onTranscript);
+  onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
     return () => {
@@ -43,8 +45,18 @@ export function VoiceInputButton({
       } catch {
         // ignore
       }
+      recognitionRef.current = null;
       setIsListening(false);
       return;
+    }
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        // ignore
+      }
+      recognitionRef.current = null;
     }
 
     if (typeof window === "undefined") return;
@@ -89,12 +101,13 @@ export function VoiceInputButton({
         }
         if (finalChunk.trim()) {
           setInterimText("");
-          onTranscript(finalChunk.trim());
+          onTranscriptRef.current(finalChunk.trim());
         }
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
+        recognitionRef.current = null;
         setIsListening(false);
         setInterimText("");
         if (
@@ -110,6 +123,7 @@ export function VoiceInputButton({
       };
 
       recognition.onend = () => {
+        recognitionRef.current = null;
         setIsListening(false);
         setInterimText("");
       };
