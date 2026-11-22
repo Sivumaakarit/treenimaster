@@ -186,6 +186,7 @@ export function TodayWorkoutView({
   };
   const feedbackSectionRef = useRef<HTMLElement | null>(null);
   const exercisesSectionRef = useRef<HTMLElement | null>(null);
+  const upcomingCardRef = useRef<HTMLElement | null>(null);
   // Alustetaan nykyisellä ID:llä, jotta sovelluksen avaus alkaa aina sivun yläosasta
   const lastScrolledFeedbackIdRef = useRef<string | null>(
     instantFeedback?.id ?? null
@@ -1036,14 +1037,26 @@ export function TodayWorkoutView({
 
       {/* KORTTI 2: VOIMATREENI (Tänään vuorossa oleva tai seuraavaksi vuorossa oleva napautettava kortti) */}
       <section
-        className={`min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl transition-all duration-300 ${
+        ref={upcomingCardRef}
+        className={`scroll-mt-20 min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5 backdrop-blur-2xl transition-all duration-300 ${
           isWorkoutExpanded
             ? "border-2 border-[#409CFF]/55 bg-gradient-to-br from-[#0A84FF]/[0.18] via-[#141E33]/95 to-[#5E5CE6]/[0.14] shadow-[0_12px_36px_rgba(10,132,255,0.2),inset_0_1px_0_rgba(255,255,255,0.22)]"
             : "apple-glass border border-white/15 hover:border-[#64D2FF]/50 cursor-pointer"
         }`}
         onClick={
           !isStrengthWorkoutDay
-            ? () => setShowUpcomingWorkout((v) => !v)
+            ? () => {
+                const next = !showUpcomingWorkout;
+                setShowUpcomingWorkout(next);
+                if (next) {
+                  window.setTimeout(() => {
+                    upcomingCardRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 80);
+                }
+              }
             : undefined
         }
       >
@@ -1105,7 +1118,18 @@ export function TodayWorkoutView({
             {!isStrengthWorkoutDay && (
               <button
                 type="button"
-                onClick={() => setShowUpcomingWorkout((v) => !v)}
+                onClick={() => {
+                  const next = !showUpcomingWorkout;
+                  setShowUpcomingWorkout(next);
+                  if (next) {
+                    window.setTimeout(() => {
+                      upcomingCardRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }, 80);
+                  }
+                }}
                 aria-expanded={isWorkoutExpanded}
                 className={`apple-press col-start-2 w-full mt-0.5 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-sm font-bold transition ${
                   isWorkoutExpanded
