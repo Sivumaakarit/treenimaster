@@ -1043,18 +1043,7 @@ export function TodayWorkoutView({
         }`}
         onClick={
           !isStrengthWorkoutDay
-            ? () => {
-                const next = !showUpcomingWorkout;
-                setShowUpcomingWorkout(next);
-                if (next) {
-                  window.setTimeout(() => {
-                    exercisesSectionRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 90);
-                }
-              }
+            ? () => setShowUpcomingWorkout((v) => !v)
             : undefined
         }
       >
@@ -1090,29 +1079,40 @@ export function TodayWorkoutView({
           </div>
 
           <div
-            className="flex flex-wrap items-center gap-2 shrink-0"
+            className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowWorkoutDetails((v) => !v)}
+                aria-expanded={showWorkoutDetails}
+                className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
+              >
+                <span>{showWorkoutDetails ? "Piilota tiedot" : "Ohjeet / vaihda"}</span>
+                <ChevronRight
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ${showWorkoutDetails ? "rotate-90" : ""
+                    }`}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={onNavigateToProgram}
+                className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
+              >
+                <span>8 vk ohjelma</span>
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              </button>
+            </div>
             {!isStrengthWorkoutDay && (
               <button
                 type="button"
-                onClick={() => {
-                  const next = !showUpcomingWorkout;
-                  setShowUpcomingWorkout(next);
-                  if (next) {
-                    window.setTimeout(() => {
-                      exercisesSectionRef.current?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    }, 90);
-                  }
-                }}
+                onClick={() => setShowUpcomingWorkout((v) => !v)}
                 aria-expanded={isWorkoutExpanded}
-                className={`apple-press inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-semibold transition ${
+                className={`apple-press ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-sm font-bold transition ${
                   isWorkoutExpanded
-                    ? "bg-[#0A84FF]/25 border-[#64D2FF]/60 text-white"
-                    : "bg-[#0A84FF]/20 hover:bg-[#0A84FF]/30 border-[#64D2FF]/45 text-[#64D2FF]"
+                    ? "bg-[#0A84FF]/28 border-[#64D2FF]/65 text-white shadow-[0_0_16px_rgba(10,132,255,0.25)]"
+                    : "bg-[#0A84FF]/22 hover:bg-[#0A84FF]/32 border-[#64D2FF]/55 text-[#64D2FF] shadow-[0_0_14px_rgba(10,132,255,0.18)]"
                 }`}
               >
                 <span>
@@ -1125,26 +1125,6 @@ export function TodayWorkoutView({
                 />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setShowWorkoutDetails((v) => !v)}
-              aria-expanded={showWorkoutDetails}
-              className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
-            >
-              <span>{showWorkoutDetails ? "Piilota tiedot" : "Ohjeet & vaihda"}</span>
-              <ChevronRight
-                className={`w-4 h-4 shrink-0 transition-transform duration-200 ${showWorkoutDetails ? "rotate-90" : ""
-                  }`}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={onNavigateToProgram}
-              className="apple-press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.11] border border-white/10 text-xs sm:text-sm font-medium text-zinc-200"
-            >
-              <span>8 vk ohjelma</span>
-              <ChevronRight className="w-4 h-4 shrink-0" />
-            </button>
           </div>
         </div>
 
@@ -1218,20 +1198,6 @@ export function TodayWorkoutView({
             ref={exercisesSectionRef}
             className="space-y-4 scroll-mt-24"
           >
-        <div className="flex items-center justify-between px-1 pt-1">
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#409CFF] shadow-[0_0_10px_#409CFF]" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64D2FF]">
-              Toteutettavat liikkeet
-            </h3>
-          </div>
-          <span className="text-xs font-semibold text-zinc-400">
-            {sessionExercises.filter(
-              (ex) => ex.sets.length > 0 && ex.sets.every((s) => s.done)
-            ).length}
-            /{sessionExercises.length} liikettä kuitattu
-          </span>
-        </div>
 
         {sessionExercises.map((exercise, exIndex) => {
           const exDoneCount = exercise.sets.filter((s) => s.done).length;
