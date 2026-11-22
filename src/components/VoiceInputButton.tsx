@@ -17,161 +17,193 @@ export function VoiceInputButton({
   className = "",
 }: VoiceInputButtonProps) {
   const [isListening, setIsListening] = useState(false);
-  const [interimText, setInterimText] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
 
-  useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
+  const stopStream = () => {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
         try {
-          recognitionRef.current.stop();
+          track.stop();
         } catch {
           // ignore
         }
       }
+      streamRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+      stopStream();
     };
   }, []);
 
-  const toggleListening = () => {
+  const toggleListening = async () => {
     setErrorMsg(null);
 
-    if (isListening && recognitionRef.current) {
+    // Jos nauhoitus on käynnissä -> lopeta ja lähetä litterointiin
+    if (isListening && mediaRecorderRef.current) {
       try {
-        recognitionRef.current.stop();
+        if (mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop();
+        }
       } catch {
-        // ignore
+        stopStream();
+        setIsListening(false);
       }
-      recognitionRef.current = null;
-      setIsListening(false);
       return;
     }
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // ignore
-      }
-      recognitionRef.current = null;
-    }
+    if (isTranscribing) return;
 
-    if (typeof window === "undefined") return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
-    const SpeechRecognition =
-      w.SpeechRecognition || w.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
+    if (
+      typeof window === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
       setErrorMsg(
-        "Selaimessasi ei ole Web Speech API -tukea (käytä Chromea tai Safaria)."
+        "Selain ei tue äänitystä – käytä näppäimistön mikrofoninappia."
       );
       return;
     }
 
-    const startRecognition = (allowRetry: boolean) => {
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.lang = "fi-FI";
-        recognition.interimResults = true;
-        recognition.continuous = false;
-        recognition.maxAlternatives = 1;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
 
-        recognition.onstart = () => {
-          setIsListening(true);
-          setInterimText("");
-        };
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "";
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recognition.onresult = (event: any) => {
-          let finalChunk = "";
-          let interimChunk = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalChunk += transcript;
-            } else {
-              interimChunk += transcript;
-            }
-          }
-          if (interimChunk) {
-            setInterimText(interimChunk);
-          }
-          if (finalChunk.trim()) {
-            setInterimText("");
-            onTranscriptRef.current(finalChunk.trim());
-          }
-        };
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recognition.onerror = (event: any) => {
-          recognitionRef.current = null;
-          setIsListening(false);
-          setInterimText("");
-          if (event.error === "audio-capture" && allowRetry) {
-            // iOS WebKit vapauttaa mikrofonin pienellä viiveellä edellisen sanelun jälkeen
-            window.setTimeout(() => startRecognition(false), 450);
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        setIsListening(false);
+        stopStream();
+        mediaRecorderRef.current = null;
+
+        const recordedType = recorder.mimeType || mimeType || "audio/mp4";
+        const blob = new Blob(chunksRef.current, { type: recordedType });
+        chunksRef.current = [];
+
+        if (blob.size < 200) {
+          return;
+        }
+
+        setIsTranscribing(true);
+        try {
+          const form = new FormData();
+          const ext = recordedType.includes("webm") ? "webm" : "m4a";
+          form.append("audio", blob, `dictation.${ext}`);
+
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            body: form,
+          });
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => null);
+            setErrorMsg(
+              errJson?.error || "Sanelun muunto tekstiksi epäonnistui."
+            );
             return;
           }
-          if (
-            event.error === "not-allowed" ||
-            event.error === "service-not-allowed"
-          ) {
-            setErrorMsg(
-              "Sanelu estetty selaimessa – käytä iPhonen näppäimistön mikrofoninappia tai salli mikrofoni Safarista."
-            );
-          } else if (event.error === "audio-capture") {
-            setErrorMsg(
-              "iPhone varasi mikrofonin hetkeksi – napauta uudelleen tai käytä näppäimistön mikrofoninappia."
-            );
-          } else if (event.error !== "aborted" && event.error !== "no-speech") {
-            setErrorMsg(`Puheentunnistusvirhe: ${event.error}`);
+          const data = await res.json();
+          const text = String(data?.text || "").trim();
+          if (text) {
+            onTranscriptRef.current(text);
+          } else {
+            setErrorMsg("Puhetta ei kuulunut – kokeile uudelleen.");
           }
-        };
+        } catch {
+          setErrorMsg("Verkkovirhe puheen litteroinnissa.");
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
 
-        recognition.onend = () => {
-          recognitionRef.current = null;
-          setIsListening(false);
-          setInterimText("");
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-      } catch {
+      recorder.onerror = () => {
         setIsListening(false);
+        stopStream();
+        mediaRecorderRef.current = null;
+        setErrorMsg("Mikrofonin nauhoitus keskeytyi.");
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
+      setIsListening(true);
+    } catch (err) {
+      stopStream();
+      setIsListening(false);
+      const name = err instanceof Error ? err.name : "";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setErrorMsg(
+          "Mikrofonilupa estetty – salli mikrofoni Safarista tai käytä näppäimistön mikrofoninappia."
+        );
+      } else {
         setErrorMsg("Mikrofonin käynnistys epäonnistui.");
       }
-    };
-
-    startRecognition(true);
+    }
   };
 
   return (
     <div className={`inline-flex flex-col items-start gap-1 ${className}`}>
       <button
         type="button"
-        onClick={toggleListening}
-        aria-label={isListening ? "Lopeta puhesyöttö" : `${label} (fi-FI)`}
+        disabled={isTranscribing}
+        onClick={() => void toggleListening()}
+        aria-label={isListening ? "Lopeta sanelu" : `${label} (fi-FI)`}
         title={
           isListening
-            ? "Kuunnellaan (fi-FI)... napsauta lopettaaksesi"
-            : "Sanele suoritus tai tuntemukset suomeksi (Web Speech API fi-FI)"
+            ? "Napauta lopettaaksesi sanelun ja muuntaaksesi tekstiksi"
+            : "Napauta ja puhu suomeksi – napauta uudelleen kun olet valmis"
         }
-        className={`apple-press inline-flex items-center gap-2 rounded-full font-medium transition-all ${
+        className={`apple-press inline-flex items-center gap-2 rounded-full font-medium transition-all disabled:opacity-70 ${
           compact ? "px-3 py-1.5 text-xs" : "px-3.5 py-2 text-xs sm:text-sm"
         } ${
           isListening
             ? "bg-[#FF3B30] text-white shadow-[0_0_20px_rgba(255,59,48,0.55)] ring-2 ring-[#FF3B30]/50 animate-pulse"
+            : isTranscribing
+            ? "bg-[#0A84FF]/25 text-[#64D2FF] border border-[#0A84FF]/45"
             : "bg-white/8 hover:bg-white/14 text-[#F5F5F7] border border-white/12"
         }`}
       >
         {isListening ? (
           <>
             <MicOff className="w-4 h-4 shrink-0" />
-            <span>Kuunnellaan (fi-FI)…</span>
+            <span>Nauhoitetaan… (napauta valmis)</span>
+          </>
+        ) : isTranscribing ? (
+          <>
+            <Sparkles className="w-4 h-4 shrink-0 animate-spin" />
+            <span>Muunnetaan tekstiksi…</span>
           </>
         ) : (
           <>
@@ -180,13 +212,6 @@ export function VoiceInputButton({
           </>
         )}
       </button>
-
-      {interimText && (
-        <div className="flex items-center gap-1.5 text-xs text-[#64D2FF] bg-[#0A84FF]/15 border border-[#0A84FF]/30 px-2.5 py-1 rounded-lg">
-          <Sparkles className="w-3.5 h-3.5 shrink-0 animate-spin" />
-          <span className="italic">&ldquo;{interimText}…&rdquo;</span>
-        </div>
-      )}
 
       {errorMsg && (
         <span role="alert" className="text-xs text-[#FF453A] mt-0.5">
