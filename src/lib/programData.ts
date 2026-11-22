@@ -243,8 +243,8 @@ const CYCLE_SPECS: CycleSpec[] = [
     squatSummary: "3×4×102,5–105 kg",
     squatSets: [
       { type: "work", label: "Työsarja 1", reps: "4", weightKg: "102.5", targetRpe: "8.0" },
-      { type: "work", label: "Työsarja 2", reps: "4", weightKg: "105", targetRpe: "8.0" },
-      { type: "work", label: "Työsarja 3", reps: "4", weightKg: "105", targetRpe: "8.5" },
+      { type: "work", label: "Työsarja 2", reps: "4", weightKg: "102.5", targetRpe: "8.0" },
+      { type: "work", label: "Työsarja 3", reps: "4", weightKg: "102.5", targetRpe: "8.5" },
     ],
     volPullSummary: "1 × max × +15 kg tai +20–22,5 kg (rajoille asti)",
     volPullReps: "10",
@@ -291,7 +291,7 @@ const CYCLE_SPECS: CycleSpec[] = [
     dlSummary: "2×3×130–135 kg",
     dlSets: [
       { type: "work", label: "Huoltava sarja 1", reps: "3", weightKg: "130", targetRpe: "6.0" },
-      { type: "work", label: "Huoltava sarja 2", reps: "3", weightKg: "135", targetRpe: "6.0" },
+      { type: "work", label: "Huoltava sarja 2", reps: "3", weightKg: "130", targetRpe: "6.0" },
     ],
     benchSummary: "2×3×72,5 kg",
     benchSets: [
@@ -386,13 +386,13 @@ const CYCLE_SPECS: CycleSpec[] = [
     structure: "Perusvoimajakson huippukierto (1 × 1 + 2 × 5)",
     dlSummary: "1×1×190–192,5 kg + 2×5×157,5 kg",
     dlSets: [
-      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "192.5", targetRpe: "9.0" },
+      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "190", targetRpe: "9.0" },
       { type: "backoff", label: "Back-off 1", reps: "5", weightKg: "157.5", targetRpe: "8.0" },
       { type: "backoff", label: "Back-off 2", reps: "5", weightKg: "157.5", targetRpe: "8.5" },
     ],
     benchSummary: "1×1×105–107,5 kg + 2×5×87,5 kg",
     benchSets: [
-      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "107.5", targetRpe: "9.0" },
+      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "105", targetRpe: "9.0" },
       { type: "backoff", label: "Back-off 1", reps: "5", weightKg: "87.5", targetRpe: "8.0" },
       { type: "backoff", label: "Back-off 2", reps: "5", weightKg: "87.5", targetRpe: "8.5" },
     ],
@@ -404,7 +404,7 @@ const CYCLE_SPECS: CycleSpec[] = [
     ],
     squatSummary: "1×1×122,5–125 kg + 2×5×102,5 kg",
     squatSets: [
-      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "125", targetRpe: "9.0" },
+      { type: "top", label: "Terävä ykkönen (PAP)", reps: "1", weightKg: "122.5", targetRpe: "9.0" },
       { type: "backoff", label: "Back-off 1", reps: "5", weightKg: "102.5", targetRpe: "8.0" },
       { type: "backoff", label: "Back-off 2", reps: "5", weightKg: "102.5", targetRpe: "8.5" },
     ],
@@ -420,7 +420,7 @@ const CYCLE_SPECS: CycleSpec[] = [
     dlSummary: "2×2×135–140 kg",
     dlSets: [
       { type: "work", label: "Räjähtävä kakkonen 1", reps: "2", weightKg: "135", targetRpe: "6.0" },
-      { type: "work", label: "Räjähtävä kakkonen 2", reps: "2", weightKg: "140", targetRpe: "6.0" },
+      { type: "work", label: "Räjähtävä kakkonen 2", reps: "2", weightKg: "135", targetRpe: "6.0" },
     ],
     benchSummary: "2×2×75 kg",
     benchSets: [
@@ -484,7 +484,7 @@ const CYCLE_SPECS: CycleSpec[] = [
     ],
     pullSummary: "Nousu → 1×1×+50–52,5 kg",
     pullSets: [
-      { type: "top", label: "Submaksimaalinen heräteykkönen", reps: "1", weightKg: "+52.5", targetRpe: "9.0" },
+      { type: "top", label: "Submaksimaalinen heräteykkönen", reps: "1", weightKg: "+50", targetRpe: "9.0" },
     ],
     squatSummary: "Nousu → 1×1×127,5 kg",
     squatSets: [
@@ -534,7 +534,7 @@ const CYCLE_SPECS: CycleSpec[] = [
     dlSets: [
       { type: "top", label: "Avausrauta", reps: "1", weightKg: "180", targetRpe: "8.0" },
       { type: "top", label: "Viimeistelynosto", reps: "1", weightKg: "197.5", targetRpe: "9.0" },
-      { type: "top", label: "UUSI ENNÄTYS (PR!)", reps: "1", weightKg: "210", targetRpe: "9.5-10" },
+      { type: "top", label: "UUSI ENNÄTYS (PR!)", reps: "1", weightKg: "207.5", targetRpe: "9.5-10" },
     ],
     benchSummary: "Lämmittelyt → 1×100 kg → 1×107,5 kg → 1×115–117,5 kg (UUSI ENNÄTYS!)",
     benchSets: [
