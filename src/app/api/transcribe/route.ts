@@ -29,6 +29,10 @@ export async function POST(req: Request) {
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await generateContentWithRetry(ai, {
+      tier: "lite",
+      config: {
+        maxOutputTokens: 350,
+      },
       contents: [
         {
           inlineData: {

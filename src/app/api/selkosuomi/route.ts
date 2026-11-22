@@ -22,6 +22,7 @@ export async function POST(req: Request) {
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await generateContentWithRetry(ai, {
+      tier: "lite",
       contents: `Korjaa käyttäjän puhekielisen treenisanelun tai pikamuistiinpanon oikeinkirjoitus, yhdyssanat ja välimerkit siistiksi, luontevaksi ja kieliopillisesti puhtaaksi suomen kieleksi (1–3 virkettä) tietokantaan tallennusta varten.
 TÄRKEÄÄ:
 - Laajenna treenilyhenteet oikeiksi nimiksi (esim. HF -> Human Flag, mave/mawe -> maastaveto, pena -> penkkipunnerrus, etari -> etukyykky).

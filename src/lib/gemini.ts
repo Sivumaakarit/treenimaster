@@ -1,5 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 
+export const GEMINI_FLASH_LITE_MODELS = [
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
+  "gemini-3.6-flash",
+] as const;
+
 export const GEMINI_FLASH_MODELS = [
   "gemini-3.6-flash",
   "gemini-3.5-flash",
@@ -24,17 +30,24 @@ function isRetryableOrSlowError(err: unknown): boolean {
 }
 
 /**
- * Kutsuu Geminiä automaattisella aikakatkaisulla ja mallivarajärjestelmällä,
- * jotta yksittäisen mallin ruuhka tai jumi ei jää pyörimään ikuisesti.
+ * Kutsuu Geminiä automaattisella aikakatkaisulla ja mallivarajärjestelmällä.
+ * - `tier: "lite"` (sanelu, selkosuomi): käyttää nopeita ja edullisia Flash-Lite-malleja.
+ * - `tier: "standard"` (valmentaja-chat): käyttää täysiä Flash-malleja.
  */
 export async function generateContentWithRetry(
   ai: GoogleGenAI,
-  params: Omit<GenerateParams, "model"> & { model?: string },
+  params: Omit<GenerateParams, "model"> & {
+    model?: string;
+    tier?: "lite" | "standard";
+  },
   perModelTimeoutMs = 9000
 ) {
-  const models = params.model
-    ? [params.model, ...GEMINI_FLASH_MODELS.filter((m) => m !== params.model)]
-    : [...GEMINI_FLASH_MODELS];
+  const { model: explicitModel, tier = "standard", ...restParams } = params;
+  const fallbackPool =
+    tier === "lite" ? GEMINI_FLASH_LITE_MODELS : GEMINI_FLASH_MODELS;
+  const models = explicitModel
+    ? [explicitModel, ...fallbackPool.filter((m) => m !== explicitModel)]
+    : [...fallbackPool];
 
   let lastError: unknown;
 
@@ -44,10 +57,10 @@ export async function generateContentWithRetry(
 
     try {
       const response = await ai.models.generateContent({
-        ...params,
+        ...restParams,
         model,
         config: {
-          ...params.config,
+          ...restParams.config,
           abortSignal: controller.signal,
         },
       });

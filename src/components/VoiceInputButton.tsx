@@ -22,9 +22,19 @@ export function VoiceInputButton({
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const maxDurationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const chunksRef = useRef<Blob[]>([]);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
+
+  const clearMaxDurationTimer = () => {
+    if (maxDurationTimerRef.current) {
+      clearTimeout(maxDurationTimerRef.current);
+      maxDurationTimerRef.current = null;
+    }
+  };
 
   const stopStream = () => {
     if (streamRef.current) {
@@ -41,6 +51,7 @@ export function VoiceInputButton({
 
   useEffect(() => {
     return () => {
+      clearMaxDurationTimer();
       if (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state !== "inactive"
@@ -106,6 +117,7 @@ export function VoiceInputButton({
       };
 
       recorder.onstop = async () => {
+        clearMaxDurationTimer();
         setIsListening(false);
         stopStream();
         mediaRecorderRef.current = null;
@@ -158,6 +170,7 @@ export function VoiceInputButton({
       };
 
       recorder.onerror = () => {
+        clearMaxDurationTimer();
         setIsListening(false);
         stopStream();
         mediaRecorderRef.current = null;
@@ -167,6 +180,21 @@ export function VoiceInputButton({
       mediaRecorderRef.current = recorder;
       recorder.start(250);
       setIsListening(true);
+
+      // Automaattinen 60 sekunnin katkaisu estää unohtuneen nauhoituksen kulupiikit
+      clearMaxDurationTimer();
+      maxDurationTimerRef.current = setTimeout(() => {
+        if (
+          mediaRecorderRef.current &&
+          mediaRecorderRef.current.state !== "inactive"
+        ) {
+          try {
+            mediaRecorderRef.current.stop();
+          } catch {
+            // ignore
+          }
+        }
+      }, 60_000);
     } catch (err) {
       stopStream();
       setIsListening(false);
