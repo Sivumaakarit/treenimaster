@@ -122,6 +122,8 @@ export function TodayWorkoutView({
   const todaysLogs = logs.filter((l) => l.performedDate === todayISO);
 
   const [sessionExercises, setSessionExercises] = useState<ExercisePlan[]>([]);
+  const sessionExercisesRef = useRef<ExercisePlan[]>(sessionExercises);
+  sessionExercisesRef.current = sessionExercises;
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
     null
   );
@@ -143,6 +145,12 @@ export function TodayWorkoutView({
   const [selkosuomiPolishing, setSelkosuomiPolishing] =
     useState<boolean>(false);
   const [selkosuomiBadge, setSelkosuomiBadge] = useState<string | null>(null);
+  const [adjustingPlanVoice, setAdjustingPlanVoice] = useState<boolean>(false);
+  const [voicePlanNotice, setVoicePlanNotice] = useState<string | null>(null);
+  const [voicePlanUndoSnapshot, setVoicePlanUndoSnapshot] = useState<{
+    exercises: ExercisePlan[];
+    feelings: string;
+  } | null>(null);
   const [confirmResetDraft, setConfirmResetDraft] = useState<boolean>(false);
   const draftHydratedForRef = useRef<string | null>(null);
 
@@ -258,6 +266,170 @@ export function TodayWorkoutView({
   const handleVoiceSkipReasonDictation = (rawSpeech: string) => {
     const localParsed = parseSpokenFeelingsToSelkosuomi(rawSpeech, "skip");
     setSkipReasonText(localParsed.selkosuomiText);
+  };
+
+  const handleVoicePlanAdjustment = async (rawSpeech: string) => {
+    const trimmed = rawSpeech.trim();
+    if (!trimmed) return;
+
+    const currentExercises = sessionExercisesRef.current;
+    const currentFeelings = feelingsRef.current;
+    setVoicePlanUndoSnapshot({
+      exercises: currentExercises.map((ex) => ({
+        ...ex,
+        sets: ex.sets.map((s) => ({ ...s })),
+      })),
+      feelings: currentFeelings,
+    });
+    setAdjustingPlanVoice(true);
+    setVoicePlanNotice(null);
+
+    try {
+      const res = await fetch("/api/workout-plan-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: trimmed,
+          exercises: currentExercises.map((ex) => ({
+            id: ex.id,
+            name: ex.name,
+            code: ex.code,
+            setsCount: ex.sets.length,
+            reps: ex.sets[0]?.actualReps ?? ex.sets[0]?.reps ?? "",
+            weightKg:
+              ex.sets[0]?.actualWeightKg ?? ex.sets[0]?.weightKg ?? "",
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        // Fallback: tallennetaan ainakin muistiinpanoluonnokseen
+        const nextFeelings = currentFeelings.trim()
+          ? `${currentFeelings.trim()} ${trimmed}`
+          : trimmed;
+        feelingsRef.current = nextFeelings;
+        setFeelings(nextFeelings);
+        setVoicePlanNotice("Lisätty treenimuistiinpanoon.");
+        return;
+      }
+
+      const data = await res.json();
+      const noteText = String(data?.noteText || "").trim();
+      const summary = String(data?.summary || "").trim();
+      const adjustments = Array.isArray(data?.adjustments)
+        ? (data.adjustments as Array<{
+            exerciseId: string;
+            exerciseName: string;
+            newSetsCount?: number | null;
+            newWeightKg?: string | null;
+            newReps?: string | null;
+            skipExercise?: boolean | null;
+          }>)
+        : [];
+
+      if (noteText) {
+        const nextFeelings = currentFeelings.trim()
+          ? `${currentFeelings.trim()} ${noteText}`
+          : noteText;
+        feelingsRef.current = nextFeelings;
+        setFeelings(nextFeelings);
+      }
+
+      if (adjustments.length > 0) {
+        setSessionExercises((prev) =>
+          prev
+            .filter((ex) => {
+              const adj = adjustments.find((a) => a.exerciseId === ex.id);
+              if (adj?.skipExercise && ex.sets.every((s) => !s.done)) {
+                return false;
+              }
+              return true;
+            })
+            .map((ex) => {
+              const adj = adjustments.find((a) => a.exerciseId === ex.id);
+              if (!adj || adj.skipExercise) return ex;
+
+              let updatedSets = ex.sets.map((s) =>
+                s.done
+                  ? s
+                  : {
+                      ...s,
+                      actualWeightKg:
+                        adj.newWeightKg && adj.newWeightKg.trim()
+                          ? adj.newWeightKg.trim()
+                          : s.actualWeightKg,
+                      actualReps:
+                        adj.newReps && adj.newReps.trim()
+                          ? adj.newReps.trim()
+                          : s.actualReps,
+                    }
+              );
+
+              if (
+                typeof adj.newSetsCount === "number" &&
+                adj.newSetsCount >= 1 &&
+                adj.newSetsCount <= 12
+              ) {
+                const doneSets = updatedSets.filter((s) => s.done);
+                const undoneSets = updatedSets.filter((s) => !s.done);
+                const targetTotal = Math.max(doneSets.length, adj.newSetsCount);
+                if (targetTotal < updatedSets.length) {
+                  const keepUndone = Math.max(0, targetTotal - doneSets.length);
+                  updatedSets = [
+                    ...doneSets,
+                    ...undoneSets.slice(0, keepUndone),
+                  ];
+                } else if (targetTotal > updatedSets.length) {
+                  const template =
+                    updatedSets[updatedSets.length - 1] ?? {
+                      id: `${ex.id}-s`,
+                      setNumber: 1,
+                      reps: adj.newReps?.trim() || "5",
+                      weightKg: adj.newWeightKg?.trim() || "0",
+                    };
+                  const extraCount = targetTotal - updatedSets.length;
+                  const extras = Array.from(
+                    { length: extraCount },
+                    (_, idx) => ({
+                      ...template,
+                      id: `${ex.id}-voice-${Date.now()}-${idx}`,
+                      setNumber: updatedSets.length + idx + 1,
+                      done: false,
+                      actualWeightKg:
+                        adj.newWeightKg?.trim() ||
+                        template.actualWeightKg ||
+                        template.weightKg,
+                      actualReps:
+                        adj.newReps?.trim() ||
+                        template.actualReps ||
+                        template.reps,
+                    })
+                  );
+                  updatedSets = [...updatedSets, ...extras];
+                }
+              }
+
+              return { ...ex, sets: updatedSets };
+            })
+        );
+      }
+
+      const noticeParts: string[] = [];
+      if (summary) noticeParts.push(`Muokattu: ${summary}`);
+      if (noteText) noticeParts.push("Lisätty muistiinpano");
+      setVoicePlanNotice(
+        noticeParts.join(" · ") || "Sanelu tallennettu luonnokseen."
+      );
+    } catch {
+      const nextFeelings = currentFeelings.trim()
+        ? `${currentFeelings.trim()} ${trimmed}`
+        : trimmed;
+      feelingsRef.current = nextFeelings;
+      setFeelings(nextFeelings);
+      setVoicePlanNotice("Lisätty treenimuistiinpanoon.");
+    } finally {
+      setAdjustingPlanVoice(false);
+    }
   };
 
   // Alusta päivän muokattava kopio (tai palauta keskeneräinen luonnos selaimen välimuistista)
@@ -1222,6 +1394,50 @@ export function TodayWorkoutView({
             ref={exercisesSectionRef}
             className="space-y-4 scroll-mt-24"
           >
+            {/* Lämmittely & lennosta sanelu -palkki (elää luonnoksessa kunnes Tallenna treeni) */}
+            <div className="rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-zinc-200 block">
+                    Lämmittely tai muutos sarjoihin?
+                  </span>
+                  <span className="text-[11px] text-zinc-400">
+                    Sanele vapaasti – päivittää luonnosta, tallentuu kantaan vasta lopuksi
+                  </span>
+                </div>
+                <VoiceInputButton
+                  onTranscript={(txt) => void handleVoicePlanAdjustment(txt)}
+                  label="Sanele muutos"
+                  compact
+                />
+              </div>
+
+              {(adjustingPlanVoice || voicePlanNotice) && (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/10">
+                  <span className="text-xs font-medium text-[#64D2FF]">
+                    {adjustingPlanVoice
+                      ? "Päivitetään suunnitelmaa sanelun mukaan…"
+                      : voicePlanNotice}
+                  </span>
+                  {!adjustingPlanVoice && voicePlanUndoSnapshot && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSessionExercises(voicePlanUndoSnapshot.exercises);
+                        setFeelings(voicePlanUndoSnapshot.feelings);
+                        feelingsRef.current = voicePlanUndoSnapshot.feelings;
+                        setVoicePlanNotice(null);
+                        setVoicePlanUndoSnapshot(null);
+                      }}
+                      className="apple-press inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/18 border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Kumoa</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
         {sessionExercises.map((exercise, exIndex) => {
           const exDoneCount = exercise.sets.filter((s) => s.done).length;
